@@ -1,4 +1,4 @@
-﻿# Bunny Hop by FiBzY 🐰
+# Bunny Hop by FiBzY 12.62 🐰
 
 Welcome to **Bunny Hop by FiBzY!**  
 This project is built with love for movement-based gameplay, making Bhop smoother, faster, and more fun! Whether you're using this for personal projects, community servers, or commercial purposes, you're free to **use, modify, and build upon** it. 
@@ -58,11 +58,16 @@ If you have **questions, feedback, or need help**, feel free to reach out!
 
 ---
 
+## Pictures
+![20250309234544_1](https://github.com/user-attachments/assets/f77d7c93-d4f4-4f6b-a7e8-fc77c3a84bb7)
+![20250309234550_1](https://github.com/user-attachments/assets/c8bc321c-b1c6-4229-a1f1-26d88f0237d9)
+
+
 ## 🏆 Credits  
 
 Special thanks to the following people for their contributions and inspiration:  
 
-- **justa** – [Steam Profile](https://steamcommunity.com/id/justadam)  
+- **justa** – [Steam Profile](https://steamcommunity.com/id/just_adam)  
   *Provided UI Layouts, Default Scoreboard Layout, and Menu Inspiration.*  
 
 - **ClazStudio** – [GitHub](https://github.com/ClazStudio)  
@@ -71,7 +76,7 @@ Special thanks to the following people for their contributions and inspiration:
 - **Shavit** – [Steam Profile](https://steamcommunity.com/id/shavit/)  
   *Gave ideas for porting the gamemode to Lua.*  
 
-- **Gravious** – [Steam Profile](https://steamcommunity.com/id/Gravious_/)  
+- **Gravious** – [Steam Profile](https://steamcommunity.com/id/Graviousdev/)  
   *Created the Base Flow Gamemode, which helped in understanding the code structure.*  
 
 - **Geroge** – [Steam Profile](https://steamcommunity.com/id/Gerogeri/)  
