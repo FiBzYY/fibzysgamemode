@@ -82,8 +82,8 @@ Special thanks to the following people for their contributions and inspiration:
 - **Geroge** – [Steam Profile](https://steamcommunity.com/id/Gerogeri/)  
   *Created the default bhop movement code, helped with Long Jump.*
 
-- **OpenAI** – [Website]((https://openai.com/))  
-  *Countless fixes with a custom ai version for werid problems*
+- **OpenAI** – [Website](https://openai.com/)
+  *Countless lua synax bugs ect. with a custom ai version for werid problems*
 
 ---
 
