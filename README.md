@@ -1,4 +1,4 @@
-# Bunny Hop by FiBzY 🐰
+# Bunny Hop by FiBzY 12.62 🐰
 
 Welcome to **Bunny Hop by FiBzY!**  
 This project is built with love for movement-based gameplay, making Bhop smoother, faster, and more fun! Whether you're using this for personal projects, community servers, or commercial purposes, you're free to **use, modify, and build upon** it. 
