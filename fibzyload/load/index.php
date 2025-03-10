@@ -6,7 +6,7 @@ $mapname = isset($_GET["m"]) ? htmlspecialchars($_GET["m"]) : "Unknown";
 
 // Your servers' data
 $_SERVERS = array(
-    "ThisServerIdentifier" => array('Bunny Hop', '77.93.141.26', 25000),
+    "ThisServerIdentifier" => array('Bunny Hop', 'YOURIPHERE', YOURPORTHERE),
     "AnotherServer" => array('Bunny Hop', 'IP ADDRESS', 27015),
 );
 
