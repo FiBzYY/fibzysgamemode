@@ -80,7 +80,10 @@ Special thanks to the following people for their contributions and inspiration:
   *Created the Base Flow Gamemode, which helped in understanding the code structure.*  
 
 - **Geroge** – [Steam Profile](https://steamcommunity.com/id/Gerogeri/)  
-  *Created the default bhop movement code, helped with Long Jump.*  
+  *Created the default bhop movement code, helped with Long Jump.*
+
+- **OpenAI** – [Website]((https://openai.com/))  
+  *Countless fixes with a custom ai version for werid problems*
 
 ---
 
