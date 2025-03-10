@@ -58,6 +58,11 @@ If you have **questions, feedback, or need help**, feel free to reach out!
 
 ---
 
+## Pictures
+![20250309234544_1](https://github.com/user-attachments/assets/f77d7c93-d4f4-4f6b-a7e8-fc77c3a84bb7)
+![20250309234550_1](https://github.com/user-attachments/assets/c8bc321c-b1c6-4229-a1f1-26d88f0237d9)
+
+
 ## 🏆 Credits  
 
 Special thanks to the following people for their contributions and inspiration:  
