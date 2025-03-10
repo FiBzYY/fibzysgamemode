@@ -67,7 +67,7 @@ If you have **questions, feedback, or need help**, feel free to reach out!
 
 Special thanks to the following people for their contributions and inspiration:  
 
-- **justa** – [Steam Profile](https://steamcommunity.com/id/justadam)  
+- **justa** – [Steam Profile](https://steamcommunity.com/id/just_adam)  
   *Provided UI Layouts, Default Scoreboard Layout, and Menu Inspiration.*  
 
 - **ClazStudio** – [GitHub](https://github.com/ClazStudio)  
@@ -76,7 +76,7 @@ Special thanks to the following people for their contributions and inspiration:
 - **Shavit** – [Steam Profile](https://steamcommunity.com/id/shavit/)  
   *Gave ideas for porting the gamemode to Lua.*  
 
-- **Gravious** – [Steam Profile](https://steamcommunity.com/id/Gravious_/)  
+- **Gravious** – [Steam Profile](https://steamcommunity.com/id/Graviousdev/)  
   *Created the Base Flow Gamemode, which helped in understanding the code structure.*  
 
 - **Geroge** – [Steam Profile](https://steamcommunity.com/id/Gerogeri/)  
