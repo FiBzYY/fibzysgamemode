@@ -14,7 +14,7 @@ $_SERVERS = array(
 $gamedata = isset($_SERVERS[$requesttype]) ? $_SERVERS[$requesttype] : array("Unknown", "Unknown", "Unknown");
 
 // Your Steam API Key
-$apikey = "305502D0982FA29805221FECA497DECB";
+$apikey = "YOURAPIKEY";
 
 // Fetch player details from Steam API if a valid SteamID is provided
 if ($requestuser !== "Unknown") {
