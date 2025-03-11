@@ -447,9 +447,7 @@ function UI:CreateMenu()
         y = y + 45
         self:CreateToggle(container, y, "gmod_mcore_test", "Gmod Multi Core", "This may improve performance by utilizing multiple cores.")
         y = y + 60
-        self:CreateToggle(container, y, "mat_antialias", "Disable Antialias", "This may improve performance by disabling antialias.")
-        y = y + 60
-        self:CreateToggle(container, y, "r_drawsprites", "Enable Sprites", "This may improve performance by disabling sprites.")
+        self:CreateToggle(container, y, "mat_antialias", "Disable Antialias", "This may improve performance by disabling antialias.", { default = 8, off = 0 })
         y = y + 60
         self:CreateToggle(container, y, "bhop_showzones", "Show Zones", "Hide or show the timer zones.")
         y = y + 60
@@ -463,7 +461,7 @@ function UI:CreateMenu()
         y = y + 60
         self:CreateToggle(container, y, "r_WaterDrawRefraction", "Toggle Refraction", "This may improve performance by toggling off refraction.")
         y = y + 60
-        self:CreateToggle(container, y, "remove_fog", "Disable Map Fog", "This may make it easier to see by disabling map fog.")
+        self:CreateToggle(container, y, "bhop_remove_fog", "Disable Map Fog", "This may make it easier to see by disabling map fog.")
         y = y + 60
         self:CreateInputBox(container, y, "bhop_skybox_speed", 40, "Skybox Speed Cycle", "This will allow you to change the skybox speed cycle.")
         y = y + 60
@@ -511,9 +509,9 @@ function UI:CreateMenu()
         surface.DrawRect(10, y + 35, container:GetWide() - 20, 1)
 
         y = y + 45
-        self:CreateToggle(container, y, "bhop_ssjdisplay", "SSJ Enable", "Disables or enables show jump stats.")
+        self:CreateToggle(container, y, "bhop_showssj", "SSJ Enable", "Disables or enables show jump stats." ,{ default = 1, off = 0 })
         y = y + 60
-        self:CreateToggle(container, y, "bhop_predisplay", "Prestrafe", "Disable or enable prestrafe.")
+        self:CreateToggle(container, y, "bhop_showpre", "Prestrafe", "Disable or enable prestrafe.")
         y = y + 60
         self:CreateToggle(container, y, "bhop_chatfjt", "First jump tick", "Disable or enable jump tick.")
         y = y + 60
@@ -541,13 +539,15 @@ function UI:CreateMenu()
             self:CreateInputBox(parent, y, "bhop_strafetrainer_interval", 10, "Update rate", "Update rate in ticks.", 1, 100)
             y = y + 60
             self:CreateToggle(parent, y, "bhop_strafetrainer_ground", "Ground", "Should update on ground.")
+            y = y + 60
+            self:CreateToggle(parent, y, "bhop_strafesync", "Strafe Synchronizer", "Disables or enables show strafe synchronizer.")
         end },
 
         { text = "Audio", panelContent = function(parent)
             local x, y = 10, 0
             self:CreatePanel(parent, {"Audio"})
             y = y + 45
-            self:CreateToggle(parent, y, "mute_map_music", "Disable Map Music", "Use if you want to disable music on all maps.")
+            self:CreateToggle(parent, y, "bhop_mute_music", "Disable Map Music", "Use if you want to disable music on all maps.")
             y = y + 60
             self:CreateToggle(parent, y, "bhop_footsteps", "Disable Footsteps", "Disable or enable footsteps.")
             y = y + 60
@@ -564,7 +564,9 @@ function UI:CreateMenu()
             y = y + 60
             self:CreateToggle(parent, y, "bhop_thirdperson", "Third Person View", "Disable or enable third person view.")
             y = y + 60
-            self:CreateToggle(parent, y, "bhop_view_interp", "View Interpolation", "Disable or enable interpolation view.")
+            self:CreateToggle(parent, y, "bhop_viewinterp", "View Interpolation", "Disable or enable interpolation view.")
+            y = y + 60
+            self:CreateToggle(parent, y, "bhop_viewpunch", "Enable View Punch", "Disable or enable view punch.")
         end },
 
         --[[{ text = "FOV", panelContent = function(parent)
@@ -603,8 +605,6 @@ function UI:CreateMenu()
             self:CreateToggle(parent, y, "bhop_roundedbox", "Enable Rounded Boxes", "Disables or enables rounded boxes.")
             y = y + 60
             self:CreateToggle(parent, y, "bhop_simplebox", "Enable Simple HUD Boxes", "Disables or enables simple HUD boxes.")
-            y = y + 60
-            self:CreateToggle(parent, y, "bhop_showpos", "Enable Show Pos HUD", "Disables or enables the custom show pos. (Useful for debugging)")
             y = y + 60
             self:CreateToggle(parent, y, "bhop_chatbox", "Enable Custom Chatbox", "Disables or enables the custom chat box.")
         end },

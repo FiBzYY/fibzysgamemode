@@ -1,4 +1,4 @@
---[[
+﻿--[[
 
  ____  _  _   __  ____    _  _  _  _  ____  ____ 
 (  _ \/ )( \ /  \(  _ \  / )( \/ )( \(    \/ ___)
@@ -11,6 +11,7 @@ local selected_hud = CreateClientConVar("bhop_hud_hide", 1, true, false)
 local roundedBoxEnabled = CreateConVar("bhop_roundedbox", "1", {FCVAR_ARCHIVE}, "Enable rounded box drawing")
 local simpleBoxEnabled = CreateConVar("bhop_simplebox", "0", {FCVAR_ARCHIVE}, "Enable simple hud box drawing")
 local sidetimer = CreateClientConVar("bhop_sidetimer", 0, true, false, "Display SideTimer Stats")
+local disablespec = CreateClientConVar("bhop_disablespec", 0, true, false, "Disable Spectator Hud")
 
 CreateClientConVar("bhop_default_crosshair", "1", true, false, "Enable default crosshair")
 
@@ -956,12 +957,20 @@ local hudStyles = {
     end,
 
     claz = function(scrW, scrH, data)
-        local gainclaz = data.gain .. "%"
-
+        local gainclaz = math.Round(data.gain, 2) .. "%"
+        local speed = math.Round(data.speed, 2)
+        local difference = math.Round(data.difference, 0)
+        local efficiency = math.Round(data.efficiency, 2)
+        local sync = math.Round(data.sync, 2)
+    
         if data.jumps > 1 then
-            DrawText(data.jumps - 1 .. ": " .. data.speed .. " (" .. math.Round(data.difference, 0) .. ") " .. gainclaz .. " | " .. data.efficiency .. " | " .. data.strafes .. " | " .. data.sync .. "%", "ClazJHUD", scrW / 2, scrH / 2 - 100, baseColorCached, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            DrawText(
+                (data.jumps) .. ": " .. speed .. " (" .. difference .. ") " .. gainclaz ..
+                " | " .. efficiency .. " | " .. data.strafes .. " | " .. sync .. "%",
+                "ClazJHUD", scrW / 2, scrH / 2 - 100, baseColorCached, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER
+            )
         else
-            DrawText(data.speed, "ClazJHUD", scrW / 2, scrH / 2 - 100, speedColorCached, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            DrawText("Pre-Speed: " .. speed, "ClazJHUD", scrW / 2, scrH / 2 - 100, speedColorCached, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
         end
     end
 }
@@ -1136,6 +1145,7 @@ end
 function DrawSpecHUD()
     local lp = LocalPlayer()
     if not IsValid(lp) then return end
+    if disablespec:GetBool() then return end
 
     local txt = "Spectating %s (%s):"
     local SpecList = {}
@@ -1156,12 +1166,19 @@ function DrawSpecHUD()
         end
     end
 
+    local botName = nil
     if IsValid(Obs) and Obs:IsBot() then
-        table.insert(SpecList, Obs:GetName())
-        txt = string.format(txt, Obs:GetName(), "Replay")
+        botName = Obs:GetName()
+        txt = string.format(txt, "Replay", "Watching")
+
+        for _, v in ipairs(player.GetAll()) do
+            if IsValid(v) and v:GetObserverTarget() == Obs then
+                table.insert(SpecList, v)
+            end
+        end
     end
 
-    if #SpecList == 0 then return end
+    if #SpecList == 0 and not (IsValid(Obs) and Obs:IsBot()) then return end
 
     DrawText(txt, "ui.mainmenu.button", ScrW() - 20, ScrH() / 2 - (#SpecList * 10), color_white, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
 
@@ -1169,7 +1186,6 @@ function DrawSpecHUD()
 
     for _, spectator in ipairs(SpecList) do
         if IsValid(spectator) and spectator:IsPlayer() then
-            print("Spectator Found:", spectator:GetName())
             table.insert(combinedList, spectator:GetName())
         end
     end
@@ -1179,13 +1195,13 @@ function DrawSpecHUD()
     end
 
     for i = 1, #combinedList do
-        DrawText(combinedList[i], "ui.mainmenu.button", ScrW() - 20, ScrH() / 2 + (i * 20) - (#combinedList * 10), color_white, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+        local drawName = combinedList[i]
+
+        DrawText(drawName, "ui.mainmenu.button", ScrW() - 20, ScrH() / 2 + (i * 20) - (#combinedList * 10), color_white, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
     end
 end
-hook.Add("HUDPaint", "DrawSpecHUD", DrawSpecHUD)
 
 -- Draw the HUD
-
 local hudHideConVar = GetConVar("bhop_hud_hide")
 function GM:HUDPaintBackground()
     local pl = LocalPlayer()

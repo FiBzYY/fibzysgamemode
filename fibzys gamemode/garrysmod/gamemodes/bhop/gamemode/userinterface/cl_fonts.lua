@@ -66,7 +66,7 @@ if not FONT_CACHE then
     MakeFont("JHUDEFF", { size = 20, weight = 4000, font = "Roboto" })
     MakeFont("JHUDMainKawaii", {font = "Impact", size = 48, weight = 500, antialias = true, shadow = false, extended = true})
     MakeFont("JHUDMainKawaiiSmall", {font = "Impact", size = 32, weight = 500, antialias = true, shadow = false, extended = true})
-    MakeFont("ClazJHUD", {font = "Impact", size = 36, weight = 4000})
+    MakeFont("ClazJHUD", {font = "Roboto", size = 36, weight = 900, ended = true, shadow = true})
 
     -- Other
     MakeFont("HUDTitle", { size = 24, weight = 700, font = "Arial" })

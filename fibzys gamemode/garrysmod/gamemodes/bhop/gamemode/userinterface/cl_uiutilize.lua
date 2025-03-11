@@ -464,17 +464,20 @@ function UI:CreateColorPicker(parent, y, labelText, defaultColor)
     return pnl, lbl, colorBox
 end
 
-function UI:CreateToggle(parent, y, command, labelText, infoText)
+function UI:CreateToggle(parent, y, command, labelText, infoText, toggleValues)
     local pnl = vgui.Create("DPanel", parent)
     pnl:SetSize(parent:GetWide(), 80)
     pnl:SetPos(0, y)
 
+    local convar = GetConVar(command)
+    local defaultValue = toggleValues and toggleValues.default or 8
+    local offValue = toggleValues and toggleValues.off or 0
+
     pnl.Paint = function(self, w, h)
         local isActive = false
 
-        local convar = GetConVar(command)
         if convar then
-            isActive = (convar:GetInt() == 1)
+            isActive = (convar:GetInt() ~= offValue)
         end
 
         local boxColor = colors.box
@@ -488,10 +491,9 @@ function UI:CreateToggle(parent, y, command, labelText, infoText)
     end
 
     pnl.OnMousePressed = function()
-        local convar = GetConVar(command)
-
         if convar then
-            local newValue = (convar:GetInt() == 1) and 0 or 1
+            local currentValue = convar:GetInt()
+            local newValue = (currentValue == offValue) and defaultValue or offValue
             RunConsoleCommand(command, tostring(newValue))
         else
             print("[UI] Warning: ConVar '" .. command .. "' does not exist!")

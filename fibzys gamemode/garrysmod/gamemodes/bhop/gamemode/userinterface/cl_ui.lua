@@ -704,8 +704,7 @@ UI:AddListener("ssj", function(_, data)
             {["name"] = "Show Sync", ["function"] = SSJ_Callback(10), ["bool"] = data[10]},
             {["name"] = "Show Last Speed", ["function"] = SSJ_Callback(11), ["bool"] = data[11]},
             {["name"] = "Show Yaw", ["function"] = SSJ_Callback(12), ["bool"] = data[12]},
-            {["name"] = "Show Time", ["function"] = SSJ_Callback(13), ["bool"] = data[13]},
-            {["name"] = "Show Offsets", ["function"] = SSJ_Callback(14), ["bool"] = data[14]}
+            {["name"] = "Show Time", ["function"] = SSJ_Callback(13), ["bool"] = data[13]}
         )
     end
 end)
@@ -1146,6 +1145,7 @@ UI:AddListener("wr", function(_, data)
     end
 end)
 
+-- SSJ Top Menu
 local function CreateSSJTopMenu(data)
     if IsValid(SSJTopFrame) then SSJTopFrame:Remove() end
 
@@ -1158,8 +1158,8 @@ local function CreateSSJTopMenu(data)
     SSJTopFrame:MakePopup()
     
     SSJTopFrame.Paint = function(self, w, h)
-        draw.RoundedBox(0, 0, 0, w, h, Color(50, 50, 50, 255))
-        draw.RoundedBox(0, 0, 0, w, 30, Color(80, 80, 80, 255))
+        draw.RoundedBox(0, 0, 0, w, h, Color(35, 35, 35, 255))
+        draw.RoundedBox(0, 0, 0, w, 30, Color(32, 32, 32, 255))
         draw.SimpleText("SSJTOP Leaderboard", "hud.subtitle", w / 2, 15, Color(255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
     end
 
@@ -1202,7 +1202,7 @@ local function CreateSSJTopMenu(data)
     headerPanel:SetPos(10, 40)
 
     headerPanel.Paint = function(self, w, h)
-        draw.RoundedBox(0, 0, 0, w, h, Color(80, 80, 80, 255))
+        draw.RoundedBox(0, 0, 0, w, h, Color(42, 42, 42, 255))
         draw.SimpleText("#", "hud.subtitle", 10, h / 2, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
         draw.SimpleText("Player", "hud.subtitle", 50, h / 2, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
         draw.SimpleText("Normal", "hud.subtitle", 220, h / 2, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
@@ -1217,14 +1217,17 @@ local function CreateSSJTopMenu(data)
             local bgColor = rank % 2 == 0 and Color(70, 70, 70, 200) or Color(60, 60, 60, 200)
             draw.RoundedBox(4, 0, 0, w, h, bgColor)
 
+            local textColor = (info[1] == LocalPlayer():Nick()) and Color(0, 150, 255) or Color(255, 255, 255)
+
             draw.SimpleText(rank, "hud.subtitle", 10, h / 2, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-            draw.SimpleText(info[1], "hud.subtitle", 50, h / 2, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+            draw.SimpleText(info[1], "hud.subtitle", 50, h / 2, textColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
             draw.SimpleText(math.Round(info[2], 2), "hud.subtitle", 220, h / 2, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
             draw.SimpleText(math.Round(info[3], 2), "hud.subtitle", 300, h / 2, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
         end
     end
 end
 
+-- SSJTop Data
 local function RequestSSJTop()
     net.Start("SSJTOP_SendData")
     net.SendToServer()
