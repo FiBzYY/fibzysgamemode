@@ -43,7 +43,7 @@ local function HandleStartZone(ent, zone)
     local moveType = ent:GetMoveType()
 
     if zone == ZONE.MAIN_START then
-        ent.InStartZone = false
+        ent.InStartZone = true
         if ent.time and not isJumping and isOnGround then
             TIMER:ResetTimer(ent)
         elseif not ent.time and isJumping and moveType ~= MOVETYPE_NOCLIP then
@@ -65,7 +65,7 @@ function ENT:StartTouch(ent)
     local zone = self:GetNWInt("zonetype")
 
     if zone == ZONE.MAIN_START then
-        -- JUMPTICK:HandleStartZone(ent)
+        JUMPTICK:HandleStartZone(ent)
 
         ent.InStartZone = true
         if ent.time and ent:IsOnGround() and not ent:KeyDown(IN_JUMP) then
@@ -75,18 +75,6 @@ function ENT:StartTouch(ent)
         end
     elseif zone == ZONE.MAIN_END and ent.time and not ent.finished then
         TIMER:StopTimer(ent)
-    end
-
-    if zone == ZONE.AC then
-        TIMER:Disable(ent)
-    end
-
-    if zone == ZONE.STEPSIZE then
-        ent:SetStepSize(16)
-    end
-
-    if zone == ZONE.SURFGRAVTY then
-        ent:SetGravity(0.6)
     end
 end
 
@@ -101,8 +89,8 @@ function ENT:EndTouch(ent)
     local zone = self:GetNWInt("zonetype")
 
     if zone == ZONE.MAIN_START then
-        -- JUMPTICK:HandleEndZone(ent)
-                ent.InStartZone = false
+        JUMPTICK:HandleEndZone(ent)
+
         if not ent.time then
             TIMER:StartTimer(ent)
         end
@@ -114,13 +102,5 @@ function ENT:EndTouch(ent)
         TIMER:StopTimer(ent)
     elseif zone == ZONE.BONUS_END and ent.bonustime and not ent.bonusfinished then
         TIMER:BonusStop(ent)
-    end
-
-    if zone == ZONE.STEPSIZE then
-        ent:SetStepSize(18)
-    end
-
-    if zone == ZONE.SURFGRAVTY then
-        ent:SetGravity(1)
     end
 end

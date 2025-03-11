@@ -82,7 +82,7 @@ function SWEP:CSSGlockShoot(dmg, recoil, numbul, cone, anim)
         end
     }
 
-    if SERVER then
+    if SERVER and GetConVar("bhop_gunsounds"):GetInt() == 1 then
         self.Owner:EmitSound("Weapon_Glock.Single", 100, 100, 1, CHAN_WEAPON)
     end
 

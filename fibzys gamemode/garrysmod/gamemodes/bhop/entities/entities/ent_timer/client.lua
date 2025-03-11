@@ -1,3 +1,5 @@
+CreateClientConVar("bhop_showzones", "1", true, false, "Toggle visibility of bhop zones")
+
 local Col = HSVToColor(RealTime() * 40 % 360, 1, 1)
 local Iv = IsValid
 
@@ -64,6 +66,8 @@ local DrawArea = {
 }
 
 function ENT:Draw()
+    if not GetConVar("bhop_showzones"):GetBool() then return end
+
     self:UpdateZoneData()
 
     local Col = DrawArea[self:GetNWInt("zonetype")]

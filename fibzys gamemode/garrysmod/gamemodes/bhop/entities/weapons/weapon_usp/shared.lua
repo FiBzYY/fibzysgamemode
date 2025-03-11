@@ -1,4 +1,4 @@
-if CLIENT then
+﻿if CLIENT then
     SWEP.DrawAmmo = true
     SWEP.DrawCrosshair = false
     SWEP.ViewModelFOV = 82
@@ -122,7 +122,11 @@ function SWEP:PrimaryAttack()
     }
 
     self.Owner:FireBullets(bullet)
-    self:EmitSound(self.SilencerState == 0 and self.Primary.Sound or self.Secondary.Sound)
+
+    if GetConVar("bhop_gunsounds"):GetInt() == 1 then
+        self:EmitSound(self.SilencerState == 0 and self.Primary.Sound or self.Secondary.Sound)
+    end
+
     self:ShootEffects()
     self:TakePrimaryAmmo(self.Primary.TakeAmmo)
     self:SetNextPrimaryFire(CurTime() + self.Primary.Delay)

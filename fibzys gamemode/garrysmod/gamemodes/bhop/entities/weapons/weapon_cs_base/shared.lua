@@ -1,4 +1,4 @@
-if CLIENT then
+﻿if CLIENT then
 	SWEP.DrawAmmo = true
 	SWEP.DrawCrosshair = false
 	SWEP.ViewModelFOV = 82
@@ -47,25 +47,23 @@ function SWEP:Think()
 end
 
 function SWEP:PrimaryAttack()
-	self:SetNextSecondaryFire(CurTime() + self.Primary.Delay)
-	self:SetNextPrimaryFire(CurTime() + self.Primary.Delay)
+    self:SetNextSecondaryFire(CurTime() + self.Primary.Delay)
+    self:SetNextPrimaryFire(CurTime() + self.Primary.Delay)
 
-	if not self:CanPrimaryAttack() then return end
+    if not self:CanPrimaryAttack() then return end
 
-	if CLIENT then
-		if LocalPlayer() and IsValid(LocalPlayer()) and (GetConVar("bhop_gunsounds"):GetInt() == 1) then
-			self:EmitSound(self.Primary.Sound)
-		end
-	end
+    if GetConVar("bhop_gunsounds"):GetInt() == 1 then
+        self:EmitSound(self.Primary.Sound)
+    end
 
-	self:CSShootBullet(self.Primary.Damage, self.Primary.Recoil, self.Primary.NumShots, self.Primary.Cone)
-	self:TakePrimaryAmmo(1)
+    self:CSShootBullet(self.Primary.Damage, self.Primary.Recoil, self.Primary.NumShots, self.Primary.Cone)
+    self:TakePrimaryAmmo(1)
 
-	if self.Owner:IsNPC() then return end
+    if self.Owner:IsNPC() then return end
 
-	if (game.SinglePlayer() and SERVER) or CLIENT then
-		self:SetNetworkedFloat("LastShootTime", CurTime())
-	end
+    if (game.SinglePlayer() and SERVER) or CLIENT then
+        self:SetNetworkedFloat("LastShootTime", CurTime())
+    end
 end
 
 function SWEP:CSShootBullet(dmg, recoil, numbul, cone)
