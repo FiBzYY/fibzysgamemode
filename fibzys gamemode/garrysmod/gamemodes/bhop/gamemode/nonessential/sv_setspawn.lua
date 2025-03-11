@@ -28,7 +28,7 @@ local function isValidSpawnPoint(ply)
 end
 
 local function getSpawnIdentifier(ply)
-    return ply.style == 8 and 2 or 0
+    return ply.style == 12 and 2 or 0
 end
 
 local setspawnFile = "setspawnmaplist.txt"

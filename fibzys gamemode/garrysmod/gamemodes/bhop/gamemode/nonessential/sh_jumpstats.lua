@@ -1,5 +1,4 @@
 SSJ = SSJ or {}
-SSJTOP = SSJTOP or {}
 
 -- Cache
 local hook_Add = hook.Add
@@ -64,6 +63,11 @@ FORWARD_MOVE = 0
 SIDE_MOVE = 1
 BHOP_LEFT = 0
 BHOP_RIGHT = 1
+
+if CLIENT then
+    CreateClientConVar("bhop_showssj", "1", true, false, "Toggle SSJ display in chat")
+    CreateClientConVar("bhop_showpre", "1", true, false, "Toggle SSJ display in chat")
+end
 
 hook.Add("Initialize", "SSJ_SetTickRate", function()
     g_fTickrate = engine.TickInterval()
@@ -273,6 +277,38 @@ local function GetSpeed(vel, twoD)
     return vel:Length()
 end
 
+if SERVER then
+    util.AddNetworkString("SyncSSJSettings")
+
+    net.Receive("SyncSSJSettings", function(len, ply)
+        local showSSJ = net.ReadBool()
+        local showPre = net.ReadBool()
+
+        ply:SetNWBool("bhop_showssj", showSSJ)
+        ply:SetNWBool("bhop_showpre", showPre)
+    end)
+end
+
+if CLIENT then
+    CreateClientConVar("bhop_showssj", "1", true, false, "Toggle SSJ display in chat")
+    CreateClientConVar("bhop_showpre", "1", true, false, "Toggle Prestrafe display in chat")
+
+    local function SyncSSJSettings()
+        net.Start("SyncSSJSettings")
+        net.WriteBool(GetConVar("bhop_showssj"):GetBool())
+        net.WriteBool(GetConVar("bhop_showpre"):GetBool())
+        net.SendToServer()
+
+        timer.Simple(0.1, function()
+            LocalPlayer():SetNWBool("bhop_showssj", GetConVar("bhop_showssj"):GetBool())
+            LocalPlayer():SetNWBool("bhop_showpre", GetConVar("bhop_showpre"):GetBool())
+        end)
+    end
+
+    cvars.AddChangeCallback("bhop_showssj", function() SyncSSJSettings() end)
+    cvars.AddChangeCallback("bhop_showpre", function() SyncSSJSettings() end)
+end
+
 -- Print the stats
 local function SSJ_PrintStats(ply, lastSpeed, jumpTimeDiff)
     local coeffsum = g_iStrafeTick[ply] > 0 and (g_fRawGain[ply] / g_iStrafeTick[ply]) * 100 or 0
@@ -439,13 +475,45 @@ local function SSJ_PrintStats(ply, lastSpeed, jumpTimeDiff)
 
     for _, v in ipairs(clients) do
         local ssj = v.SSJ and v.SSJ["Settings"]
-        if ssj and ssj[1] and (ssj[2] or jumpCount ~= 6) then
-            NETWORK:StartNetworkMessageTimer(ply, "Print", {"Timer", str})
+        local showSSJ = v:GetNWBool("bhop_showssj", true)
+        local showPre = v:GetNWBool("bhop_showpre", true)
+
+        if ssj and ssj[1] and (ssj[2] or jumpCount == 6) and showSSJ then
+            if not showPre then
+                if jumpCount > 1 then
+                    NETWORK:StartNetworkMessageTimer(v, "Print", {"Timer", str})
+                end
+            else
+                NETWORK:StartNetworkMessageTimer(v, "Print", {"Timer", str})
+            end
         end
-    end
+    end 
 
     -- SSJ HUD Update
     NETWORK:StartNetworkMessageSSJ(ply, "SSJ", jumpCount, coeffsum, velocity, strafes, efficiency, sync, lastSpeed or 0, g_speedDiff[ply])
+
+    -- Illegal Check
+    local style = TIMER:GetStyle(ply)
+    if jumpCount == 1 and velocity > 290 or style == TIMER:GetStyleID("TAS") or style == TIMER:GetStyleID("Unreal") or style == TIMER:GetStyleID("WTF") or style == TIMER:GetStyleID("AS") or ply:GetNWInt("inPractice", true) then
+        gB_IllegalSSJ[ply] = true
+    end
+
+    -- SSJ TOP Record
+    if SSJTOP and jumpCount == 6 and not gB_IllegalSSJ[ply] then
+        local steamID = ply:SteamID()
+        local wasDucking = playerDuckStatus[steamID] or false
+        local ssjType = wasDucking and "DUCKED" or "NORMAL"
+        local jumpSpeed = math.floor(velocity)
+
+        if jumpSpeed > (SSJTOP[steamID] and SSJTOP[steamID][ssjType:lower()] or 0) then
+            local ID = "ssjTop"
+            local Data = { ply:Nick(), tostring(jumpSpeed), ssjType, "6th" }
+
+            NETWORK:StartNetworkMessageTimer(nil, "Print", { ID, Lang:Get(ID, Data) })
+
+            UpdateSSJTop(ply, jumpSpeed)
+        end
+    end
 end
 
 -- Player jump
@@ -678,117 +746,3 @@ hook.Add("PlayerInitialSpawn", "OnClientPutInServer2", function(ply)
         }}
     end
 end)
-
--- FJT --
---[[if SERVER then
-    util.AddNetworkString("JumpTickMessage")
-end
-
-JUMPTICK = JUMPTICK or {}
-
-CreateClientConVar("bhop_fjt", "1", true, false, "Toggle Jump Tick", 0, 1)
-
-if SERVER then
-    util.AddNetworkString("RequestFJTStatus")
-    util.AddNetworkString("SendFJTStatus")
-
-    net.Receive("RequestFJTStatus", function(len, ply)
-        local status = net.ReadInt(2)
-        ply.bhop_fjt_enabled = (status == 1)
-    end)
-
-    hook.Add("PlayerInitialSpawn", "RequestFJTOnSpawn", function(ply)
-        timer.Simple(1, function()
-            if IsValid(ply) then
-                net.Start("SendFJTStatus")
-                net.Send(ply)
-            end
-        end)
-    end)
-end
-
-if CLIENT then
-    cvars.AddChangeCallback("bhop_fjt", function(convar_name, oldValue, newValue)
-        net.Start("RequestFJTStatus")
-        net.WriteInt(tonumber(newValue), 2)
-        net.SendToServer()
-    end)
-
-    net.Receive("SendFJTStatus", function()
-        net.Start("RequestFJTStatus")
-        net.WriteInt(GetConVar("bhop_fjt"):GetInt(), 2)
-        net.SendToServer()
-    end)
-end
-
-local playerLeftZone = {}
-local playerJumpedInsideZone = {}
-local playerFJT = {}
-local tickcount = {}
-
-hook.Add("KeyPress", "FJT_DetectJump", function(ply, key)
-    if not ply.bhop_fjt_enabled then return end
-
-    if key == IN_JUMP and ply:IsOnGround() then
-        if ply.InStartZone then
-            playerJumpedInsideZone[ply] = true
-        elseif playerLeftZone[ply] and tickcount[ply] and not playerFJT[ply] then
-            local currentTick = engine.TickCount()
-            local jumpTick = (currentTick - tickcount[ply]) + 1
-
-            playerFJT[ply] = jumpTick
-
-            local ColorSSJ = Color(255, 255, 0)
-            local str = {ColorSSJ, color_white}
-            str[#str + 1] = "FJT: "
-            str[#str + 1] = ColorSSJ
-            str[#str + 1] = tostring(jumpTick)
-            str[#str + 1] = color_white
-
-            net.Start("JumpTickMessage")
-            net.WriteInt(jumpTick, 16)
-            net.Send(ply)
-
-            NETWORK:StartNetworkMessageTimer(ply, "Print", {"Timer",str})
-        end
-    end
-end)
-
-function JUMPTICK:HandleStartZone(ply)
-    playerLeftZone[ply] = false
-    playerJumpedInsideZone[ply] = false
-    playerFJT[ply] = nil
-    tickcount[ply] = nil
-
-    ply.InStartZone = true
-end
-
-function JUMPTICK:HandleEndZone(ply)
-    if not ply.bhop_fjt_enabled then return end
-
-    ply.InStartZone = false
-    playerLeftZone[ply] = true
-
-    tickcount[ply] = engine.TickCount()
-    playerFJT[ply] = nil
-
-    if playerJumpedInsideZone[ply] then
-        playerFJT[ply] = -1
-        tickcount[ply] = nil
-
-        local ColorSSJ = Color(255, 255, 0)
-        local str = {ColorSSJ, color_white}
-        str[#str + 1] = "FJT: "
-        str[#str + 1] = ColorSSJ
-        str[#str + 1] = tostring("-1")
-        str[#str + 1] = color_white
-
-        net.Start("JumpTickMessage")
-        net.WriteInt(-1, 16)
-        net.Send(ply)
-
-        NETWORK:StartNetworkMessageTimer(ply, "Print", {"Timer",str})
-    else
-        playerFJT[ply] = nil
-    end
-end--]]

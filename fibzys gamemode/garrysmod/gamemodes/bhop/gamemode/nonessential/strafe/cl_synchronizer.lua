@@ -75,6 +75,7 @@ hook.Add("HUDPaint", "DrawStrafeSyncHUD", function()
     local ply = LocalPlayer()
     if not IsValid(ply) or hudEnabled:GetBool() == false then return end
 
+    if TIMER:GetStyle(ply) == TIMER:GetStyleID("AS") then return end
     local yawRatio = GetBufferedSum(g_yawRatioHistory)
     local gainRatio = GetBufferedSum(g_gainRatioHistory)
 

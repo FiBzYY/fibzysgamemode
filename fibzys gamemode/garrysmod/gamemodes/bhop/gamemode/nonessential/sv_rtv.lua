@@ -452,12 +452,19 @@ end)
 
 function RTV:SendMapList(client)
     local mapList = {}
+    local seenMaps = {}
 
     for _, data in ipairs(MapList) do
-        table.insert(mapList, { 
-            name = tostring(data[1]), 
-            points = tonumber(data[2]) or 0
-        })
+        local mapName = tostring(data[1])
+
+        if not seenMaps[mapName] then
+            seenMaps[mapName] = true
+
+            table.insert(mapList, { 
+                name = mapName, 
+                points = tonumber(data[2]) or 0
+            })
+        end
     end
 
     UI:SendToClient(client or false, "nominate_list", mapList)

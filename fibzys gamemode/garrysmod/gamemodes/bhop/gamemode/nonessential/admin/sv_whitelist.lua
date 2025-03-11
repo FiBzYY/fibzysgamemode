@@ -1,7 +1,5 @@
 -- Whitelist system
-
 local hook_Add = hook.Add
-
 CreateConVar("bhop_whitelist", "0", {FCVAR_ARCHIVE, FCVAR_NOTIFY, FCVAR_REPLICATED}, "Whitelist enabled")
 
 local function IsPlayerWhitelisted(ply)
@@ -14,7 +12,8 @@ local function IsPlayerWhitelisted(ply)
     end
 
     local steamid = ply:SteamID()
-    print("Checking whitelist for SteamID: " .. steamid)
+    UTIL:Notify(Color(255, 255, 255), "Whitelist", "Checking whitelist for SteamID: " .. steamid)
+
     return BHOP.Whitelist[steamid] or false
 end
 
@@ -22,21 +21,21 @@ hook.Add("CheckPassword", "WhitelistCheck", function(steamid64, ip, sv_password,
     -- whitelist is OFF, check the normal password
     if not BHOP.IsWhitelistOn then
         if sv_password ~= "" and cl_password ~= sv_password then
-            print("~ " .. name .. " failed to provide the correct password! ~")
+            UTIL:Notify(Color(255, 255, 255), "Whitelist", "~ " .. name .. " failed to provide the correct password! ~")
             return false, "Incorrect server password!"
         end
         return true
     end
 
     local steamid = util.SteamIDFrom64(steamid64)
-    print("~ CheckPassword: Checking if SteamID " .. steamid .. " (" .. name .. ") is whitelisted ~")
+    UTIL:Notify(Color(255, 255, 255), "Whitelist", "~ CheckPassword: Checking if SteamID " .. steamid .. " (" .. name .. ") is whitelisted ~")
 
     -- if the player is whitelisted
     if BHOP.Whitelist[steamid] then
-        print("~ SteamID " .. steamid .. " (" .. name .. ") is whitelisted ~")
+        UTIL:Notify(Color(255, 255, 255), "Whitelist", "~ SteamID " .. steamid .. " (" .. name .. ") is whitelisted ~")
         return true
     else
-        print("~ SteamID " .. steamid .. " (" .. name .. ") is NOT whitelisted ~")
+        UTIL:Notify(Color(255, 255, 255), "Whitelist", "~ SteamID " .. steamid .. " (" .. name .. ") is NOT whitelisted ~")
         SendPopupNotification(nil, "Notification", "~ SteamID " .. steamid .. " (" .. name .. ") tried to join ~", 2)
         return false, "You are not allowed to join this server."
     end
@@ -44,7 +43,7 @@ end)
 
 local function KickNonWhitelisted(ply)
     if not IsPlayerWhitelisted(ply) then
-        print("~ " .. ply:Nick() .. " (" .. ply:SteamID() .. ") is not whitelisted and will be kicked ~")
+        UTIL:Notify(Color(255, 255, 255), "Whitelist", "~ " .. ply:Nick() .. " (" .. ply:SteamID() .. ") is not whitelisted and will be kicked ~")
         ply:Kick("~ You are not allowed to join this server. ~")
     end
 end
