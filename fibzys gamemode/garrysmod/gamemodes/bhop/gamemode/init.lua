@@ -1,4 +1,4 @@
-local function includeFiles(fileList, serverOnly)
+﻿local function includeFiles(fileList, serverOnly)
     for _, file in ipairs(fileList) do
         if SERVER then
             AddCSLuaFile(file)
@@ -24,7 +24,9 @@ local files = {
         "essential/timer/sh_timer.lua",
         "nonessential/sh_multi_hops.lua",
         -- "nonessential/vip/sh_paint.lua",
+        "nonessential/sh_ssjtop.lua",
         "nonessential/sh_jumpstats.lua",
+        "nonessential/sh_fjt.lua",
         -- "nonessential/sh_edgehelper.lua",
         -- "nonessential/sh_rampometer.lua",
         "nonessential/sh_unreal.lua",
@@ -55,7 +57,8 @@ local files = {
         "nonessential/strafe/cl_showkeys.lua",
         "nonessential/strafe/cl_showspeed.lua",
         "nonessential/strafe/cl_synchronizer.lua",
-        -- "nonessential/cl_cheats.lua",
+        "nonessential/cl_soundstopper.lua",
+        "nonessential/cl_cheats.lua",
         -- "nonessential/cl_voice.lua",
         -- "nonessential/cl_mapcolor.lua",
         -- "nonessential/cl_netgraph.lua",
@@ -128,6 +131,7 @@ if SERVER then
 end
 
 util.AddNetworkString("MovementData")
+util.AddNetworkString("ToggleWeaponPickup")
 
 -- Cvars
 CreateConVar("bhop_version", tostring(BHOP.Version.GM), {FCVAR_ARCHIVE, FCVAR_NOTIFY, FCVAR_REPLICATED}, "Version number")
@@ -322,18 +326,32 @@ concommand.Add("_imvalid", function(ply, cmd, args)
     collectgarbage("collect")
 end)
 
+local weaponPickupState = {}
+net.Receive("ToggleWeaponPickup", function(len, ply)
+    local newState = net.ReadBool()
+    weaponPickupState[ply] = newState
+
+    NETWORK:StartNetworkMessageTimer(ply, "Print", {"Timer", "Weapon Pickup is now " .. (newState and "enabled" or "disabled") .. " for you."})
+end)
+
 function GM:PlayerCanPickupWeapon(ply, weapon)
-    if ply.WeaponStripped or ply:HasWeapon(weapon:GetClass()) or ply:IsBot() then return false end
+    if weaponPickupState[ply] == false then
+        return false
+    end
+
+    if ply.WeaponStripped or ply:HasWeapon(weapon:GetClass()) or ply:IsBot() then
+        return false
+    end
 
     local primaryAmmoType = weapon:GetPrimaryAmmoType()
     local initialAmmo = 420
 
-    hook_Add("WeaponEquip", "SetPlayerAmmoOnPickup", function(wep, player)
-        if player == ply and wep == weapon then
+    timer.Simple(0, function()
+        if IsValid(ply) and IsValid(weapon) and ply:GetActiveWeapon() == weapon then
             ply:SetAmmo(initialAmmo, primaryAmmoType)
-            hook.Remove("WeaponEquip", "SetPlayerAmmoOnPickup")
         end
     end)
+
     return true
 end
 

@@ -202,6 +202,11 @@ function Command:PerformRestart(pl, currentFOV)
         pl:UnSpectate()
     end
 
+    if pl.style == TIMER:GetStyleID("Segment") and styleID ~= TIMER:GetStyleID("Segment") then
+        Segment:Reset(pl)
+        Segment:Exit(pl)
+    end
+
     if pl:Team() ~= TEAM_SPECTATOR then
         local szWeapon = IsValid(pl:GetActiveWeapon()) and pl:GetActiveWeapon():GetClass() or "weapon_crowbar"
         pl.ReceiveWeapons = not not szWeapon
@@ -792,6 +797,22 @@ function Command:Init()
         "Enable or disable LJ stats.", 
         ""
         },
+        {
+        {"wrsounds", "wrsound"}, 
+        function(pl)
+            if not IsValid(pl) then return end
+
+            if pl:GetInfoNum("bhop_wrsfx", 0) == 0 then
+                pl:ConCommand("bhop_wrsfx 1")
+                NETWORK:StartNetworkMessageTimer(pl, "Print", { "Notification", "WR sounds ON :)" })
+            else
+                pl:ConCommand("bhop_wrsfx 0")
+                NETWORK:StartNetworkMessageTimer(pl, "Print", { "Notification", "WR sounds OFF :(" })
+            end
+        end,
+        "Toggle WR sound effects on/off",
+        ""
+        },
        {
             {"kick", "kicplayer"},
             function(pl, args)
@@ -839,7 +860,7 @@ function Command:Init()
             end,
             "Kick player",
             ""
-        }
+        },
     }
 
     for _, cmd in ipairs(commands) do
@@ -856,7 +877,6 @@ function Command:Init()
 end
 
 UI:AddListener("nominate", function(client, data)
-    print("🔥 Nominate Listener Triggered from:", client:Nick())  
     local mapName = data[1]
     if mapName then
         Command.Nominate(client, nil, {mapName})

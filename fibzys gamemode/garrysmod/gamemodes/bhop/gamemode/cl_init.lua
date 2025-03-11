@@ -14,7 +14,9 @@ local files = {
         "essential/timer/sh_timer.lua",
         "nonessential/sh_multi_hops.lua",
        -- "nonessential/vip/sh_paint.lua",
+        "nonessential/sh_ssjtop.lua",
         "nonessential/sh_jumpstats.lua",
+        "nonessential/sh_fjt.lua",
        -- "nonessential/sh_edgehelper.lua",
        -- "nonessential/sh_rampometer.lua",
         "nonessential/sh_unreal.lua",
@@ -47,7 +49,8 @@ local files = {
         "nonessential/strafe/cl_showkeys.lua",
         "nonessential/strafe/cl_showspeed.lua",
         "nonessential/strafe/cl_synchronizer.lua",
-        -- "nonessential/cl_cheats.lua",
+        "nonessential/cl_soundstopper.lua",
+        "nonessential/cl_cheats.lua",
         -- "nonessential/cl_voice.lua",
         -- "nonessential/cl_mapcolor.lua",
         -- "nonessential/cl_netgraph.lua",
@@ -96,10 +99,13 @@ CreateClientConVar("bhop_sourcesensitivity", 0, true, false, "Toggle sensitivity
 CreateClientConVar("bhop_absolutemousesens", 0, true, false, "Toggle absolute mouse sensitivity adjustment (1 = ON, 0 = OFF)")
 CreateClientConVar("bhop_showchatbox", "1", true, false, "Toggle chatbox visibility: 1 for show, 0 for hide", 0, 1)
 CreateClientConVar("bhop_nogun", "0", true, false, "Enable or disable no-gun mode (1 = enabled, 0 = disabled)")
-CreateClientConVar("bhop_nosway", "0", true, false, "Enable or disable gun sway mode (1 = enabled, 0 = disabled)")
+CreateClientConVar("bhop_nosway", "1", true, false, "Enable or disable gun sway mode (1 = enabled, 0 = disabled)")
 CreateClientConVar("bhop_showplayers", 1, true, false, "Shows bhop players", 0, 1)
 CreateClientConVar("bhop_viewtransfrom", 0, true, false, "Shows transfrom view type", 0, 1)
 CreateClientConVar("bhop_thirdperson", 0, true, false, "Shows third person view type", 0, 1)
+CreateClientConVar("bhop_viewpunch", "1", true, false, "Disable view punch effect")
+CreateClientConVar("bhop_weaponpickup", "1", true, false, "Enable or disable weapon pickup for yourself.")
+CreateClientConVar("bhop_viewinterp", "0", true, false, "Enable or disable view interpolation.")
 
 -- So we dont need to keep calling hook.add ect...
 local lp, Iv, ct, Vector, hook_Add = LocalPlayer, IsValid, CurTime, Vector, hook.Add
@@ -181,12 +187,26 @@ end)
 -- Apply settings dynamically
 local function ApplySettings()
     RunConsoleCommand("hud_saytext_time", GetConVar("bhop_showchatbox"):GetBool() and "12" or "0")
-    RunConsoleCommand("mat_picmip", GetConVar("bhop_simpletextures"):GetInt() == 1 and "999999" or "0")
+end
+cvars.AddChangeCallback("bhop_showchatbox", ApplySettings)
+
+-- Chatbox visibility
+local function UpdateChatboxVisibility()
+    local showChatbox = GetConVar("bhop_showchatbox"):GetBool()
+
+    if not showChatbox then
+        RunConsoleCommand("hud_saytext_time", "12")
+    end
+
+    UTIL:AddMessage("Settings", "Chatbox is now " .. (showChatbox and "visible!" or "hidden!"))
+
+    if not showChatbox then
+       RunConsoleCommand("hud_saytext_time", "0")
+    end
 end
 
--- Auto-apply settings on change
-cvars.AddChangeCallback("bhop_showchatbox", ApplySettings)
-cvars.AddChangeCallback("bhop_simpletextures", ApplySettings)
+cvars.AddChangeCallback("bhop_showchatbox", UpdateChatboxVisibility)
+hook.Add("PlayerInitialSpawn", "SetChatboxVisibility", UpdateChatboxVisibility)
 
 -- Interp switcher with easy toggling
 concommand.Add("bhop_interp", function()
@@ -196,17 +216,6 @@ concommand.Add("bhop_interp", function()
     RunConsoleCommand("cl_interp", newInterp)
     UTIL:AddMessage("Settings", "Switched to cl_interp " .. newInterp .. (newInterp == "0.05" and " for smoother visuals." or " for better input responsiveness."))
 end)
-
--- Chatbox visibility handling
-local function UpdateChatboxVisibility()
-    local showChatbox = GetConVarNumber("bhop_showchatbox") == 1
-    RunConsoleCommand("hud_saytext_time", showChatbox and "12" or "0")
-    UTIL:AddMessage("Settings", "Chatbox is now " .. (showChatbox and "visible!" or "hidden!"))
-end
-
--- Apply chatbox visibility on change and on spawn
-cvars.AddChangeCallback("bhop_showchatbox", UpdateChatboxVisibility)
-hook_Add("PlayerInitialSpawn", "SetChatboxVisibility", UpdateChatboxVisibility)
 
 -- Base FOV ConVar reference
 --[[local baseFOVConVar = GetConVar("bhop_set_fov")
@@ -226,21 +235,53 @@ local function MouseSensitivity(fDefault)
 end
 hook_Add("AdjustMouseSensitivity", "MouseSensitivity", MouseSensitivity)--]]
 
+local view = {}
 local cameraDistance = 7
 local thirdPersonDist = 100
+
+local view = {}
+local CalcTab = { origin = Vector(0, 0, 0), last = 1 }
+local DuckDiff = 16
 
 -- Main View change
 function GM:CalcView(ply, origin, angles, fov)
     local viewTransform = GetConVar("bhop_viewtransfrom"):GetBool()
     local thirdPerson = GetConVar("bhop_thirdperson"):GetBool()
+    local viewPunch = GetConVar("bhop_viewpunch"):GetBool()
+    local ViewInterp = GetConVar("bhop_viewinterp"):GetBool()
 
     if not ply:Alive() then
-        return origin, angles, fov
+        angles.r = 0
+        view.origin = origin
+        view.angles = angles
+        view.fov = fov
+        return view
     end
 
-    local view = {}
+    if not viewPunch then
+        angles.r = 0
+    end
+
     local offsetVector = Vector(-cameraDistance, 0, 0)
     offsetVector:Rotate(angles)
+
+    -- View Interpolation
+    if not ply:IsOnGround() and ViewInterp then
+        local frameTime = FrameTime()
+        local estimatedZ = CalcTab.origin.z + ply:GetVelocity().z * frameTime
+        local posDiff = math.abs(origin.z - estimatedZ)
+
+        if posDiff - CalcTab.last > DuckDiff and posDiff - CalcTab.last < DuckDiff * 2 then
+            origin.z = estimatedZ
+            posDiff = 0
+        end
+
+        CalcTab.last = posDiff
+    end
+
+    CalcTab.origin = origin
+    CalcTab.angles = angles
+    CalcTab.fov = fov
 
     if thirdPerson then
         local trace = util.TraceHull({
@@ -261,7 +302,9 @@ function GM:CalcView(ply, origin, angles, fov)
         view.fov = fov
         view.drawviewer = false
     else
-        return origin, angles, fov
+        view.origin = origin
+        view.angles = angles
+        view.fov = fov
     end
 
     return view
@@ -332,7 +375,7 @@ function GM:OnPlayerChat(ply, szText, bTeam, bDead)
             tab[#tab + 1] = color_white
             tab[#tab + 1] = " | "
 
-            local rankID = ply:GetNWInt("Rank")
+            local rankID = ply:GetNWInt("Rank", -1)
             local rankData = TIMER.Ranks[rankID]
             if rankData then
                 tab[#tab + 1] = rankData[2] -- Rank Color
@@ -454,33 +497,44 @@ hook_Add("HUDWeaponPickedUp", "flipweps", function(wep)
     wep.ViewModelFlip = not fp:GetBool()
 end)
 
--- Weapon Sway Toggle
-local swayvar = CreateClientConVar("bhop_weaponsway", 1, true, false, "Controls how weapon view models move.", 0, 1)
-local sway = swayvar:GetBool()
+local function SendWeaponPickupState()
+    local pickupState = not GetConVar("bhop_weaponpickup"):GetBool()
+    net.Start("ToggleWeaponPickup")
+    net.WriteBool(pickupState)
+    net.SendToServer()
+end
 
-cvars.AddChangeCallback("bhop_weaponsway", function(_, _, new)
-    sway = new == "1"
+cvars.AddChangeCallback("bhop_weaponpickup", function(_, _, new)
+    SendWeaponPickupState()
+end, "bhop_weppickup_callback")
+
+concommand.Add("bhop_toggle_weppickup", function()
+    local currentState = GetConVar("bhop_weaponpickup"):GetBool()
+    RunConsoleCommand("bhop_weaponpickup", currentState and "0" or "1")
 end)
 
 function GM:CalcViewModelView(weapon, viewmodel, op, oa, p, a)
-    if not sway then return p, a end
+    local sway = GetConVar("bhop_nosway"):GetBool()
+    local noGun = GetConVar("bhop_nogun"):GetBool()
     local viewTransform = GetConVar("bhop_viewtransfrom"):GetBool()
 
-    if not viewTransform then
-        return p, a
+    if sway then
+        return op, oa
     end
 
-    local noGun = GetConVar("bhop_nogun"):GetBool()
-    local offsetVector = Vector(-cameraDistance, 0, 0)
-    
     if noGun and IsValid(weapon) then
-        offsetVector = offsetVector - a:Forward() * 100
+        return Vector(-5000, -5000, -5000), a
     end
-    
-    offsetVector:Rotate(a)
 
-    local newPos = p + offsetVector
-    local newAng = a
+    local newPos, newAng = p, a
+
+    if viewTransform then
+        local offsetVector = Vector(-cameraDistance, 0, 0)
+        offsetVector:Rotate(a)
+        newPos = newPos + offsetVector
+    end
+
+    newAng.r = 0
 
     return newPos, newAng
 end
@@ -566,6 +620,17 @@ hook.Add("HUDPaintBackground", "DrawStats", function()
             draw.SimpleText(string.format("%2d           %3d        %d%%", k, speed[k], v), "HUDFont", x + 10, rowY, textColor, 0, 0)
         end
     end
+end)
+
+-- Client WR sounds
+local sounds_enabled = CreateClientConVar("bhop_wrsfx", "1", true, true, "WR sounds enabled state", 0, 1)
+local sounds_volume = CreateClientConVar("bhop_wrsfx_volume", "0.4", true, false, "WR sounds volume", 0, 1)
+
+net.Receive("WRSounds", function(len)
+    if not sounds_enabled:GetBool() then return end
+    local soundPath = "wrsfx/" .. net.ReadString()
+
+    lp():EmitSound(soundPath, 75, 100, sounds_volume:GetFloat())
 end)
 
 --[[ -- Replay Trail
