@@ -90,6 +90,11 @@ local function PredictVelocity(pl, mv)
     local moveAngles = mv:GetMoveAngles()
     local forwardSpeed, sideSpeed = mv:GetForwardSpeed(), mv:GetSideSpeed()
 
+    local style = TIMER:GetStyle(pl)
+    if style == TIMER:GetStyleID("W") then
+        sideSpeed = 0
+    end
+
     local dir = (moveAngles:Forward() * forwardSpeed) + (moveAngles:Right() * sideSpeed)
     dir[3] = 0
 

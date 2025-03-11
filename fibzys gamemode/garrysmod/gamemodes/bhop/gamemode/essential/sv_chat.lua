@@ -33,6 +33,16 @@ Lang = {
     SetSpawn = {"You have set a ", UTIL.Colour["Timer"], "spawn point", UTIL.Colour["White"], "."},
     styleFreestyle = {"You have ", UTIL.Colour["Timer"], "1;", UTIL.Colour["White"], " Freestyle Zone.", UTIL.Colour["Timer"], "2;"},
 
+    -- SSJTOP
+    ssjTop = {
+        UTIL.Colour["Green"], "1;",
+        UTIL.Colour["White"], " got a ",
+        UTIL.Colour["Red"], "2;",
+        UTIL.Colour["White"], " SSJ (", UTIL.Colour["Timer"], "3;", UTIL.Colour["White"], ") on the ",
+        UTIL.Colour["Red"], "4;",
+        UTIL.Colour["White"], " jump!"
+    },
+
     -- Replay
     BotEnter = {UTIL.Colour["Timer"], "1;", UTIL.Colour["White"], " styles Replay has been spawned."},
     BotSlow = {"Your time was not good enough to be displayed by the WR Replay ", UTIL.Colour["Timer"], "(+1;)", UTIL.Colour["White"], "."},

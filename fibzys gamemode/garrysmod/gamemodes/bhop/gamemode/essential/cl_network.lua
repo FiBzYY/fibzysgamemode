@@ -192,12 +192,15 @@ NETWORK:GetNetworkMessage("TimerNetworkProtocol", function(actionType, data, ply
 
     if actionType == "Spectate" then
         local spectateType = tostring(data[1])
-        if spectateType == "Clear" then CS_Clear() end
-        if spectateType == "Mode" then CS_Mode(tonumber(data[2])) end
-        if spectateType == "Viewer" then CS_Viewer(data[2], data[3], data[4]) end
-        if spectateType == "Timer" then
-            if data[2] then CS_Bot(data[3], data[4], data[5], data[6], data[7])
-            else CS_Player(data[3], data[4], data[5], data[6]) end
+
+        if spectateType == "Clear" then 
+            CS_Clear() 
+        elseif spectateType == "Mode" then 
+            CS_Mode(tonumber(data[2])) 
+        elseif spectateType == "Viewer" then 
+            CS_Viewer(data[2], data[3], data[4]) 
+        elseif spectateType == "Timer" then 
+            CS_Bot(data[3], data[4], data[5], data[6], data[7])
         end
     end
 

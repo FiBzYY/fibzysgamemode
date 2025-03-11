@@ -22,6 +22,13 @@ Timer = {
     CheckpointStartTick = 0
 }
 
+util.AddNetworkString("WRSounds")
+timer_sounds = {}
+
+require "reqwest"
+local reqwest = reqwest
+local WEBHOOK = file.Read("bhop-wr-webhook.txt", "DATA")
+
 -- Config
 function Timer:RefreshMultipliers()
     self.Multiplier = GetConVar("timer_multiplier"):GetFloat()
@@ -322,6 +329,11 @@ function TIMER:ResetTimer(ply)
         end
     end
 
+    if self:GetStyle(ply) == self:GetStyleID("Segment") and self.waypoints then 
+        NETWORK:StartNetworkMessageTimer(ply, "Print", {"Timer", "Your segmented waypoints have been reset."})
+        Segment:Reset(ply)
+    end
+
     -- Jumps
     PlayerJumps[ply] = 0
     NETWORK:StartNetworkMessage(observers, "jump_update", {ply, 0})
@@ -356,6 +368,10 @@ function TIMER:StopTimer(ply)
     -- Send Stop Timer | InStartZone | ScoreBoard
     NETWORK:StartNetworkMessage(ply, "TIMER/Finish", tickTimeDiff)
     NETWORK:StartNetworkMessageTimer(player.GetAll(), "Scoreboard", {"normal", ply, ply.finished})
+
+	if self:GetStyle(ply) == self:GetStyleID("Segment") then 
+		Segment:Reset(ply)
+	end
 
     self:Finish(ply, tickTimeDiff)
 
@@ -401,6 +417,7 @@ function TIMER:BonusStart(ply)
     ply.iFractionalTicksBonus = 0
     ply.iFullTicksBonus = 0
     ply.InStartZone = false
+    ply.freezeStrafes = false
 
     NETWORK:StartNetworkMessage(ply, "UpdateSingleVar", ply, "InStartZone", ply.InStartZone)
     self:SetJumps(ply, 0)
@@ -442,7 +459,8 @@ function TIMER:BonusStop(ply)
 
     SendTimerUpdate(ply, ply.bonustime, ply.bonusfinished, ply.iFractionalTicksBonus)
     SendFinalTimerUpdate(ply, ply.iFractionalTicksBonus)
-    self:ResetStrafeCount(ply)
+
+    ply.freezeStrafes = true
 
     NETWORK:StartNetworkMessageTimer(player.GetAll(), "Scoreboard", {"bonus", ply, ply.bonusfinished})
 end
@@ -652,6 +670,92 @@ function TIMER:AddRecord(ply, time, old)
     end)
 end
 
+function TIMER:PostDiscordWR(ply, time, styleID)
+    if not WEBHOOK or WEBHOOK == "" then return end
+    if not reqwest then return end
+    if not (styleID == TIMER:GetStyleID("Normal") or styleID == TIMER:GetStyleID("Bonus")) then return end
+
+    local playerName = ply:Nick()
+    local playerSteam64 = ply:SteamID64()
+    local formattedTime = TIMER:WRConvert2(time)
+    local sync = (ply.LastSync or 0) .. "%"  
+    local jumps = TIMER:GetJumps(ply) or 0  
+    local strafes = ply.TotalStrafes or 0  
+    local topSpeed = math.floor((ply.LastSpeedData and ply.LastSpeedData[1]) or 0)  
+    local avgSpeed = math.floor((ply.LastSpeedData and ply.LastSpeedData[2]) or 0)  
+
+    local runID = "440493"  
+    local points = Timer.Multiplier  
+    local serverIP = game.GetIPAddress()  
+    local mapName = game.GetMap()  
+    local serverName = GetHostName()  
+    local timestamp = os.date("!%Y-%m-%d %H:%M:%S")  
+    local joinLink = "https://steamcommunity.com/linkfilter/?url=steam://connect/" .. serverIP
+
+    local fields = {
+        {
+            name = "**Player**",
+            value = string.format("[**%s**](https://steamcommunity.com/profiles/%s)", playerName, playerSteam64),
+            inline = true
+        },
+        {
+            name = "**Time**",
+            value = string.format("`%s` (±XX:XXX)", formattedTime),
+            inline = true
+        },
+        {
+            name = "**Additional**",
+            value = string.format(
+                "⚡ **Sync:** %s\n💨 **Strafes:** %d\n🦘 **Jumps:** %d\n🚀 **Top Speed:** %d u/s\n📈 **Avg Speed:** %d u/s\n📌 **Run ID:** [%s](https://example.com/run/%s)\n📅 **Date:** %s\n🏆 **Points:** %d",
+                sync, strafes, jumps, topSpeed, avgSpeed, runID, runID, timestamp, points
+            ),
+            inline = false
+        },
+        {
+            name = "**Server**",
+            value = string.format("`[%s] | BunnyHop | 100-tick`", serverName),
+            inline = false
+        }
+    }
+
+    local compiled = {
+        username = "Server Record",  
+        embeds = {{
+            title = string.format("🏆 **Server Record | %s**", mapName),
+            color = 16755200,  
+            fields = fields,
+            timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ"),
+            footer = { text = "Top time on server" }
+        }},
+        components = {{
+            type = 1,
+            components = {{
+                type = 2,
+                label = "🔗 Join Server",
+                style = 5,
+                url = joinLink
+            }}
+        }}
+    }
+
+    reqwest({
+        method = "POST",
+        url = WEBHOOK,
+        body = util.TableToJSON(compiled, false),
+        headers = {
+            ["Content-Type"] = "application/json",
+            ["User-Agent"] = "GMod-Timer/1.0",
+        },
+        timeout = 5,
+        success = function(status, body, headers)
+            print("[TIMER] Discord WR Webhook sent successfully! Status: " .. status)
+        end,
+        failed = function(err, errExt)
+            print("[TIMER] Discord WR Webhook failed! Error: " .. tostring(err))
+        end
+    })
+end
+
 -- When the player finished the time
 function TIMER:HandleRecordCompletion(ply, time, old, styleData)
     self:RecalculatePoints(ply.style)
@@ -659,19 +763,27 @@ function TIMER:HandleRecordCompletion(ply, time, old, styleData)
     self:AddScore(ply)
 
     local id = 1
-    MySQL:Start("SELECT t1.*, (SELECT COUNT(*) + 1 FROM timer_times AS t2 WHERE t2.time < t1.time AND map = '" .. game.GetMap() .. "' AND style = " .. ply.style .. ") AS nRank FROM timer_times t1 WHERE t1.uid = '" .. ply:SteamID() .. "' AND t1.map = '" .. game.GetMap() .. "' AND t1.style = " .. ply.style, function(Rank)
-        if Rank and Rank[1] and Rank[1].nRank then
-            id = tonumber(Rank[1].nRank)
+    local query = "SELECT t1.*, (SELECT COUNT(*) + 1 FROM timer_times AS t2 WHERE t2.time < t1.time AND map = '" .. 
+    game.GetMap() .. "' AND style = " .. ply.style .. ") AS nRank FROM timer_times t1 WHERE t1.uid = '" .. 
+    ply:SteamID() .. "' AND t1.map = '" .. game.GetMap() .. "' AND t1.style = " .. ply.style
+
+    MySQL:Start(query, function(Rank)
+        if not Rank or not Rank[1] then
+            return
         end
 
+        id = tonumber(Rank[1].nRank) or 1
+
         styleData:AddRecord({ply:SteamID(), Rank[1]["player"], time, self:Null(Rank[1]["date"]), nil})
-        
+
         TIMER:SetRecord(ply, time, ply.style)
         NETWORK:StartNetworkMessage(ply, "TIMER/Record", ply, time, ply.style)
 
         if id == 1 then
             self:RecalculateInitial(ply.style)
         end
+
+        self:PostDiscordWR(ply, time, ply.style)
 
         if id <= 10 then
             self:UpdateWRs(player.GetHumans())
@@ -687,6 +799,31 @@ function TIMER:HandleRecordCompletion(ply, time, old, styleData)
     end)
 end
 
+function TIMER:LoadSounds()
+    timer_sounds = file.Find("sound/wrsfx/*", "GAME")
+
+    for i, snd in ipairs(timer_sounds) do
+        resource.AddFile("sound/wrsfx/" .. snd)
+        util.PrecacheSound("wrsfx/" .. snd)
+    end
+end
+
+function TIMER:GetNextSound()
+    if #timer_sounds == 0 then return "" end
+    return timer_sounds[math.random(#timer_sounds)]
+end
+
+function TIMER:Broadcast()
+    local soundPath = TIMER:GetNextSound()
+    if soundPath == "" then return end
+
+    net.Start("WRSounds")
+    net.WriteString(soundPath)
+    net.Broadcast()
+end
+
+TIMER:LoadSounds()
+
 function TIMER:RecalculateInitial(id)
     if not self.Styles or not self.Styles[id] or not self.Styles[id].Data then
         return
@@ -701,7 +838,11 @@ function TIMER:RecalculateInitial(id)
 
     local initialRecord = tonumber(styleData.Records[1][3]) or 0
     styleData:SetInitialRecord(initialRecord)
+
     BHDATA:Broadcast("Timer", { "Initial", styleData:GetInitialRecord() })
+
+    -- Play WR Sounds
+    TIMER:Broadcast()
 end
 
 function TIMER:SendInitialRecords(ply)
@@ -837,6 +978,8 @@ function TIMER:AddSpeedData(ply, tab)
             ply.LastSync or 0,
             ply.TotalStrafes or 0
         }, " ")
+
+        ply.LastSpeedData = { math.floor(tab[1] or 0), math.floor(tab[2] or 0) }
 
         if szData == "" then
             return

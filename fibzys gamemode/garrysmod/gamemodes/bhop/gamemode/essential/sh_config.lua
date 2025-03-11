@@ -93,7 +93,7 @@ if not CONFIG_LOADED then
     }
 
     -- Enable whitelist
-    BHOP.IsWhitelistOn = false
+    BHOP.IsWhitelistOn = true
 
     -- Auto whitelist these IDs
     BHOP.Whitelist = {
