@@ -387,21 +387,19 @@ function TIMER:LoadBest(ply)
 end
 
 Player.Points = {}
+
 function TIMER:CachePointSum(style, id, callback)
     MySQL:Start("SELECT SUM(points) AS nSum FROM timer_times WHERE uid = '" .. id .. "' AND (" .. self:GetMatchingstyles(style) .. ")", function(data)
         if data and data[1] and data[1].nSum then
+            local pointSum = tonumber(data[1].nSum) or 0
             Player.Points[id] = Player.Points[id] or {}
-            Player.Points[id][style] = tonumber(data[1].nSum) or 0
+            Player.Points[id][style] = pointSum
 
             if callback then
-                callback(Player.Points[id][style])
+                callback(pointSum)
             end
         else
-            if not data or not data[1] then
-                print("[DEBUG] New player, no points found for UID:", id)
-            else
-                UTIL:Notify(Color(255, 0, 0), "Database Error", "Failed to fetch points for UID:", id)
-            end
+            UTIL:Notify(Color(255, 0, 0), "Database Error", "No users to fetch points for:", id)
         end
     end)
 end

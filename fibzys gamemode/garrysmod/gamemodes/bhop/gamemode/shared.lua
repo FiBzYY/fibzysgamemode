@@ -84,5 +84,6 @@ end
 
 -- Showhidden load up
 
---ShowHidden = ShowHidden or {}
---ShowHidden.Refresh = (ShowHidden.Refresh ~= nil)
+ShowHidden = ShowHidden or {}
+ShowHidden.Refresh = (ShowHidden.Refresh ~= nil)
+ShowHidden.luabsp = include("nonessential/showhidden/luabsp.lua")

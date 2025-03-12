@@ -64,10 +64,10 @@ local files = {
         "nonessential/fpsfixes/cl_buffthefps.lua"
     },
     showHidden = {
-        -- "nonessential/showhidden/sh_init.lua",
-        -- "nonessential/showhidden/luabsp.lua",
-        -- "nonessential/showhidden/cl_init.lua",
-        -- "nonessential/showhidden/cl_lang.lua"
+         "nonessential/showhidden/sh_init.lua",
+         "nonessential/showhidden/luabsp.lua",
+         "nonessential/showhidden/cl_init.lua",
+         "nonessential/showhidden/cl_lang.lua"
     },
     misc = {
         -- "nonessential/misc/cl_centerbox.lua",
@@ -82,16 +82,16 @@ includeFiles(files.movementFixes)
 includeFiles(files.ui)
 includeFiles(files.clientModules)
 includeFiles(files.fpsFixes)
--- includeFiles(files.showHidden)
+includeFiles(files.showHidden)
 -- includeFiles(files.misc)
-
--- ShowHidden.luabsp = include("nonessential/showhidden/luabsp.lua")
 
 --- end of include
 local setting_anticheats = CreateClientConVar("bhop_anticheats", "0", true, false)
 local setting_gunsounds = CreateClientConVar("bhop_gunsounds", "1", true, false, "Toggle Gun Sounds", 0, 1)
 local setting_hints = CreateClientConVar("bhop_hints", "180", true, false)
 local customFOV = CreateClientConVar("bhop_set_fov", "90", true, true, "Set custom FOV", 1, 180)
+local sounds_enabled = CreateClientConVar("bhop_wrsfx", "1", true, true, "WR sounds enabled state", 0, 1)
+local sounds_volume = CreateClientConVar("bhop_wrsfx_volume", "0.4", true, false, "WR sounds volume", 0, 1)
 
 -- Cvars
 CreateClientConVar("bhop_simpletextures", 0, true, false, "Toggle simple solid textures", 0, 1)
@@ -192,16 +192,17 @@ cvars.AddChangeCallback("bhop_showchatbox", ApplySettings)
 
 -- Chatbox visibility
 local function UpdateChatboxVisibility()
-    local showChatbox = GetConVar("bhop_showchatbox"):GetBool()
+    local showChatbox = not GetConVar("bhop_showchatbox"):GetBool()
 
     if not showChatbox then
         RunConsoleCommand("hud_saytext_time", "12")
-    end
 
-    UTIL:AddMessage("Settings", "Chatbox is now " .. (showChatbox and "visible!" or "hidden!"))
-
-    if not showChatbox then
-       RunConsoleCommand("hud_saytext_time", "0")
+        timer.Simple(0.1, function()
+            UTIL:AddMessage("Settings", "Chatbox is now visible!")
+        end)
+    else
+        RunConsoleCommand("hud_saytext_time", "0")
+        UTIL:AddMessage("Settings", "Chatbox is now hidden!")
     end
 end
 
@@ -305,6 +306,7 @@ function GM:CalcView(ply, origin, angles, fov)
         view.origin = origin
         view.angles = angles
         view.fov = fov
+        view.drawviewer = false
     end
 
     return view
@@ -470,6 +472,15 @@ concommand.Add("_toggleanticheats", function()
     acs:SetInt(acs:GetInt() == 1 and 0 or 1)
 end)
 
+function GM:EntityEmitSound(data)
+    if GetConVar("bhop_gunsounds"):GetInt() == 0 then
+        if string.find(data.OriginalSoundName, "footstep") or string.find(data.OriginalSoundName, "player/footstep") then
+            return
+        end
+        return false
+    end
+end
+
 -- Toggle Gun Sounds
 concommand.Add("_togglegunsounds", function()
     local gunshots = GetConVar("bhop_gunsounds")
@@ -498,7 +509,7 @@ hook_Add("HUDWeaponPickedUp", "flipweps", function(wep)
 end)
 
 local function SendWeaponPickupState()
-    local pickupState = not GetConVar("bhop_weaponpickup"):GetBool()
+    local pickupState = GetConVar("bhop_weaponpickup"):GetBool()
     net.Start("ToggleWeaponPickup")
     net.WriteBool(pickupState)
     net.SendToServer()
@@ -518,7 +529,7 @@ function GM:CalcViewModelView(weapon, viewmodel, op, oa, p, a)
     local noGun = GetConVar("bhop_nogun"):GetBool()
     local viewTransform = GetConVar("bhop_viewtransfrom"):GetBool()
 
-    if sway then
+    if not sway then
         return op, oa
     end
 
@@ -623,11 +634,8 @@ hook.Add("HUDPaintBackground", "DrawStats", function()
 end)
 
 -- Client WR sounds
-local sounds_enabled = CreateClientConVar("bhop_wrsfx", "1", true, true, "WR sounds enabled state", 0, 1)
-local sounds_volume = CreateClientConVar("bhop_wrsfx_volume", "0.4", true, false, "WR sounds volume", 0, 1)
-
 net.Receive("WRSounds", function(len)
-    if not sounds_enabled:GetBool() then return end
+    if sounds_enabled:GetBool() then return end
     local soundPath = "wrsfx/" .. net.ReadString()
 
     lp():EmitSound(soundPath, 75, 100, sounds_volume:GetFloat())

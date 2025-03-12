@@ -359,7 +359,7 @@ local styleIDs = {
     [11] = TIMER:GetStyleID("WTF"),         [12] = TIMER:GetStyleID("LG"),
     [13] = TIMER:GetStyleID("Backwards"),   [14] = TIMER:GetStyleID("Stamina"),
     [15] = TIMER:GetStyleID("Segment"),     [16] = TIMER:GetStyleID("Practice"),
-    [17] = TIMER:GetStyleID("AS"),          [18] = TIMER:GetStyleID("TAS"),
+    [17] = TIMER:GetStyleID("AS"),          [18] = TIMER:GetStyleID("LG"),
 }
 
 UI:AddListener("style", function(client, data)
@@ -515,8 +515,31 @@ function Command:Init()
         {
             {"showtriggers", "st", "maptriggers"},
             function(pl, _, varArgs)
-                pl:ConCommand("showtriggers_toggle")
-                SendPopupNotification(pl, "Notification", "Now showing triggers...", 2)
+                local currentValue = pl:GetInfoNum("showtriggers_enabled", 0)
+
+                if currentValue == 0 then
+                    pl:ConCommand("showtriggers_enabled 1")
+                    TIMER:Print(pl, "ShowTriggers Enabled. You can now see triggers.")
+                else
+                    pl:ConCommand("showtriggers_enabled 0")
+                    TIMER:Print(pl, "ShowTriggers Disabled. Triggers are now hidden.")
+                end
+            end,
+            "Toggle triggers",
+            ""
+        },
+        {
+            {"showclips", "clips", "mapclips"},
+            function(pl, _, varArgs)
+                local currentValue = pl:GetInfoNum("showclips", 0)
+
+                if currentValue == 0 then
+                    pl:ConCommand("showclips 1")
+                    TIMER:Print(pl, "ShowClips Enabled. You can now see clips.")
+                else
+                    pl:ConCommand("showclips 0")
+                    TIMER:Print(pl, "ShowClips Disabled. clips are now hidden.")
+                end
             end,
             "Toggle triggers",
             ""
@@ -686,9 +709,12 @@ function Command:Init()
         },
         {
             {"nominate", "rtvmap", "playmap", "addmap", "maps"},
-            function(ply, args)
-                Command.Nominate( ply, nil, args )
-                UI:SendToClient(ply, "nominate", {RTV.MapListVersion})
+           function(ply, args)
+                if args[1] then
+                    Command.Nominate(ply, nil, args)
+                else
+                    UI:SendToClient(ply, "nominate", {RTV.MapListVersion})
+                end
             end,
             "Nominate a map for the next round",
             "[mapname]"
@@ -700,7 +726,9 @@ function Command:Init()
                 if #args > 0 then
                     Player:SendRemoteWRList(ply, args[1], nStyle, nPage)
                 else
-                    UI:SendToClient(ply, "wr", TIMER:GetRecordList(nStyle, nPage), nStyle, nPage, TIMER:GetRecordCount(nStyle))
+                    TIMER:GetRecordList(nStyle, nPage, function(wrList)
+                        UI:SendToClient(ply, "wr", wrList, nStyle, nPage, TIMER:GetRecordCount(nStyle))
+                    end)
                 end
             end,
             "Displays world records or record list",
@@ -948,8 +976,7 @@ function GM:ShowHelp(pl)
 end
 
 function GM:ShowTeam(pl)
-    net.Start("OpenWorldRecords")
-    net.Send(pl)
+    NETWORK:StartNetworkMessage(pl, "OpenSpectateDialog", {})
 end
 
 Command:Init()

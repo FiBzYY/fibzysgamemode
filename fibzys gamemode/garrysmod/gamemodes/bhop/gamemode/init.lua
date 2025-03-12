@@ -64,8 +64,8 @@ local files = {
         -- "nonessential/cl_netgraph.lua",
         "nonessential/fpsfixes/cl_fpsfixes.lua",
         "nonessential/fpsfixes/cl_buffthefps.lua",
-        -- "nonessential/showhidden/cl_init.lua",
-        -- "nonessential/showhidden/cl_lang.lua",
+        "nonessential/showhidden/cl_init.lua",
+        "nonessential/showhidden/cl_lang.lua",
         -- "nonessential/bash/cl_bash.lua",
         -- "nonessential/bash/cl_menu.lua"
     },
@@ -73,8 +73,8 @@ local files = {
         "nonessential/fpsfixes/sh_fpsfixes.lua",
     },
     showHiddenShared = {
-        -- "nonessential/showhidden/sh_init.lua",
-        -- "nonessential/showhidden/luabsp.lua"
+        "nonessential/showhidden/sh_init.lua",
+        "nonessential/showhidden/luabsp.lua"
     },
     serverOnly = {
         "essential/sv_chat.lua",
@@ -93,8 +93,8 @@ local files = {
         "nonessential/sv_checkpoint.lua",
         "nonessential/sv_segment.lua",
         "nonessential/sv_setspawn.lua",
-        -- "nonessential/showhidden/sv_init.lua",
-        -- "nonessential/showhidden/sh_init.lua",
+        "nonessential/showhidden/sv_init.lua",
+        "nonessential/showhidden/sh_init.lua",
         "nonessential/movementfixes/sh_tpfix.lua"
         -- "nonessential/bash/sv_bash.lua",
         -- "nonessential/bash/sv_config.lua"
@@ -110,7 +110,7 @@ local files = {
 includeFiles(files.shared)
 includeFiles(files.movementFixes)
 includeFiles(files.fpsFixesShared)
--- includeFiles(files.showHiddenShared)
+includeFiles(files.showHiddenShared)
 
 if SERVER then
     for _, file in ipairs(files.clientModules) do
@@ -184,7 +184,7 @@ end
 timer.Create(timerName, interval, 0, ReloadMap)
 
 hook_Add("Initialize", "PrintBhopVersion", function()
-    UTIL:Notify(Color(255, 0, 255), "Gamemode", "Bhop Gamemode Version: " .. string.format("%.2f", GetConVar("bhop_version"):GetFloat()))
+    UTIL:Notify(Color(255, 0, 255), "Gamemode", "Bhop Gamemode Version: " .. BHOP.Version.GM)
 end)
 
 -- Banned users list
