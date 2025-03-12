@@ -509,7 +509,9 @@ local function SSJ_PrintStats(ply, lastSpeed, jumpTimeDiff)
             local ID = "ssjTop"
             local Data = { ply:Nick(), tostring(jumpSpeed), ssjType, "6th" }
 
-            NETWORK:StartNetworkMessageTimer(nil, "Print", { ID, Lang:Get(ID, Data) })
+            if SERVER then
+                NETWORK:StartNetworkMessageTimer(nil, "Print", { ID, Lang:Get(ID, Data) })
+            end
 
             UpdateSSJTop(ply, jumpSpeed)
         end

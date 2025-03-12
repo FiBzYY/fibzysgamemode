@@ -619,11 +619,21 @@ function Admin:HandleRequest( ply, args )
 					local query = "DELETE FROM timer_zones WHERE map = " .. mapName ..
 					" AND type = " .. delType ..
 					" AND pos1 = " .. pos1 ..
-					" AND pos2 = " .. pos2
+					" AND pos2 = " .. pos2 .. " LIMIT 1"
 
 					MySQL:Start(query, function(result)
 						if result then
 							UTIL:Notify(Color(0, 255, 0), "Database", "Zone removed successfully.")
+                    
+							for k, v in pairs(Zones.Cache) do
+								if v.Type == delType and v.P1 == zone.min and v.P2 == zone.max then
+									Zones.Cache[k] = nil
+								end
+							end
+
+							Zones:ClearEntities()
+							Zones:Reload()
+
 						else
 							UTIL:Notify(Color(255, 0, 0), "Database", "Failed to remove zone.")
 						end
@@ -635,14 +645,12 @@ function Admin:HandleRequest( ply, args )
 				end
 			end
 
-		if not bFind then
-			BHDATA:Send( ply, "Print", { "Admin", "Couldn't find selected entity. Please try again." } )
-		else
-			Zones:Reload()
-			BHDATA:Send( ply, "Print", { "Admin", Lang:Get( "AdminOperationComplete" ) } )
-			
-			Admin:AddLog( "Admin removed zone of type " .. Zones:GetName( nType ), ply:SteamID(), ply:Name() )
-		end
+			if not bFind then
+				BHDATA:Send(ply, "Print", {"Admin", "Couldn't find selected entity. Please try again."})
+			else
+				BHDATA:Send(ply, "Print", {"Admin", Lang:Get("AdminOperationComplete")})
+				Admin:AddLog("Admin removed zone of type " .. Zones:GetName(nType), ply:SteamID(), ply:Name())
+			end
 		elseif ID == 11 then
 			local nValue = tonumber(Value)
 			if not nValue then
@@ -716,12 +724,12 @@ function Admin:HandleRequest( ply, args )
 		local nStyle, nRank, szUID = tonumber(d[1]), tonumber(d[2]), MySQL:Escape(tostring(d[3]))
 		local mapName = MySQL:Escape(game.GetMap())
 
-		MySQL:Start("DELETE FROM timer_times WHERE map = " .. mapName .. " AND style = " .. nStyle .. " AND uid = '" .. szUID .. "'", function()
+		MySQL:Start("DELETE FROM timer_times WHERE map = " .. mapName .. " AND style = " .. nStyle .. " AND uid = " .. szUID .. "", function()
 			TIMER:LoadRecords()
 
 			local i = Replay:GetInfo(nStyle)
 			if i and i.Style and i.SteamID and i.Style == nStyle and i.SteamID == szUID then
-				MySQL:Start("DELETE FROM timer_replays WHERE map = " .. mapName .. " AND style = " .. nStyle .. " AND uid = '" .. szUID .. "'", function()
+				MySQL:Start("DELETE FROM timer_replays WHERE map = " .. mapName .. " AND style = " .. nStyle .. " AND uid = " .. szUID .. "", function()
 					if Replay:Exists(i.Style) then
 						for _, b in pairs(player.GetBots()) do
 							if b.Style == i.Style then

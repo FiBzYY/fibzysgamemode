@@ -238,13 +238,7 @@ function GM:SetupMove(client, data, cmd)
     elseif style == TIMER:GetStyleID("SW") then
         forwardInput = (forwardPressed and 0.05 or 0) - (backPressed and 0.05 or 0)
     elseif style == TIMER:GetStyleID("HSW") then
-        if forwardPressed and (leftPressed or rightPressed) then
-            forwardInput = 2
-            sideInput = (rightPressed and 2 or 0) - (leftPressed and 2 or 0)
-        else
-            forwardInput = 0
-            sideInput = 0
-        end
+        forwardInput = forwardPressed and 0.3 or 0
     elseif style == TIMER:GetStyleID("A") then
         forwardInput = 0
         sideInput = leftPressed and -3 or 0
@@ -257,6 +251,28 @@ function GM:SetupMove(client, data, cmd)
             if moveX ~= 0 then
                 local strafeDirection = moveX > 0 and 1 or -1
                 sideInput = strafeDirection * 3
+            end
+
+            if CLIENT then
+                local moveX = cmd:GetMouseX()
+                local strafeDirection = 0
+
+                if moveX ~= 0 then
+                    strafeDirection = moveX > 0 and 1 or -1
+                end
+
+                if strafeDirection == 0 then
+                    RunConsoleCommand("-moveleft")
+                    RunConsoleCommand("-moveright")
+                end
+
+                if strafeDirection == -1 then
+                    RunConsoleCommand("+moveleft")
+                    --cmd:SetSideMove(-450)
+                elseif strafeDirection == 1 then
+                    RunConsoleCommand("+moveright")
+                    --cmd:SetSideMove(450)
+                end
             end
         end
     elseif style == TIMER:GetStyleID("Normal") or style == TIMER:GetStyleID("Unreal") or
@@ -465,6 +481,32 @@ function GM:Move(ply, mv)
         ply.JumpedThisFrame = false
     end
 end
+
+-- Auto Strafer for CreateMove
+--[[function GM:CreateMove(cmd)
+    local ply = LocalPlayer()
+    if not IsValid(ply) or not ply:Alive() then return end
+
+    local moveX = cmd:GetMouseX()
+    local strafeDirection = 0
+
+    if moveX ~= 0 then
+        strafeDirection = moveX > 0 and 1 or -1
+    end
+
+    if strafeDirection == 0 then
+        RunConsoleCommand("-moveleft")
+        RunConsoleCommand("-moveright")
+    end
+
+    if strafeDirection == -1 then
+        RunConsoleCommand("+moveleft")
+        cmd:SetSideMove(-450)
+    elseif strafeDirection == 1 then
+        RunConsoleCommand("+moveright")
+        cmd:SetSideMove(450)
+    end
+end--]]
 
 -- No recoil
 function GM:PreRegisterSWEP(swep, class)

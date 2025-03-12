@@ -407,6 +407,11 @@ end
 
 -- Syncing for spectator
 function TIMER:Sync(server)
+    if type(server) ~= "number" then
+        print("Sync Error: Expected number, got " .. type(server))
+        return
+    end
+
     difference = CurTime() - server
 end
 

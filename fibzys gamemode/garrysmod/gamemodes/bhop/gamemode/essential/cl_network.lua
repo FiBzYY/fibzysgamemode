@@ -50,9 +50,12 @@ local function CS_Viewer(bLeave, szName, szUID)
 end
 
 function CS_Bot(timer, name, record, server, var)
-    if server then
+    if server and type(server) == "number" then
         TIMER:Sync(server)
+    else
+        print("[CS_Bot] server is not a number! Got:", type(server))
     end
+
     if var and type(var) == "table" and #var > 0 then
         CS_Remote(var)
     else

@@ -15,7 +15,8 @@ colors = {
     textTopActive = DynamicColors.PanelColor,
     box = Color(75, 75, 75),
     boxActive = Color(70, 90, 100),
-    infoText = Color(120, 120, 120)
+    infoText = Color(120, 120, 120),
+    hightlight = Color(0, 255, 255)
 }
 
 function UI:CreateCustomDropdown(parent, y, themeID, labelText, themeOptions)
@@ -33,7 +34,9 @@ function UI:CreateCustomDropdown(parent, y, themeID, labelText, themeOptions)
     dropdownButton:SetSize(200, 25)
     dropdownButton:SetText("")
     
-    local selectedText = "Select a option"
+    local selectedTheme = Settings:GetValue('selected.hud', "hud.css")
+    local selectedText = themeOptions[selectedTheme] or "Select an option"
+
     local dropdownOpen = false
 
     dropdownButton.Paint = function(self, w, h)
@@ -117,7 +120,9 @@ function UI:CreateCustomDropdownPreset(parent, y, themeID, labelText, themeOptio
     dropdownButton:SetSize(200, 25)
     dropdownButton:SetText("")
     
-    local selectedText = "Select a option"
+    local selectedTheme = Settings:GetValue('selected.nui', "nui.css")
+    local selectedText = themeOptions[selectedTheme] or "Select an option"
+
     local dropdownOpen = false
 
     dropdownButton.Paint = function(self, w, h)

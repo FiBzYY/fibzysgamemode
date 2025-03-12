@@ -174,7 +174,7 @@ function TIMER:LoadZones(callback)
             return
         end
 
-        UTIL:Notify(Color(0, 255, 0), "Database", "✅ Found " .. #zones .. " zones for map: " .. map)
+        UTIL:Notify(Color(255, 0, 0), "Database", "Found " .. #zones .. " zones for map: " .. map)
         for _, data in pairs(zones) do
             local zoneType = tonumber(data["type"])
             local pos1Str = data["pos1"]
@@ -194,7 +194,7 @@ function TIMER:LoadZones(callback)
             end
         end
 
-        UTIL:Notify(Color(0, 255, 0), "Database", "Zones have been successfully loaded into cache.")
+        UTIL:Notify(Color(255, 0, 0), "Database", "Zones have been successfully loaded into cache.")
 
         if callback then callback(true) end
     end)
@@ -502,6 +502,7 @@ end
 
 function SQL:Prepare(query, args, noQuote)
     if not SQLObject or not SQL.Available then
+        UTIL:Notify(Color(255, 0, 0), "Database", "[ERROR] Database not connected! Cannot execute query: " .. query)
         return { Execute = function() end }
     end
 

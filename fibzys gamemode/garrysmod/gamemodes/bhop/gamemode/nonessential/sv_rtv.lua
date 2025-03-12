@@ -137,9 +137,7 @@ function RTV:EndVote()
     end
 
     if nMax == 0 then
-        RTV:ResetVote(nil, 1, true, nil, true)
-        RTV.VotePossible = false
-        return
+        nWin = 6
     end
 
     if nWin <= 0 then

@@ -541,7 +541,7 @@ local function CreateScoreboard(shouldHide)
             if styles == "Auto-Strafe" then styles = "AS" end   
 
             DrawText(styles, "ui.mainmenu.button", x + (w * 0.6), ph / 2, TEXT, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-            DrawText(con(ply:GetNWFloat("Record", 0)), "ui.mainmenu.button", x + (w * 0.75), ph / 2, TEXT, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+            DrawText(ConvertTimeWR(ply:GetNWFloat("Record", 0)), "ui.mainmenu.button", x + (w * 0.75), ph / 2, TEXT, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
             DrawText(ply:Ping(), "ui.mainmenu.button", x + (w * 0.92), ph / 2, TEXT, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
             local textX = nx + (w * 0.23) + x + x + 17

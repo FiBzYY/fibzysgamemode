@@ -151,11 +151,14 @@ hook.Add("ShouldCollide", "LJWorldCollide", function(ent1, ent2)
     local o = ent1:IsPlayer() and ent2 or ent1
 
     if not p.ljen then return end
+    lastent[p] = lastent[p] or nil
 
     if didjump[p] and o ~= lastent[p] then
         timer.Simple(1, function()
+            if not IsValid(p) then return end
+
             if not p:IsOnGround() and not inbhop[p] and didjump[p] then
-                local t = util.QuickTrace(p:GetPos() + Vector(0, 0, 2), Vector(0, 0, -34), {ply})
+                local t = util.QuickTrace(p:GetPos() + Vector(0, 0, 2), Vector(0, 0, -34), {p})
                 if not t.Hit then
                     jumpproblem[p] = true
                 elseif t.HitPos and p:GetPos().z - t.HitPos.z <= 0.2 then

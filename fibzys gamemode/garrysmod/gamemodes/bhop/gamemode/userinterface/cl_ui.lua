@@ -596,16 +596,34 @@ function UI:DrawBanner(panel, title)
 end
 
 function UI:BuildSimpleButton(self, name, func, x, y, w, h)
-	local butt = self:Add('DButton')
+	local butt = self:Add("DButton")
 	butt:SetPos(x, y)
 	butt:SetSize(w, h)
 	butt:SetText("")
+
+	local selectedNUI = Settings:GetValue("selected.nui") or "nui.kawaii"
+	local nuiTheme, themeId = Theme:GetPreference("NumberedUI", selectedNUI)
+	local themeColors = nuiTheme["Colours"]
+
 	butt.Paint = function(pan, width, height)
-		surface.SetDrawColor(pan:IsHovered() and self.themec["Tri Colour"] or self.themec["Secondary Colour"])
-		surface.DrawRect(0, 0, width, height)
-		DrawText(name, "ui.mainmenu.button", width / 2, height / 2, self.themec["Text Colour"], TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		local nuiTheme, themeId = Theme:GetPreference("NumberedUI", Settings:GetValue("selected.nui") or "nui.kawaii")
+		local themeColors = nuiTheme["Colours"]
+
+		if themeId == "nui.css" then
+			local base = themeColors["Primary Colour"]
+			local textColor = color_white
+			local hoverColor = themeColors["Secondary Colour"]
+
+			draw.RoundedBox(0, 0, 0, width, height, pan:IsHovered() and hoverColor or base)
+			DrawText(name, "hud.numberedui.css2", width / 2, height / 2, textColor, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		elseif themeId == "nui.kawaii" then
+		    surface.SetDrawColor(pan:IsHovered() and Color(38, 38, 38) or self.themec["Secondary Colour"])
+		    surface.DrawRect(0, 0, width, height)
+		    DrawText(name, "ui.mainmenu.button", width / 2, height / 2, self.themec["Text Colour"], TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		end
 	end
-	butt.OnMousePressed = function(pan)
+
+	butt.OnMousePressed = function()
 		func()
 	end
 
@@ -614,6 +632,7 @@ end
 
 function UI:DialogBox(title, answers, yes, no)
 	answers = answers or {"Yes", "No"}
+
 	local width = 320 
 	local height = 60 
 	local base = self:BasePanel(width, height)
@@ -740,7 +759,7 @@ UI:AddListener("style", function(_, data)
             {["name"] = "Segment", ["function"] = STYLE_Callback(15), ["bool"] = data[15]},
             {["name"] = "Practice", ["function"] = STYLE_Callback(16), ["bool"] = data[16]},
             {["name"] = "Auto-Strafe", ["function"] = STYLE_Callback(17), ["bool"] = data[17]},
-            {["name"] = "TAS", ["function"] = STYLE_Callback(18), ["bool"] = data[18]}
+            {["name"] = "Low Gravity", ["function"] = STYLE_Callback(18), ["bool"] = data[18]}
         )
     end
 end)
@@ -842,11 +861,11 @@ UI:AddListener("nominate", function(_, data)
     for i = startIndex, endIndex do
         local mapItem = Cache.M_Data[i]
         if mapItem and mapItem.name then
-            options[#options + 1] = {
-                ["name"] = i .. ". " .. mapItem.name .. " (" .. (mapItem.points or 0) .. " points)",
-                ["col"] = (mapItem.name == currentMap) and Color(0, 150, 255) or Color(255, 255, 255),
-                ["function"] = Nominate_Callback(mapItem.name) 
-            }
+        options[#options + 1] = {
+            ["name"] = mapItem.name .. " (" .. (mapItem.points or 0) .. " points)",
+            ["col"] = (mapItem.name == currentMap) and Color(0, 150, 255) or Color(255, 255, 255),
+            ["function"] = Nominate_Callback(mapItem.name) 
+        }
         end
     end
 
@@ -1068,6 +1087,7 @@ function StringToTab(tab)
     end
 
     if not istable(tab) then
+        print("[WARNING] StringToTab() received invalid data!")
         return {}
     end
 

@@ -1,4 +1,4 @@
---[[
+﻿--[[
 
  _  _  ____  __ _  _  _ 
 ( \/ )(  __)(  ( \/ )( \
@@ -282,7 +282,7 @@ function UI:CreateMenu()
             "Just hold Space to continuously hop, allowing you to focus on strafing.",
             "",
             "3. Advanced Techniques:",
-            "Mastering strafing is key to building speed. Try chaning between A + mouse left and D + mouse right.",
+            "Mastering strafing is key to building speed. Try changing between A + mouse left and D + mouse right.",
             "Avoid sharp or jerky movements, as smooth strafes will help you maintain speed.",
             "",
             "4. Improvement Tips:",
@@ -383,9 +383,9 @@ function UI:CreateMenu()
         self:CreatePanel(container, {"Settings"})
 
         y = y + 45
-        self:CreateToggle(container, y, "bhop_disablespec", "Disable Spectator Hud", "This will disable the spectator hud.")
+        self:CreateToggle(container, y, "bhop_disablespec", "Spectator Hud", "This will enable or disable the spectator hud.")
         y = y + 60
-        self:CreateToggle(container, y, "bhop_weaponpickup", "Disable weapons pickup", "Enables or disables weapon pickup.")
+        self:CreateToggle(container, y, "bhop_weaponpickup", "Weapons Pickup", "This will enable or disable weapon pickup.")
         y = y + 60
         self:CreateToggle(container, y, "bhop_flipweapons", "Flip Weapons", "Flips your weapons to the left side.")
         y = y + 60
@@ -393,13 +393,13 @@ function UI:CreateMenu()
         y = y + 60
         self:CreateToggle(container, y, "bhop_showkeys", "Show Keys", "This displays the keys hud.")
         y = y + 60
-        self:CreateToggle(container, y, "bhop_showchatbox", "Enable Chatbox", "Disables or enables chatbox completely.")
+        self:CreateToggle(container, y, "bhop_showchatbox", "Chatbox Visibility", "Enables or disables chatbox completely.")
         y = y + 60
-        self:CreateToggle(container, y, "bhop_timer_prefix_rainbow", "Enable Rainbow Timer", "Disables or enables rainbow timer prefix.")
+        self:CreateToggle(container, y, "bhop_timer_prefix_rainbow", "Rainbow Timer Chat", "Enables or disables rainbow timer prefix.")
         y = y + 60
-        self:CreateToggle(container, y, "bhop_smoothnoclip", "Enable Smooth Noclip", "Disables or enables noclip smoothing.")
+        self:CreateToggle(container, y, "bhop_smoothnoclip", "Smooth Noclip", "Enables or disables noclip smoothing.", { default = 1, off = 0 })
         y = y + 60
-        self:CreateToggle(container, y, "bhop_weaponsway", "Enable Weapon Sway", "Controls how weapon view models move.")
+        self:CreateToggle(container, y, "bhop_nosway", "Weapon Sway", "Controls how weapon view models move.")
     end, isActive = true },
 
     { text = "Graphics", panelContent = function(parent)
@@ -447,23 +447,23 @@ function UI:CreateMenu()
         y = y + 45
         self:CreateToggle(container, y, "gmod_mcore_test", "Gmod Multi Core", "This may improve performance by utilizing multiple cores.")
         y = y + 60
-        self:CreateToggle(container, y, "mat_antialias", "Disable Antialias", "This may improve performance by disabling antialias.", { default = 8, off = 0 })
+        self:CreateToggle(container, y, "mat_antialias", "Antialias", "This may improve performance by disabling antialias.", { default = 8, off = 0 })
         y = y + 60
-        self:CreateToggle(container, y, "bhop_showzones", "Show Zones", "Hide or show the timer zones.")
+        self:CreateToggle(container, y, "bhop_showzones", "Display Zones", "Show or hide the timer zones.")
         y = y + 60
         self:CreateInputBox(container, y, "bhop_thickness", 1, "Zones Thickness", "How thick you want the zones to be.")
         y = y + 60
-        self:CreateToggle(container, y, "bhop_anticheats", "Show AC Zones", "Hide or show the anti-cheat timer zones.")
+        self:CreateToggle(container, y, "bhop_wireframe", "Zones Wireframe", "Shows zones in wireframe.")
         y = y + 60
-        self:CreateToggle(container, y, "bhop_showplayers", "Show Players", "Hide or show the players.")
+        self:CreateToggle(container, y, "bhop_anticheats", "Show AC Zones", "Show or hide the anti-cheat timer zones.")
+        y = y + 60
+        self:CreateToggle(container, y, "bhop_showplayers", "Show Players", "Show or hide the players.")
         y = y + 60
         self:CreateToggle(container, y, "r_WaterDrawReflection", "Toggle Reflection", "This may improve performance by toggling off reflection.")
         y = y + 60
         self:CreateToggle(container, y, "r_WaterDrawRefraction", "Toggle Refraction", "This may improve performance by toggling off refraction.")
         y = y + 60
-        self:CreateToggle(container, y, "bhop_remove_fog", "Disable Map Fog", "This may make it easier to see by disabling map fog.")
-        y = y + 60
-        self:CreateInputBox(container, y, "bhop_skybox_speed", 40, "Skybox Speed Cycle", "This will allow you to change the skybox speed cycle.")
+        self:CreateToggle(container, y, "bhop_map_fog", "Map Fog", "This may make it easier to see by disabling map fog.")
         y = y + 60
         self:CreateToggle(container, y, "bhop_nogun", "No gun toggle", "This will allow you to use guns without seeing them.")
     end },
@@ -509,38 +509,38 @@ function UI:CreateMenu()
         surface.DrawRect(10, y + 35, container:GetWide() - 20, 1)
 
         y = y + 45
-        self:CreateToggle(container, y, "bhop_showssj", "SSJ Enable", "Disables or enables show jump stats." ,{ default = 1, off = 0 })
+        self:CreateToggle(container, y, "bhop_showssj", "Display SSJ", "Enables or disables show jump stats." ,{ default = 1, off = 0 })
         y = y + 60
-        self:CreateToggle(container, y, "bhop_showpre", "Prestrafe", "Disable or enable prestrafe.")
+        self:CreateToggle(container, y, "bhop_showpre", "Display Prestrafe", "Enables or disables prestrafe.")
         y = y + 60
-        self:CreateToggle(container, y, "bhop_chatfjt", "First jump tick", "Disable or enable jump tick.")
+        self:CreateToggle(container, y, "bhop_chatfjt", "First jump tick", "Enables or disables jump tick.")
         y = y + 60
-        self:CreateToggle(container, y, "bhop_showfjthud", "First jump tick HUD", "Disable or enable jump tick HUD.")
+        self:CreateToggle(container, y, "bhop_showfjthud", "First jump tick HUD", "Enables or disables jump tick HUD.")
         y = y + 60
         self:CreateInputBoxText(container, y, "bhop_jhud_style", "claz", "JHUD Choose a Style", "JHUD style picker 'pyramid', 'kawaii', 'claz', 'old'")
         y = y + 60
-        self:CreateToggle(container, y, "bhop_jhud", "JHUD Enable", "Disable or enable SSJ HUD.")
+        self:CreateToggle(container, y, "bhop_jhud", "Display JHUD", "Enables or disables SSJ HUD.")
         y = y + 60
-        self:CreateToggle(container, y, "bhop_jhudold", "JHUD Old Enable", "Disable or enable the older SSJ HUD from 2020.")
+        self:CreateToggle(container, y, "bhop_jhudold", "Display JHUD Old", "Enables or disables the older SSJ HUD from 2020.")
         y = y + 60
         self:CreateInputBox(container, y, "bhop_ssj_fadeduration", 1.5, "SSJ Fade Duration", "How long until the SSJ HUD fades out.")
         y = y + 60
-        self:CreateToggle(container, y, "bhop_fjt", "Show FJT", "Disable or enable the strafe ground tick.")
+        self:CreateToggle(container, y, "bhop_fjt", "Display FJT", "Enables or disables the strafe ground tick.")
         y = y + 60
-        self:CreateToggle(container, y, "bhop_center_speed", "Display center speed", "Disable or enable the center speed.")
+        self:CreateToggle(container, y, "bhop_center_speed", "Display center speed", "Enables or disables the center speed.")
     end },
 
         { text = "Strafe Trainer", panelContent = function(parent)
             local x, y = 10, 0
             self:CreatePanel(parent, {"Strafe Trainer"})
             y = y + 45
-            self:CreateToggle(parent, y, "bhop_strafetrainer", "Strafe Trainer Enable", "Disables or enables show strafe trainer.")
+            self:CreateToggle(parent, y, "bhop_strafetrainer", "Display Strafe Trainer", "Enables or disables show strafe trainer.")
             y = y + 60
             self:CreateInputBox(parent, y, "bhop_strafetrainer_interval", 10, "Update rate", "Update rate in ticks.", 1, 100)
             y = y + 60
-            self:CreateToggle(parent, y, "bhop_strafetrainer_ground", "Ground", "Should update on ground.")
+            self:CreateToggle(parent, y, "bhop_strafetrainer_ground", "Ground Update", "Should update on ground.")
             y = y + 60
-            self:CreateToggle(parent, y, "bhop_strafesync", "Strafe Synchronizer", "Disables or enables show strafe synchronizer.")
+            self:CreateToggle(parent, y, "bhop_strafesync", "Strafe Synchronizer", "Enables or disables show strafe synchronizer.")
         end },
 
         { text = "Audio", panelContent = function(parent)
@@ -549,9 +549,9 @@ function UI:CreateMenu()
             y = y + 45
             self:CreateToggle(parent, y, "bhop_mute_music", "Disable Map Music", "Use if you want to disable music on all maps.")
             y = y + 60
-            self:CreateToggle(parent, y, "bhop_footsteps", "Disable Footsteps", "Disable or enable footsteps.")
+            self:CreateInputBoxText(parent, y, "bhop_footsteps", "on", "Footsteps", "Options: 'off', 'local', 'spectate', 'all'.")
             y = y + 60
-            self:CreateToggle(parent, y, "bhop_wrsfx", "Disable WR Sounds", "Disable or enable World Record sounds.")
+            self:CreateToggle(parent, y, "bhop_wrsfx", "WR Sounds", "Enables or disables the World Record sounds.")
             y = y + 60
             self:CreateInputBox(parent, y, "bhop_wrsfx_volume", 0.4, "WR Sounds Volume", "Customize your WR sound volume.")
         end },
@@ -560,13 +560,13 @@ function UI:CreateMenu()
             local x, y = 10, 0
             self:CreatePanel(parent, {"Controls"})
             y = y + 45
-            self:CreateToggle(parent, y, "bhop_viewtransfrom", "View Transfrom View", "Disable or enable transfrom viewing.")
+            self:CreateToggle(parent, y, "bhop_viewtransfrom", "View Transfrom View", "Enables or disables transfrom viewing.")
             y = y + 60
-            self:CreateToggle(parent, y, "bhop_thirdperson", "Third Person View", "Disable or enable third person view.")
+            self:CreateToggle(parent, y, "bhop_thirdperson", "Third Person View", "Enables or disables the third person view.")
             y = y + 60
-            self:CreateToggle(parent, y, "bhop_viewinterp", "View Interpolation", "Disable or enable interpolation view.")
+            self:CreateToggle(parent, y, "bhop_viewinterp", "View Interpolation", "Enables or disables interpolation view.")
             y = y + 60
-            self:CreateToggle(parent, y, "bhop_viewpunch", "Enable View Punch", "Disable or enable view punch.")
+            self:CreateToggle(parent, y, "bhop_viewpunch", "View Punch", "Enables or disables view punch.")
         end },
 
         --[[{ text = "FOV", panelContent = function(parent)
@@ -598,22 +598,22 @@ function UI:CreateMenu()
             local x, y = 10, 0
             self:CreatePanel(parent, {"Layouts"})
             y = y + 45
-            self:CreateToggle(parent, y, "bhop_sidetimer", "Enable Side Timer", "Disables or enables side timer.")
+            self:CreateToggle(parent, y, "bhop_sidetimer", "Side Timer", "Enables or disables side timer.")
             y = y + 60
-            self:CreateToggle(parent, y, "bhop_show_notifications", "Enable Pop-up Notifications", "Disables or enables pop-up notifications.")
+            self:CreateToggle(parent, y, "bhop_show_notifications", "Pop-up Notifications", "Enables or disables pop-up notifications.")
             y = y + 60
-            self:CreateToggle(parent, y, "bhop_roundedbox", "Enable Rounded Boxes", "Disables or enables rounded boxes.")
+            self:CreateToggle(parent, y, "bhop_roundedbox", "Rounded Boxes", "Enables or disables rounded boxes.")
             y = y + 60
-            self:CreateToggle(parent, y, "bhop_simplebox", "Enable Simple HUD Boxes", "Disables or enables simple HUD boxes.")
+            self:CreateToggle(parent, y, "bhop_simplebox", "Simple HUD Boxes", "Enables or disables simple HUD boxes.")
             y = y + 60
-            self:CreateToggle(parent, y, "bhop_chatbox", "Enable Custom Chatbox", "Disables or enables the custom chat box.")
+            self:CreateToggle(parent, y, "bhop_chatbox", "Custom Chatbox", "Enables or disables the custom chat box.")
         end },
 
         { text = "Presets", panelContent = function(parent)
             local x, y = 10, 0
             self:CreatePanel(parent, {"Presets Picker"})
             y = y + 45
-           self:CreateCustomDropdownPreset(parent, y, "nui.kawaii", "Set nui theme", {
+           self:CreateCustomDropdownPreset(parent, y, "nui.kawaii", "Set Menu theme", {
                 ["nui.kawaii"] = "Kawaii",
                 ["nui.css"] = "CS:S"
             })
@@ -759,11 +759,8 @@ hook_Add("InitPostEntity", "AssignCachedPointsSum", function()
         cachedSum = nil
     end
 end)
-
 function UI:CreateRankPanel(parent)
-    if not Iv(parent) then
-        return
-    end
+    if not Iv(parent) then return end
 
     local panelWidth = parent:GetWide()
     local rankCount = #TIMER.Ranks
@@ -785,161 +782,133 @@ function UI:CreateRankPanel(parent)
     pnl.Paint = function(self, w, h)
         local y = 10
 
-        local boxPadding = 5
-        local boxX = 5
-        local boxY = y - boxPadding
-        local boxWidth = w - 10
-        local boxHeight = 13 * rankCount + 70
-
-        surface.SetDrawColor(42, 42, 42)
-        surface.DrawRect(boxX, boxY, boxWidth, boxHeight)
-
-        Text("Ranks", "SmallTextFont", 10, y, colors.text, TEXT_ALIGN_LEFT)
+        Text("Ranks", "SmallTextFont", 15, y, colors.text, TEXT_ALIGN_LEFT)
         surface.SetDrawColor(120, 120, 120)
-        surface.DrawRect(10, y + 25, w - 20, 1)
-        y = y + 35
+        surface.DrawRect(15, y + 25, w - 30, 1)
+        y = y + 50
 
-        local yLeft = y
-        local yRight = y
-        local xLeft = 10
-        local xRight = panelWidth / 2 - 100
-        for i, rank in ipairs(rankDisplayLeft) do
-            local rankName, rankColor, rankNumber = rank[1], rank[2], rank[3]
+        Text("Displaying " .. rankCount .. " Ranks", "SmallTextFont", 15, y - 10, Color(200, 200, 200), TEXT_ALIGN_LEFT)
+        y = y + 25
 
-            Text(rankNumber .. ".", "SmallTextFont", xLeft, yLeft, Color(255, 255, 255), TEXT_ALIGN_LEFT)
+        -- DO TO: Finish Dropdowns here
 
-            local numWidth = surface.GetTextSize(rankNumber .. ".")
 
-            if rankNumber == rankCount then
-                DrawRainbowText(rankName, "SmallTextFont", xLeft + numWidth + 5, yLeft + 8)
-            else
-                Text(rankName, "SmallTextFont", xLeft + numWidth + 5, yLeft, rankColor, TEXT_ALIGN_LEFT)
+        local tableMargin = 20
+        local tableX, tableY = tableMargin, y
+        local tableWidth, tableHeight = w - (tableMargin * 2), 40 + (rankCount * 14)
+
+        surface.SetDrawColor(38, 38, 38)
+        surface.DrawRect(tableX, tableY, tableWidth, tableHeight)
+
+        local titleHeight = 30
+        surface.SetDrawColor(32, 32, 32)
+        surface.DrawRect(tableX, tableY, tableWidth, titleHeight)
+
+        Text("Rank", "SmallTextFont", tableX + 10, tableY + 10 - 3, Color(200, 200, 200), TEXT_ALIGN_LEFT)
+        Text("Name", "SmallTextFont", tableX + 100, tableY + 10 - 3, Color(200, 200, 200), TEXT_ALIGN_LEFT)
+
+        Text("Rank", "SmallTextFont", tableX + 10 + 340, tableY + 10 - 3, Color(200, 200, 200), TEXT_ALIGN_LEFT)
+        Text("Name", "SmallTextFont", tableX + 100  + 345, tableY + 10 - 3, Color(200, 200, 200), TEXT_ALIGN_LEFT)
+
+        surface.SetDrawColor(150, 150, 150, 50)
+        surface.DrawRect(tableX, tableY + titleHeight, tableWidth, 1)
+        tableY = tableY + titleHeight + 10
+
+        local yLeft, yRight = tableY, tableY
+        local xLeft, xRight = tableX + 10, tableX + (tableWidth / 2) + 10
+
+        if rankCount == 0 then
+            Text("No Ranks Found", "SmallTextFont", tableX + 10, tableY, Color(255, 0, 0), TEXT_ALIGN_LEFT)
+        else
+            for i, rank in ipairs(rankDisplayLeft) do
+                local rankName, rankColor, rankNumber = rank[1], rank[2], rank[3]
+                Text(rankNumber .. ".", "SmallTextFont", xLeft, yLeft, Color(255, 255, 255), TEXT_ALIGN_LEFT)
+                Text(rankName, "SmallTextFont", xLeft + 90, yLeft, rankColor, TEXT_ALIGN_LEFT)
+                yLeft = yLeft + 25
             end
 
-            yLeft = yLeft + 25
-        end
-
-        for i, rank in ipairs(rankDisplayRight) do
-            local rankName, rankColor, rankNumber = rank[1], rank[2], rank[3]
-
-            Text(rankNumber .. ".", "SmallTextFont", xRight, yRight, Color(255, 255, 255), TEXT_ALIGN_LEFT)
-
-            local numWidth = surface.GetTextSize(rankNumber .. ".")
-            if rankNumber == rankCount then
-                DrawRainbowText(rankName, "SmallTextFont", xRight + numWidth + 5, yRight + 8)
-            else
-                Text(rankName, "SmallTextFont", xRight + numWidth + 5, yRight, rankColor, TEXT_ALIGN_LEFT)
+            for i, rank in ipairs(rankDisplayRight) do
+                local rankName, rankColor, rankNumber = rank[1], rank[2], rank[3]
+                Text(rankNumber .. ".", "SmallTextFont", xRight, yRight, Color(255, 255, 255), TEXT_ALIGN_LEFT)
+                Text(rankName, "SmallTextFont", xRight + 90, yRight, rankColor, TEXT_ALIGN_LEFT)
+                yRight = yRight + 25
             end
-
-            yRight = yRight + 25
         end
 
-        local rankingX = w - 200
-        local rankingY = 10
-        Text("Stats", "SmallTextFont", rankingX, rankingY, colors.text, TEXT_ALIGN_LEFT)
-        surface.SetDrawColor(255, 255, 255, 50)
-        surface.DrawRect(rankingX, rankingY + 25, 280, 1)
-        rankingY = rankingY + 35
+        local statsY = math.max(yLeft, yRight) + 20
+        surface.SetDrawColor(32, 32, 32)
+        surface.DrawRect(tableX, statsY, tableWidth, 30)
 
-        TIMER.ranking = {}
+        Text("Your Stats:", "SmallTextFont", tableX + 10, statsY + 10 - 3, Color(200, 200, 200), TEXT_ALIGN_LEFT)
 
         if TIMER.ranking then
-            local rank = lp():GetNWInt("Rank", 0)
-            Text("Rank: " .. rank, "SmallTextFont", rankingX, rankingY, colors.text, TEXT_ALIGN_LEFT)
-            rankingY = rankingY + 25
+            local playerRank = lp():GetNWInt("Rank", 0)
+            local playerPoints = lp().nSum or 0
 
-            local wrText = "Points: "
-            Text(wrText, "SmallTextFont", rankingX, rankingY, colors.text, TEXT_ALIGN_LEFT)
-
-            local wrTextWidth = surface.GetTextSize(wrText)
-            local wrColor = (TIMER.ranking == "Starter") and Color(255, 255, 255) or colors.buttonIsActive
-
-            local rankPoints = lp().nSum or 0
-            local rankPointsText = tostring(rankPoints)
-
-            Text(rankPointsText, "SmallTextFont", rankingX + wrTextWidth, rankingY, wrColor, TEXT_ALIGN_LEFT)
+            Text("Rank: " .. playerRank, "SmallTextFont", tableX + 150, statsY + 10 - 3, Color(255, 255, 255), TEXT_ALIGN_LEFT)
+            Text("Total Points: " .. playerPoints, "SmallTextFont", tableX + 250, statsY + 10 - 3, Color(255, 255, 255), TEXT_ALIGN_LEFT)
         else
-            Text("Waiting for Ranking stats...", "SmallTextFont", rankingX, rankingY, Color(255, 0, 0), TEXT_ALIGN_LEFT)
+            Text("Waiting for Ranking stats...", "SmallTextFont", tableX + 150, statsY + 10 - 3, Color(255, 0, 0), TEXT_ALIGN_LEFT)
         end
-
     end
+
     return pnl
 end
 
 function UI:CreateWRPanel(parent)
-    if not Iv(parent) then
-        return
-    end
+    if not Iv(parent) then return end
 
     local playerName = lp():Nick()
     local panelWidth = parent:GetWide()
+    local recordCount = #UI.WRList or 0
+    local lastPlace = recordCount
 
     local pnl = vgui.Create("DPanel", parent)
     pnl:Dock(FILL)
     pnl.Paint = function(self, w, h)
         local y = 10
 
-        local boxPadding = 5
-        local boxX = 5
-        local boxY = y - boxPadding
-        local boxWidth = w - 10
-        local boxHeight = 25 * (#UI.WRList or 0) + 140
-
-        surface.SetDrawColor(42, 42, 42)
-        surface.DrawRect(boxX, boxY, boxWidth, boxHeight)
-
-        Text("World Records", "SmallTextFont", 10, y, colors.text, TEXT_ALIGN_LEFT)
+        Text("World Records", "SmallTextFont", 15, y, colors.text, TEXT_ALIGN_LEFT)
         surface.SetDrawColor(120, 120, 120)
-        surface.DrawRect(10, y + 25, w - 20, 1)
-        y = y + 35
+        surface.DrawRect(15, y + 25, w - 30, 1)
+        y = y + 50
 
-        if not UI.WRList or #UI.WRList == 0 then
-            Text("No Records Made", "SmallTextFont", 10, y, Color(255, 0, 0), TEXT_ALIGN_LEFT)
+        Text("Displaying " .. lastPlace .. "/" .. recordCount .. " times", "SmallTextFont", 15, y - 10, Color(200, 200, 200), TEXT_ALIGN_LEFT)
+        y = y + 25
+
+        local tableMargin = 20
+        local tableX, tableY = tableMargin, y
+        local tableWidth, tableHeight = w - (tableMargin * 2), 40 + (recordCount * 25)
+
+        surface.SetDrawColor(38, 38, 38)
+        surface.DrawRect(tableX, tableY, tableWidth, tableHeight)
+
+        local titleHeight = 30
+        surface.SetDrawColor(32, 32, 32)
+        surface.DrawRect(tableX, tableY, tableWidth, titleHeight)
+
+        Text("Place", "SmallTextFont", tableX + 10, tableY + 10 - 3, Color(200, 200, 200), TEXT_ALIGN_LEFT)
+        Text("Name", "SmallTextFont", tableX + 80, tableY + 10 - 3, Color(200, 200, 200), TEXT_ALIGN_LEFT)
+        Text("Time", "SmallTextFont", tableX + tableWidth - 60, tableY + 10 - 3, Color(200, 200, 200), TEXT_ALIGN_RIGHT)
+
+        surface.SetDrawColor(150, 150, 150, 50)
+        surface.DrawRect(tableX, tableY + titleHeight, tableWidth, 1)
+        tableY = tableY + titleHeight + 10
+
+        if recordCount == 0 then
+            Text("No Records Found", "SmallTextFont", tableX + 10, tableY, Color(255, 0, 0), TEXT_ALIGN_LEFT)
         else
             for i, record in ipairs(UI.WRList or {}) do
                 local recordName = record[1]
+                local recordTime = record[2]
 
-                local textColor
-                if i == 1 then
-                    textColor = Color(55, 122, 151)
-                elseif recordName == playerName then
-                    textColor = Color(122, 122, 122)
-                else
-                    textColor = colors.text
-                end
+                local textColorName = (i == 1) and Color(0, 255, 255) or (recordName == playerName and Color(200, 200, 200) or Color(255, 255, 255))
 
-                Text(i .. ". " .. record[1] .. " - " .. record[2], "SmallTextFont", 10, y, textColor, TEXT_ALIGN_LEFT)
-                y = y + 25
+                Text(tostring(i), "SmallTextFont", tableX + 10, tableY, color_white, TEXT_ALIGN_LEFT)
+                Text(recordName, "SmallTextFont", tableX + 80, tableY, textColorName, TEXT_ALIGN_LEFT)
+                Text(recordTime, "SmallTextFont", tableX + tableWidth - 30, tableY, color_white, TEXT_ALIGN_RIGHT)
+                tableY = tableY + 25
             end
-        end
-
-        local globalsX = w - 300
-        local globalsY = 10
-        Text("Globals", "SmallTextFont", globalsX, globalsY, colors.text, TEXT_ALIGN_LEFT)
-
-        surface.SetDrawColor(255, 255, 255)
-        surface.DrawRect(globalsX, globalsY + 25, 280, 1)
-
-        globalsY = globalsY + 35
-
-        if TIMER.map and TIMER.globalWR then
-            Text("Map: " .. TIMER.map, "SmallTextFont", globalsX, globalsY, colors.text, TEXT_ALIGN_LEFT)
-            globalsY = globalsY + 25
-
-            local wrText = "Global WR: "
-            Text(wrText, "SmallTextFont", globalsX, globalsY, colors.text, TEXT_ALIGN_LEFT)
-
-            local wrTextWidth = surface.GetTextSize(wrText)
-            local wrColor = (TIMER.globalWR == "N/A") and Color(255, 0, 0) or colors.buttonIsActive
-
-            Text(TIMER.globalWR, "SmallTextFont", globalsX + wrTextWidth, globalsY, wrColor, TEXT_ALIGN_LEFT)
-
-            globalsY = globalsY + 25
-
-            local yourWRText = "Your WR's: "
-            Text(yourWRText .. LocalPlayer():GetNWInt("SpecialRank", 0), "SmallTextFont", globalsX, globalsY, colors.text, TEXT_ALIGN_LEFT)
-        else
-            Text("Waiting for Global WR...", "SmallTextFont", globalsX, globalsY, Color(255, 0, 0), TEXT_ALIGN_LEFT)
         end
     end
 

@@ -851,11 +851,6 @@ cvars.AddChangeCallback("bhop_ssj_fadeduration", function(cvar, old, new)
 	duration = tonumber(new)
 end)
 
-Jhudold = {
-    Enabled = CreateClientConVar("bhop_jhudold", "0", true, false, "JHud older display"),
-    Value = function() return GetConVar("bhop_jhudold"):GetBool() end
-}
-
 -- Variables
 local jhudenable = CreateClientConVar("bhop_jhud", 1, true)
 local last_jump = 0
@@ -980,6 +975,8 @@ local jhudstyle = CreateClientConVar("bhop_jhud_style", "pyramid", true, false, 
 
 -- JHUD Display
 local function JumpHudDisplay()
+    if not jhudenable:GetBool() then return end
+
     if not SSJStats or not SSJStats.jumps then return end
 
     local scrW, scrH = screenWidth, screenHeight
@@ -1145,7 +1142,7 @@ end
 function DrawSpecHUD()
     local lp = LocalPlayer()
     if not IsValid(lp) then return end
-    if disablespec:GetBool() then return end
+    if not disablespec:GetBool() then return end
 
     local txt = "Spectating %s (%s):"
     local SpecList = {}
@@ -1183,15 +1180,23 @@ function DrawSpecHUD()
     DrawText(txt, "ui.mainmenu.button", ScrW() - 20, ScrH() / 2 - (#SpecList * 10), color_white, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
 
     local combinedList = {}
+    local seenNames = {}
 
     for _, spectator in ipairs(SpecList) do
         if IsValid(spectator) and spectator:IsPlayer() then
-            table.insert(combinedList, spectator:GetName())
+            local name = spectator:GetName()
+            if not seenNames[name] then
+                seenNames[name] = true
+                table.insert(combinedList, name)
+            end
         end
     end
 
     for _, name in pairs(CSList or {}) do
-        table.insert(combinedList, name)
+        if not seenNames[name] then
+            seenNames[name] = true
+            table.insert(combinedList, name)
+        end
     end
 
     for i = 1, #combinedList do

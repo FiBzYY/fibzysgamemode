@@ -170,12 +170,15 @@ end
 -- Reload
 function Zones:Reload()
     self:ClearEntities()
+
+    table.Empty(self.Cache)
+
     TIMER:LoadZones()
     self:Setup()
 end
 
 function Zones:ClearEntities()
-    for _, ent in pairs(self.Entities) do
+    for _, ent in ipairs(self.Entities) do
         if IsValid(ent) then
             ent:Remove()
         end

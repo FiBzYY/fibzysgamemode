@@ -396,7 +396,7 @@ function TIMER:Disable(ply)
     ply.bonustime = nil
     ply.bonusfinished = nil
 
-    NETWORK:StartNetworkMessage(ply, "TIMER/Start")
+    NETWORK:StartNetworkMessage(ply, "TIMER/Reset")
 
     if Replay and Replay.StartRecording then
         Replay:StartRecording(ply)
@@ -522,6 +522,7 @@ function TIMER:ConcatTables(t1, t2)
 end
 
 -- When the player gets a new WR
+-- When the player gets a new WR
 function TIMER:WorldRecordCompletion(ply, time, currentWR, formattedTime)
     local StyleName = TIMER:StyleName(ply.style)
     local styleData = self.Styles[ply.style].Data
@@ -529,14 +530,32 @@ function TIMER:WorldRecordCompletion(ply, time, currentWR, formattedTime)
     styleData:SetInitialRecord(time)
 
     local ID_WR = "WorldRecord"
-    local WRData = { StyleName, ply:Name(), nil, formattedTime, TIMER:SecondsToClock(currentWR) }
+    
+    -- ✅ Fix WR Difference Formatting
+    local WRDifference
+    if currentWR == 0 then
+        -- No previous WR, show "Old WR was X"
+        WRDifference = ("Old WR was %s"):format(TIMER:WRConvert2(time))
+    else
+        -- Player improved WR, show "Improved by -X.XXX"
+        local timeDiff = currentWR - time
+        WRDifference = ("Improved by %s%s"):format(timeDiff < 0 and "-" or "", TIMER:WRConvert2(math.abs(timeDiff)))
+    end
+
+    -- ✅ Pass the corrected WRDifference into WRData
+    local WRData = { StyleName, ply:Name(), nil, formattedTime, WRDifference }
+
+    -- ✅ Correctly format the WR message
     local worldRecordMessage = Lang:Get(ID_WR, WRData)
+    
+    -- ✅ Color & Notifications
     local rainbowText = TIMER:Rainbow("New " .. StyleName .. " World Record! ")
     local fullMessage = TIMER:ConcatTables(rainbowText, worldRecordMessage)
 
     BHDATA:Broadcast("Print", { "Timer", fullMessage })
     SendPopupNotification(nil, "Notification", "New World Record by " .. ply:Name(), 2)
 end
+
 
 -- When the player finished
 function TIMER:Finish(ply, time)
@@ -578,6 +597,8 @@ function TIMER:Finish(ply, time)
 
             if time < currentWR or currentWR == 0 then
                 self:WorldRecordCompletion(ply, time, currentWR, formattedTime)
+    
+                self:PostDiscordWR(ply, time, ply.style, currentWR)
             end
 
             NETWORK:StartNetworkMessageTimer(ply, "Print", { "Timer", Lang:Get(ID, Data) })
@@ -670,7 +691,7 @@ function TIMER:AddRecord(ply, time, old)
     end)
 end
 
-function TIMER:PostDiscordWR(ply, time, styleID)
+function TIMER:PostDiscordWR(ply, time, styleID, currentWR)
     if not WEBHOOK or WEBHOOK == "" then return end
     if not reqwest then return end
     if not (styleID == TIMER:GetStyleID("Normal") or styleID == TIMER:GetStyleID("Bonus")) then return end
@@ -692,6 +713,14 @@ function TIMER:PostDiscordWR(ply, time, styleID)
     local timestamp = os.date("!%Y-%m-%d %H:%M:%S")  
     local joinLink = "https://steamcommunity.com/linkfilter/?url=steam://connect/" .. serverIP
 
+    local WRDifference
+    if currentWR == 0 then
+        WRDifference = ("Old WR was %s"):format(TIMER:WRConvert2(time))
+    else
+        local timeDiff = currentWR - time
+        WRDifference = ("%s%s"):format(timeDiff < 0 and "-" or "", TIMER:WRConvert2(math.abs(timeDiff)))
+    end
+
     local fields = {
         {
             name = "**Player**",
@@ -700,7 +729,7 @@ function TIMER:PostDiscordWR(ply, time, styleID)
         },
         {
             name = "**Time**",
-            value = string.format("`%s` (±XX:XXX)", formattedTime),
+            value = string.format("`%s` (WR %s)", formattedTime, WRDifference),
             inline = true
         },
         {
@@ -782,8 +811,6 @@ function TIMER:HandleRecordCompletion(ply, time, old, styleData)
         if id == 1 then
             self:RecalculateInitial(ply.style)
         end
-
-        self:PostDiscordWR(ply, time, ply.style)
 
         if id <= 10 then
             self:UpdateWRs(player.GetHumans())
@@ -1033,24 +1060,25 @@ function TIMER:GetRecordID(time, style)
     return #records + 1
 end
 
-function TIMER:GetRecordList(style, page)
-    local styleData = self.Styles[style] and self.Styles[style].Data
-    if not styleData then
-        return {}
-    end
+function TIMER:GetRecordList(style, page, callback)
+    local pageSize = 7
+    local offset = (page - 1) * pageSize
 
-    local pageSize = 7 or 10
-    local startIndex = (page - 1) * pageSize + 1
-    local endIndex = startIndex + pageSize - 1
-    local records = {}
+    MySQL:Start("SELECT uid, player, time, date, data FROM timer_times WHERE map = '" .. game.GetMap() .. "' AND style = " .. style .. " ORDER BY time ASC LIMIT " .. pageSize .. " OFFSET " .. offset, function(result)
+        local records = {}
 
-    for i = startIndex, endIndex do
-        if styleData.Records[i] then
-            table.insert(records, styleData.Records[i])
+        if result then
+            for _, row in ipairs(result) do
+                local speedData = StringToTab(row.data or "0 0 0 0 0")
+
+                table.insert(records, { row.uid, row.player, tonumber(row.time), row.date, speedData })
+            end
         end
-    end
 
-    return records
+        if callback then
+            callback(records)
+        end
+    end)
 end
 
 function TIMER:GetRecordCount(style)

@@ -1,6 +1,6 @@
 ﻿local BhopCheats = {
     Fullbright = false,
-    RemoveFog = CreateClientConVar("bhop_remove_fog", "0", true, false, "Toggle fog removal on maps"),
+    RemoveFog = CreateClientConVar("bhop_map_fog", "0", true, false, "Toggle fog removal on maps"),
     Skybox = {
         Enabled = CreateClientConVar("bhop_skybox", "0", true, false, "Enable or disable custom skybox effects (0 = off, 1 = on)"),
         Mode = CreateClientConVar("bhop_skybox_mode", "rainbow", true, false, "Choose the skybox color mode: 'rainbow', 'black', or 'white'."),
@@ -39,21 +39,21 @@ hook.Add("PreDrawEffects", "Bhop_Fullbright_EffectFix", function()
 end)
 
 hook.Add("SetupWorldFog", "Bhop_NoFog", function()
-    if BhopCheats.RemoveFog:GetBool() then return true end
+    if not BhopCheats.RemoveFog:GetBool() then return true end
 end)
 
 hook.Add("SetupSkyboxFog", "Bhop_NoFog_Skybox", function()
-    if BhopCheats.RemoveFog:GetBool() then return true end
+    if not BhopCheats.RemoveFog:GetBool() then return true end
 end)
 
 hook.Add("RenderScreenspaceEffects", "Bhop_NoFog_Render", function()
-    if BhopCheats.RemoveFog:GetBool() then
+    if not BhopCheats.RemoveFog:GetBool() then
         render.FogMode(MATERIAL_FOG_NONE)
     end
 end)
 
-cvars.AddChangeCallback("bhop_remove_fog", function(_, _, newVal)
-    if tobool(newVal) then
+cvars.AddChangeCallback("bhop_map_fog", function(_, _, newVal)
+    if not tobool(newVal) then
         hook.Add("SetupWorldFog", "Bhop_NoFog", function() return true end)
         hook.Add("SetupSkyboxFog", "Bhop_NoFog_Skybox", function() return true end)
         hook.Add("RenderScreenspaceEffects", "Bhop_NoFog_Render", function()

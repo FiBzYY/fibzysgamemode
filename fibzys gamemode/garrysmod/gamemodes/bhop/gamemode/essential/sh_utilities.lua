@@ -1,5 +1,48 @@
 UTIL = UTIL or {}
 
+local normalmat = Material(BHOP.Zone.ZoneMaterial)
+
+-- Zone drawing
+function UTIL:DrawZoneTypes(min, max, colour, normal, pos, thickness)
+    if not colour or not min or not max then return end
+
+    local vec = Vector
+    local drawbeams = render.DrawBeam
+
+    local set1 = {
+        vec(min.x, min.y, min.z), vec(min.x, max.y, min.z),
+        vec(max.x, max.y, min.z), vec(max.x, min.y, min.z)
+    }
+    local set2 = {
+        vec(min.x, min.y, max.z), vec(min.x, max.y, max.z),
+        vec(max.x, max.y, max.z), vec(max.x, min.y, max.z)
+    } 
+    local overlap = 0.5
+
+    local function ExtendBeam(p1, p2)
+        if not p1 or not p2 then return p1, p2 end
+        local direction = (p2 - p1):GetNormalized()
+        return p1 - direction * overlap, p2 + direction * overlap
+    end
+
+    if normal then
+        render.SetMaterial(normalmat)
+        for i = 1, 4 do
+            local i2 = (i == 4 and 1 or i + 1)
+
+            local start1, end1 = ExtendBeam(set1[i], set1[i2])
+            local start2, end2 = ExtendBeam(set2[i], set2[i2])
+            local start3, end3 = ExtendBeam(set1[i], set2[i])
+
+            drawbeams(start1, end1, thickness, 0, 1, colour)
+            drawbeams(start2, end2, thickness, 0, 1, colour)
+            drawbeams(start3, end3, thickness, 0, 1, colour)
+        end
+    else
+        render.DrawWireframeBox(pos, Angle(0, 0, 0), min, max, colour, true)
+    end
+end
+
 cache_player_names = {}
 
 -- Get players name
