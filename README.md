@@ -38,7 +38,7 @@ This is **fully modular** and can be integrated into any Bhop server setup!
 # 🚀 Installation Guide
 
 📥 Download the **Bhop** gamemode and place it into your **`gamemodes/`** folder.  
-🗄️ Set up a **MySQL server**.  
+🗄️ Set up a **MySQL server**. This requires sqloo addon!
 📂 Move `sv.db` into the **`garrysmod/`** directory.  
 📌 Use the `timer.sql` file to import the required database tables.  
 🔧 Open `server.cfg` and set up your **SQL connection details** to match your MySQL server.  
