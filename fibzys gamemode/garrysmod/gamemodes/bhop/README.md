@@ -1,4 +1,4 @@
-# Bunny Hop by FiBzY 12.62 🐰
+# Bunny Hop by FiBzY 12.78 🐰
 
 Welcome to **Bunny Hop by FiBzY!**  
 This project is built with love for movement-based gameplay, making Bhop smoother, faster, and more fun! Whether you're using this for personal projects, community servers, or commercial purposes, you're free to **use, modify, and build upon** it. 
@@ -38,7 +38,7 @@ This is **fully modular** and can be integrated into any Bhop server setup!
 # 🚀 Installation Guide
 
 📥 Download the **Bhop** gamemode and place it into your **`gamemodes/`** folder.  
-🗄️ Set up a **MySQL server**.  
+🗄️ Set up a **MySQL server**. This requires sqloo addon!
 📂 Move `sv.db` into the **`garrysmod/`** directory.  
 📌 Use the `timer.sql` file to import the required database tables.  
 🔧 Open `server.cfg` and set up your **SQL connection details** to match your MySQL server.  
