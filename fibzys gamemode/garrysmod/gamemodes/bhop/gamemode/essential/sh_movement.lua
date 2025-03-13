@@ -281,7 +281,7 @@ function GM:SetupMove(client, data, cmd)
         end
     elseif style == TIMER:GetStyleID("Normal") or style == TIMER:GetStyleID("Unreal") or
            style == TIMER:GetStyleID("WTF") or style == TIMER:GetStyleID("Legit") or 
-           style == TIMER:GetStyleID("Bonus") or style == TIMER:GetStyleID("Segment") or style == TIMER:GetStyleID("LG") then
+           style == TIMER:GetStyleID("Bonus") or style == TIMER:GetStyleID("Segment") or style == TIMER:GetStyleID("LG") or style == TIMER:GetStyleID("HG") or style == TIMER:GetStyleID("MM") then
         forwardInput = (forwardPressed and 3 or 0) - (backPressed and 3 or 0)
         sideInput = (rightPressed and 3 or 0) - (leftPressed and 3 or 0)
     end
