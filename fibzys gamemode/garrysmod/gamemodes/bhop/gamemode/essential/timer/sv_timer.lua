@@ -387,9 +387,9 @@ end
 -- Stop any timer thats running
 function TIMER:Disable(ply)
     if not IsValid(ply) then return false end
-
     if ply:IsBot() then return false end
-    if ply:GetNWInt("inPractice", false) then return false end
+
+    ply:SetNWBool("inPractice", true)
 
     ply.time = nil
     ply.finished = nil
@@ -879,9 +879,29 @@ function TIMER:SendInitialRecords(ply)
     end
 end
 
+function TIMER:LoadMapData()
+    local mapName = MySQL:Escape(game.GetMap())
+
+    MySQL:Start("SELECT multiplier, bonusmultiplier, options FROM timer_map WHERE map = " .. mapName .. " LIMIT 1", function(result)
+        if result and result[1] then
+            Timer.Multiplier = tonumber(result[1]["multiplier"]) or 1
+            Timer.BonusMultiplier = tonumber(result[1]["bonusmultiplier"]) or 1
+            Timer.Options = tonumber(result[1]["options"]) or 0
+            UTIL:Notify(Color(255, 255, 0), "Timer", "Loaded map multipliers: Multiplier = " .. Timer.Multiplier .. ", BonusMultiplier = " .. Timer.BonusMultiplier .. ", Options = " .. Timer.Options)
+        else
+            UTIL:Notify(Color(255, 255, 0), "Timer", "No entry found for map " .. mapName .. ". Using default values.")
+            Timer.Multiplier = 1
+            Timer.BonusMultiplier = 1
+            Timer.Options = 0
+        end
+    end)
+end
+
 -- Load all records
 function TIMER:LoadRecords()
     if not self.Styles then return end
+
+    self:LoadMapData() -- Load multipliers at the start
 
     for id, _ in pairs(self.Styles) do
         if not self.Styles[id] or not self.Styles[id].Data then
@@ -1093,6 +1113,12 @@ end
 function TIMER:GetMultiplier(style)
 	if style == TIMER:GetStyleID("Bonus") then return Timer.BonusMultiplier end
 	return Timer.Multiplier
+end
+
+function TIMER:GetAverage(style)
+    local styleData = self.Styles[style] and self.Styles[style].Data
+    if not styleData then return 0 end
+    return styleData.Average or 0
 end
 
 function TIMER:GetPointsForMap(runTime, style)

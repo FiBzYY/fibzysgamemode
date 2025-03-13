@@ -997,12 +997,12 @@ UI:AddListener("segment", function(_, data)
 
     if data and data[1] then return end
 
-    UI.segment = UI:NumberedUIPanel("Segment Menu",
-        {["name"] = "Teleport to checkpoint", ["function"] = SEGMENT_Callback("set")},
-        {["name"] = "Previous checkpoint", ["function"] = SEGMENT_Callback("goto")},
-        {["name"] = "Delete checkpoint", ["function"] = SEGMENT_Callback("remove")},
-        {["name"] = "Reset Checkpoint", ["function"] = SEGMENT_Callback("reset")}
-    )
+	UI.segment = UI:NumberedUIPanel("Segment Menu",
+		{["name"] = "Set Checkpoint", ["function"] = SEGMENT_Callback("set")},
+		{["name"] = "Goto Checkpoint", ["function"] = SEGMENT_Callback("goto")},
+		{["name"] = "Previous checkpoint", ["function"] = SEGMENT_Callback("remove")},
+		{["name"] = "Reset Checkpoint", ["function"] = SEGMENT_Callback("reset")}
+	)
 end)
 
 UI:AddListener("menu", function()

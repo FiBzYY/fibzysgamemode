@@ -155,13 +155,16 @@ UI:AddListener("segment", function(client, data)
     elseif id == "reset" then
         client.hasWarning = client.hasWarning or false
         if client.hasWarning then 
-            client:ConCommand("reset")
             client.hasWarning = false
+            Segment:Reset(client)
+            NETWORK:StartNetworkMessageTimer(client, "Print", {"Timer", "Your checkpoints have been reset."})
         else 
             client.hasWarning = true 
             NETWORK:StartNetworkMessageTimer(client, "Print", {"Timer", "Are you sure you wish to reset your checkpoints? Press again to confirm."})
             timer.Simple(3, function()
-                client.hasWarning = false
+                if IsValid(client) then
+                    client.hasWarning = false
+                end
             end)
         end 
     end

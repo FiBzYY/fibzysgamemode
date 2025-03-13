@@ -33,9 +33,10 @@ function UI:CreateCustomDropdown(parent, y, themeID, labelText, themeOptions)
     dropdownButton:SetPos(20, 40)
     dropdownButton:SetSize(200, 25)
     dropdownButton:SetText("")
-    
-    local selectedTheme = Settings:GetValue('selected.hud', "hud.css")
-    local selectedText = themeOptions[selectedTheme] or "Select an option"
+
+    local isHudHidden = GetConVar("bhop_hud_hide"):GetBool()
+    local selectedTheme = isHudHidden and "disabled" or Settings:GetValue("selected.hud", "hud.css")
+    local selectedText = isHudHidden and "Select an option" or (themeOptions[selectedTheme] or "Select an option")
 
     local dropdownOpen = false
 
@@ -77,18 +78,16 @@ function UI:CreateCustomDropdown(parent, y, themeID, labelText, themeOptions)
         end
 
         option.DoClick = function()
-            selectedText = name
             dropdownOpen = false
             dropdownMenu:SetVisible(false)
-            selectedTheme = id
 
-            if id == 0 then
-                Settings:SetValue('selected.hud', "disabled")
-                Theme:DisableHUD()
+            if id == "disabled" then
+                selectedText = "Select an option"
                 RunConsoleCommand("bhop_hud_hide", "1")
             else
-                Settings:SetValue('selected.hud', id)
+                selectedText = name
                 RunConsoleCommand("bhop_hud_hide", "0")
+                Settings:SetValue("selected.hud", id)
             end
 
             parent:InvalidateLayout(true)
@@ -194,7 +193,8 @@ function UI:CreateThemeToggle(parent, y, themeID, labelText)
     pnl:SetPos(0, y)
 
     pnl.Paint = function(self, w, h)
-        local isActive = (selectedTheme == themeID)
+        local isHudHidden = GetConVar("bhop_hud_hide"):GetBool()
+        local isActive = (not isHudHidden and selectedTheme == themeID) or (themeID == 0 and isHudHidden)
 
         if themeID == 0 then
             local boxColor = isActive and Color(50, 205, 50) or Color(255, 69, 0)
@@ -203,9 +203,9 @@ function UI:CreateThemeToggle(parent, y, themeID, labelText)
             draw.RoundedBox(8, w - 60, 20, 50, 20, boxColor)
 
             if isActive then
-                draw.RoundedBox(8, w - 30, 20, 20, 20, knobColor)
+                draw.RoundedBox(8, w - 30, 20, 20, 20, knobColor) -- Green (ON)
             else
-                draw.RoundedBox(8, w - 60, 20, 20, 20, knobColor)
+                draw.RoundedBox(8, w - 60, 20, 20, 20, knobColor) -- Red (OFF)
             end
         else
             local boxColor = colors.box or Color(120, 120, 120)
@@ -222,16 +222,17 @@ function UI:CreateThemeToggle(parent, y, themeID, labelText)
     end
 
     pnl.OnMousePressed = function()
-        selectedTheme = themeID
-        
         if themeID == 0 then
-            Settings:SetValue('selected.hud', "disabled")
-            Theme:DisableHUD() -- DO TO
             RunConsoleCommand("bhop_hud_hide", "1")
+            Settings:SetValue('selected.hud', "disabled")
+            Theme:DisableHUD()
+
+            selectedTheme = "disabled"
         else
-            Settings:SetValue('selected.hud', themeID)
-            RunConsoleCommand("fibzy_hud", tostring(themeID))
             RunConsoleCommand("bhop_hud_hide", "0")
+            Settings:SetValue('selected.hud', themeID)
+
+            selectedTheme = themeID
         end
 
         parent:InvalidateLayout(true)
@@ -267,7 +268,7 @@ function UI:CreateInputBox(parent, y, command, defaultVal, labelText, infoText, 
     minVal = minVal or 0.1
     maxVal = maxVal or 10
 
-    local cvarValue = GetConVar(command) and GetConVar(command):GetInt() or defaultVal
+    local cvarValue = GetConVar(command) and GetConVar(command):GetFloat() or defaultVal
 
     local inputBox = vgui.Create("DTextEntry", pnl)
     inputBox:SetPos(pnl:GetWide() - 50, 0)

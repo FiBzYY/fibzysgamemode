@@ -538,7 +538,7 @@ function Admin:HandleRequest( ply, args )
 			if result and result[1] then
 				MySQL:Start("UPDATE timer_map SET multiplier = " .. Timer.Multiplier .. " WHERE map = " .. mapName)
 			else
-				MySQL:Start("INSERT INTO timer_map (map, multiplier, bonusmultiplier, plays, options) VALUES ('" .. mapName .. "', " .. Timer.Multiplier .. ", NULL, 0, NULL)")
+				MySQL:Start("INSERT INTO timer_map (map, multiplier, bonusmultiplier, plays, options) VALUES (" .. mapName .. ", " .. Timer.Multiplier .. ", NULL, 0, NULL)")
 			end
 		end)
 
@@ -821,14 +821,14 @@ function Admin:HandleRequest( ply, args )
 			if result and result[1] then
 				MySQL:Start("UPDATE timer_map SET bonusmultiplier = " .. Timer.BonusMultiplier .. " WHERE map = " .. mapName)
 			else
-				MySQL:Start("INSERT INTO timer_map (map, multiplier, bonusmultiplier, plays, options) VALUES ('" .. mapName .. "', " .. Timer.Multiplier .. ", " .. Timer.BonusMultiplier .. ", 0, NULL)")
+				MySQL:Start("INSERT INTO timer_map (map, multiplier, bonusmultiplier, plays, options) VALUES (" .. mapName .. ", " .. Timer.Multiplier .. ", " .. Timer.BonusMultiplier .. ", 0, NULL)")
 			end
 		end)
 
 		TIMER:RecalculatePoints(TIMER:GetStyleID("Bonus"))
 		TIMER:LoadRecords()
 		for _, p in pairs(player.GetHumans()) do
-			Player:UpdateRank(p)
+			TIMER:UpdateRank(p)
 		end
 
 		Admin:AddLog("Changed bonus multiplier on " .. game.GetMap() .. " from " .. nOld .. " to " .. nMultiplier, ply:SteamID(), ply:Name())

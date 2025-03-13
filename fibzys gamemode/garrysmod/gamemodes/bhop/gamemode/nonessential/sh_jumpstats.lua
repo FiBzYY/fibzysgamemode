@@ -259,6 +259,8 @@ end
 
 -- Get Velocity
 local function GetClientVelocity(ply)
+    if not IsValid(ply) then return 0 end
+
     local velocity = ply:GetAbsVelocity()
     if not velocity then return 0 end
     
@@ -293,20 +295,25 @@ if CLIENT then
     CreateClientConVar("bhop_showssj", "1", true, false, "Toggle SSJ display in chat")
     CreateClientConVar("bhop_showpre", "1", true, false, "Toggle Prestrafe display in chat")
 
-    local function SyncSSJSettings()
-        net.Start("SyncSSJSettings")
-        net.WriteBool(GetConVar("bhop_showssj"):GetBool())
-        net.WriteBool(GetConVar("bhop_showpre"):GetBool())
-        net.SendToServer()
+    local lastSSJ = GetConVar("bhop_showssj"):GetBool()
+    local lastPre = GetConVar("bhop_showpre"):GetBool()
 
-        timer.Simple(0.1, function()
-            LocalPlayer():SetNWBool("bhop_showssj", GetConVar("bhop_showssj"):GetBool())
-            LocalPlayer():SetNWBool("bhop_showpre", GetConVar("bhop_showpre"):GetBool())
-        end)
+    local function SyncSSJSettings()
+        local newSSJ = GetConVar("bhop_showssj"):GetBool()
+        local newPre = GetConVar("bhop_showpre"):GetBool()
+
+        if newSSJ ~= lastSSJ or newPre ~= lastPre then
+            lastSSJ, lastPre = newSSJ, newPre
+
+            net.Start("SyncSSJSettings")
+            net.WriteBool(newSSJ)
+            net.WriteBool(newPre)
+            net.SendToServer()
+        end
     end
 
-    cvars.AddChangeCallback("bhop_showssj", function() SyncSSJSettings() end)
-    cvars.AddChangeCallback("bhop_showpre", function() SyncSSJSettings() end)
+    cvars.AddChangeCallback("bhop_showssj", function() timer.Simple(0.05, SyncSSJSettings) end)
+    cvars.AddChangeCallback("bhop_showpre", function() timer.Simple(0.05, SyncSSJSettings) end)
 end
 
 -- Print the stats
@@ -329,8 +336,8 @@ local function SSJ_PrintStats(ply, lastSpeed, jumpTimeDiff)
     -- Jump Sync Stats
     local avgDiff = g_fAvgDiffFromPerf[ply] or 0
     local avgAbsJSS = g_fAvgAbsoluteJss[ply] or 0
-    local jss = avgDiff / (strafeTicks or 1)
-    local absjss = avgAbsJSS / (strafeTicks or 1)
+    local jss = avgDiff / (strafeTicks or 1) or 0
+    local absjss = avgAbsJSS / (strafeTicks or 1) or 0
     local yawwing = (g_iYawwingTick[ply] / (strafeTicks or 1)) * 100
 
     -- Colors
@@ -520,17 +527,26 @@ end
 
 -- Player jump
 local function Player_Jump(ply)
+    if not g_iJump[ply] then
+        g_iJump[ply] = 0
+    end
+
+    if not g_iStrafeTick[ply] then
+        g_iStrafeTick[ply] = 0
+    end
+
+    -- Prevent jump tracking if no strafing happened yet
     if (g_iJump[ply] > 0 and g_iStrafeTick[ply] == 0) then return end
 
     local currentSpeed = math.floor(GetClientVelocity(ply))
     local lastSpeed = g_prevSpeed[ply] or currentSpeed
-    local jumpCount = g_iJump[ply] or 0
+    local jumpCount = g_iJump[ply]
     local currentTime = SysTime()
 
-    -- previous speed
+    -- Previous speed
     g_prevSpeed[ply] = currentSpeed
 
-    -- height only for first jump
+    -- Height only for first jump
     if jumpCount == 0 then
         g_fInitialHeight[ply] = math.floor(ply:GetPos()[3])
     end
@@ -538,10 +554,10 @@ local function Player_Jump(ply)
     -- Speed difference
     g_speedDiff[ply] = currentSpeed - lastSpeed
 
-    -- jump count
+    -- Increment jump count
     g_iJump[ply] = (ply.time ~= 0) and (jumpCount + 1) or TIMER:GetJumps(ply)
 
-    -- jump time difference
+    -- Jump time difference
     local jumpTimeDiff = (g_fJumpTime[ply] and g_fJumpTime[ply] > 0) and (currentTime - g_fJumpTime[ply]) or 0
     g_fJumpTime[ply] = currentTime
 

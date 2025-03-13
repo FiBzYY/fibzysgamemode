@@ -538,7 +538,12 @@ local function CreateScoreboard(shouldHide)
             if styles == "Normal" then styles = "N" end
             if styles == "Bonus" then styles = "B" end
             if styles == "Segment" then styles = "S" end                     
-            if styles == "Auto-Strafe" then styles = "AS" end   
+            if styles == "Auto-Strafe" then styles = "AS" end
+            if styles == "Low Gravity" then styles = "LG" end
+            if styles == "Easy Scroll" then styles = "E" end
+            if styles == "Half-Sideways" then styles = "HSW" end                     
+            if styles == "Stamina" then styles = "STAM" end  
+            if styles == "Legit" then styles = "L" end
 
             DrawText(styles, "ui.mainmenu.button", x + (w * 0.6), ph / 2, TEXT, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
             DrawText(ConvertTimeWR(ply:GetNWFloat("Record", 0)), "ui.mainmenu.button", x + (w * 0.75), ph / 2, TEXT, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)

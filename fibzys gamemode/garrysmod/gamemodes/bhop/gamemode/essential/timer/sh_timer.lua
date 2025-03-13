@@ -54,6 +54,8 @@ TIMER.Styles = {
     {"Bonus", "Bonus", {"bonus", "b"}},
     {"WTF", "WTF", {"wtf"}},
     {"Low Gravity", "LG", {"lg", "lowgrav", "lowgravity"}},
+    {"High Gravity", "HG", {"hg", "highgrav", "highgravity"}},
+    {"Moon Man", "MOON", {"moon", "moonman", "mm"}},
     {"Backwards", "BW", {"bw", "backwards"}},
     {"Stamina", "Stamina", {"stamina", "stam"}},
     {"Segment", "Segment", {"segment"}},

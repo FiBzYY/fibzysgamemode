@@ -12,6 +12,7 @@ local roundedBoxEnabled = CreateConVar("bhop_roundedbox", "1", {FCVAR_ARCHIVE}, 
 local simpleBoxEnabled = CreateConVar("bhop_simplebox", "0", {FCVAR_ARCHIVE}, "Enable simple hud box drawing")
 local sidetimer = CreateClientConVar("bhop_sidetimer", 0, true, false, "Display SideTimer Stats")
 local disablespec = CreateClientConVar("bhop_disablespec", 0, true, false, "Disable Spectator Hud")
+local jhudold = CreateClientConVar("bhop_jhudold", 0, true, false, "Display the old JHUD from 2020")
 
 CreateClientConVar("bhop_default_crosshair", "1", true, false, "Enable default crosshair")
 
@@ -154,6 +155,28 @@ local function cTimeWR(ns)
 	else
 		return fo( "%.1d.%.1d", fl( ns % 60 ), fl( ns * 10 % 10 ) )
 	end
+end
+
+local function getColorForGain(gain)
+    if gain > 115 then
+        return Color(255, 0, 0, 255)       -- GainReallyBad
+    elseif gain > 110 then
+        return Color(255, 69, 0, 255)      -- GainReallyBad
+    elseif gain > 105 then
+        return Color(255, 128, 0, 255)     -- GainBad
+    elseif gain > 100 then
+        return Color(39, 255, 0, 255)      -- GainGood
+    elseif gain >= 90 then
+        return Color(0, 255, 255, 255)     -- GainReallyGood
+    elseif gain >= 80 then
+        return Color(39, 255, 0, 255)      -- GainGood
+    elseif gain >= 70 then
+        return Color(39, 255, 0, 255)      -- GainMeh
+    elseif gain >= 60 then
+        return Color(255, 128, 0, 255)     -- GainBad
+    else
+        return Color(255, 0, 0, 255)       -- GainReallyBad
+    end
 end
 
 HUD = {
@@ -417,6 +440,26 @@ HUD.Themes = {
             end
         end
 
+        local function getColorJHUD(jumps)
+            return jumps == 1 and color_white or highlightColor
+        end
+
+        -- Old JHUD
+        if SSJStats and jhudold:GetBool() then
+            local x, y = ScrW() / 2, ScrH() / 2
+            local offsetY = 291
+
+            local gain = math.Round(SSJStats.gain, 2)
+            local speed = math.Round(SSJStats.speed, 0)
+            local jumps = SSJStats.jumps
+            DrawText(speed, "JHUDMain", x, y + offsetY, getColorJHUD(jumps), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+
+            if jumps > 1 then
+                offsetY = offsetY + 21
+                DrawText("(with " .. gain .. "% gain)", "JHUDMain", x, y + offsetY, getColorForGain(gain), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            end
+        end
+
         pl.lastTickUpdate = pl.lastTickUpdate or engine.TickCount()
 
         local ticksBetweenUpdates = 10
@@ -488,7 +531,7 @@ HUD.Themes = {
             end
         end
 
-        DrawText(ceil(speed), "HUDTimerKindaUltraBig", screenWidth / 2, yPos - 100, (pl:GetMoveType() == MOVETYPE_NOCLIP) and textColor or pl.speedcol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+        DrawText(ceil(speed), "HUDTimerKindaUltraBig", ScrW() / 2, yPos - 80, (pl:GetMoveType() == MOVETYPE_NOCLIP) and tc or pl.speedcol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
         DrawText(status, "HUDTimerKindaUltraBig", screenWidth / 2, yPos + 20, textColor, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 
         if current < 0.1 and not pl:GetNWInt("inPractice", true) and pl:GetMoveType() ~= MOVETYPE_NOCLIP then 
@@ -870,28 +913,6 @@ local function getColorForSpeed(speed)
     end
 end
 
-local function getColorForGain(gain)
-    if gain > 115 then
-        return Color(255, 0, 0, 255)       -- GainReallyBad
-    elseif gain > 110 then
-        return Color(255, 69, 0, 255)      -- GainReallyBad
-    elseif gain > 105 then
-        return Color(255, 128, 0, 255)     -- GainBad
-    elseif gain > 100 then
-        return Color(39, 255, 0, 255)      -- GainGood
-    elseif gain >= 90 then
-        return Color(0, 255, 255, 255)     -- GainReallyGood
-    elseif gain >= 80 then
-        return Color(39, 255, 0, 255)      -- GainGood
-    elseif gain >= 70 then
-        return Color(39, 255, 0, 255)      -- GainMeh
-    elseif gain >= 60 then
-        return Color(255, 128, 0, 255)     -- GainBad
-    else
-        return Color(255, 0, 0, 255)       -- GainReallyBad
-    end
-end
-
 local function updateColorAlpha(color, fadeAmount)
     if color.a > 0 then
         color.a = math.Clamp(color.a - fadeAmount, 0, 255)
@@ -932,21 +953,13 @@ local hudStyles = {
         end
     end,
 
-    old = function(scrW, scrH, data)
-        DrawText(math.Round(data.speed, 0), "JHUDMain", scrW / 2, scrH / 2 + 291, speedColorCached, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-
-        if data.jumps > 1 then
-            DrawText("(with " .. math.Round(data.gain, 2) .. "% gain)", "JHUDMain", scrW / 2, scrH / 2 + 312, baseColorCached, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-        end
-    end,
-
     kawaii = function(scrW, scrH, data)
         local gainkawaii = math.Round(data.gain, 2) .. "%"
 
         if data.jumps == 1 then
-            DrawText(data.speed, "HUDTimerUltraBig", scrW / 2, scrH / 2 - 100, speedColorCached, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            DrawText(data.jumps .. ": " .. data.speed, "HUDTimerUltraBig", scrW / 2, scrH / 2 - 100, speedColorCached, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
         elseif data.jumps > 1 then
-            local textToDraw = data.jumps <= 7 and (data.jumps - 1 .. ": " .. data.speed) or (data.jumps % 7 == 0 and (data.jumps - 1 .. ": " .. gainkawaii) or gainkawaii)
+            local textToDraw = data.jumps <= 6 and (data.jumps .. ": " .. data.speed) or (data.jumps % 6 == 0 and (data.jumps .. ": " .. gainkawaii) or gainkawaii)
             DrawText(textToDraw, "HUDTimerUltraBig", scrW / 2, scrH / 2 - 100, baseColorCached, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
         end
     end,
@@ -971,7 +984,7 @@ local hudStyles = {
 }
 
 -- Main HUD Display
-local jhudstyle = CreateClientConVar("bhop_jhud_style", "pyramid", true, false, "Choose a JHUD style: 'pyramid', 'kawaii', 'old', etc.")
+local jhudstyle = CreateClientConVar("bhop_jhud_style", "pyramid", true, false, "Choose a JHUD style: 'pyramid', 'kawaii', 'claz'.")
 
 -- JHUD Display
 local function JumpHudDisplay()

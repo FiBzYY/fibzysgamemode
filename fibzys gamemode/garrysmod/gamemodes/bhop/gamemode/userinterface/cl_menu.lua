@@ -389,8 +389,6 @@ function UI:CreateMenu()
         y = y + 60
         self:CreateToggle(container, y, "bhop_flipweapons", "Flip Weapons", "Flips your weapons to the left side.")
         y = y + 60
-        self:CreateToggle(container, y, "bhop_gunsounds ", "Gun Sounds", "Enables or disables weapon sounds.")
-        y = y + 60
         self:CreateToggle(container, y, "bhop_showkeys", "Show Keys", "This displays the keys hud.")
         y = y + 60
         self:CreateToggle(container, y, "bhop_showchatbox", "Chatbox Visibility", "Enables or disables chatbox completely.")
@@ -509,11 +507,11 @@ function UI:CreateMenu()
         surface.DrawRect(10, y + 35, container:GetWide() - 20, 1)
 
         y = y + 45
-        self:CreateToggle(container, y, "bhop_showssj", "Display SSJ", "Enables or disables show jump stats." ,{ default = 1, off = 0 })
+        self:CreateToggle(container, y, "bhop_showssj", "Display SSJ", "Enables or disables show jump stats in chat." ,{ default = 1, off = 0 })
         y = y + 60
-        self:CreateToggle(container, y, "bhop_showpre", "Display Prestrafe", "Enables or disables prestrafe.")
+        self:CreateToggle(container, y, "bhop_showpre", "Display Prestrafe", "Enables or disables prestrafe in chat.")
         y = y + 60
-        self:CreateToggle(container, y, "bhop_chatfjt", "First jump tick", "Enables or disables jump tick.")
+        self:CreateToggle(container, y, "bhop_fjt", "Display FJT", "Enables or disables the strafe ground tick.")
         y = y + 60
         self:CreateToggle(container, y, "bhop_showfjthud", "First jump tick HUD", "Enables or disables jump tick HUD.")
         y = y + 60
@@ -521,11 +519,9 @@ function UI:CreateMenu()
         y = y + 60
         self:CreateToggle(container, y, "bhop_jhud", "Display JHUD", "Enables or disables SSJ HUD.")
         y = y + 60
-        self:CreateToggle(container, y, "bhop_jhudold", "Display JHUD Old", "Enables or disables the older SSJ HUD from 2020.")
+        self:CreateToggle(container, y, "bhop_jhudold", "Display JHUD Old", "Enables or disables the older SSJ MMod HUD from 2020.")
         y = y + 60
         self:CreateInputBox(container, y, "bhop_ssj_fadeduration", 1.5, "SSJ Fade Duration", "How long until the SSJ HUD fades out.")
-        y = y + 60
-        self:CreateToggle(container, y, "bhop_fjt", "Display FJT", "Enables or disables the strafe ground tick.")
         y = y + 60
         self:CreateToggle(container, y, "bhop_center_speed", "Display center speed", "Enables or disables the center speed.")
     end },
@@ -547,13 +543,19 @@ function UI:CreateMenu()
             local x, y = 10, 0
             self:CreatePanel(parent, {"Audio"})
             y = y + 45
+            self:CreateToggle(parent, y, "bhop_chatsounds", "Chat sounds", "Enables or disables chat sounds on messages.")
+            y = y + 60
             self:CreateToggle(parent, y, "bhop_mute_music", "Disable Map Music", "Use if you want to disable music on all maps.")
+            y = y + 60
+            self:CreateToggle(parent, y, "bhop_gunsounds", "Gun Sounds", "Enables or disables weapon sounds.")
             y = y + 60
             self:CreateInputBoxText(parent, y, "bhop_footsteps", "on", "Footsteps", "Options: 'off', 'local', 'spectate', 'all'.")
             y = y + 60
+            self:CreateToggle(parent, y, "bhop_zonesounds", "Zone sounds", "Enables or disables zone sounds on leave.")
+            y = y + 60
             self:CreateToggle(parent, y, "bhop_wrsfx", "WR Sounds", "Enables or disables the World Record sounds.")
             y = y + 60
-            self:CreateInputBox(parent, y, "bhop_wrsfx_volume", 0.4, "WR Sounds Volume", "Customize your WR sound volume.")
+            self:CreateInputBox(parent, y, "bhop_wrsfx_volume", 0.4, "WR Sounds Volume", "Customize your WR sound volume. (Choose between 0.1 and 1)")
         end },
 
         { text = "Controls", panelContent = function(parent)

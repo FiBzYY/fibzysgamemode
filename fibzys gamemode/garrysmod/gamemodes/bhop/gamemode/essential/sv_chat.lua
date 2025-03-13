@@ -93,7 +93,7 @@ Lang = {
     NominateOnMap = {"You are currently playing this map so you can't nominate it.", UTIL.Colour["White"]},
 
     -- Map
-    MapInfo = {"The map '1;' has a weight of ", UTIL.Colour["Timer"], "2; points (", UTIL.Colour["Timer"], "3;)", UTIL.Colour["White"], "4;"},
+    MapInfo = {"The map 1; has ", UTIL.Colour["Timer"], "2;", UTIL.Colour["White"], " points (3;) 4;"},
     MapInavailable = {"This map does not exist, not added or not zoned. Please contact an administrator if you feel this is incorrect.", UTIL.Colour["White"]},
     MapPlayed = {"This map has been played ", UTIL.Colour["Timer"], "1; times.", UTIL.Colour["White"]},
     TimeLeft = {"There is ", UTIL.Colour["Timer"], "1;", UTIL.Colour["White"], " left on this map.", UTIL.Colour["White"]},

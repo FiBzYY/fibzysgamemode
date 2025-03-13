@@ -765,6 +765,8 @@ local function DoStairsFix(ply, mv)
 end
 
 local function RNGFix_SetupMove(ply, mv, cmd)
+    if not IsValid(ply) then return end
+
     if not iTick[ply] then 
         iTick[ply] = 0
     end 
@@ -788,7 +790,7 @@ hook.Add("SetupMove", "RNGFix", RNGFix_SetupMove)
 
 -- PostThink works a little better than a ProcessMovement post hook because we need to wait for ProcessImpacts (trigger activation)
 local function PlayerPostThink(ply, mv)
-    if not ply:Alive() or ply:GetMoveType() ~= MOVETYPE_WALK or ply:WaterLevel() ~= 0 then
+    if not IsValid(ply) or not ply:Alive() or ply:GetMoveType() ~= MOVETYPE_WALK or ply:WaterLevel() ~= 0 then
         return
     end
 

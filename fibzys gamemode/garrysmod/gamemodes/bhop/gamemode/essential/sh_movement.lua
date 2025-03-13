@@ -229,6 +229,10 @@ function GM:SetupMove(client, data, cmd)
     if SERVER then
         if style == TIMER:GetStyleID("LG") then
             GravityChange(client, 0.6)
+        elseif style == TIMER:GetStyleID("HG") then
+            GravityChange(client, 1.4)
+        elseif style == TIMER:GetStyleID("MOON") then
+            GravityChange(client, 0.1)
         end
     end
 
@@ -357,6 +361,8 @@ end
 
 -- Hulls
 function GM:FinishMove(ply, mv)
+    if not IsValid(ply) then return end
+
     if ply:IsOnGround() and mv:KeyDown(IN_DUCK) then
         ply:SetNWBool("duckUntilOnGround", true)
     end

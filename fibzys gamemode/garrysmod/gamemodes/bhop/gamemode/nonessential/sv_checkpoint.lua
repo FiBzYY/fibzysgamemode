@@ -1,7 +1,6 @@
 ﻿Checkpoints = Checkpoints or {}
 
-local ct = CurTime
-local Iv = IsValid
+local ct, Iv = CurTime, IsValid
 
 CreateConVar("timer_cpfreeze", "0.15", FCVAR_ARCHIVE, "Checkpoint freeze time.")
 
@@ -98,9 +97,9 @@ function Checkpoints:Teleport(pl)
     self:SetUp(pl)
     local current = self:GetCurrent(pl)
     local data = pl.checkpoints[current]
-    if not data then 
-        return 
-    end
+    if not data then return end
+
+    TIMER:Disable(pl)
 
     pl:SetMoveType(MOVETYPE_NONE)
     pl:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
@@ -113,14 +112,10 @@ function Checkpoints:Teleport(pl)
         if not Iv(pl) then return end
 
         local teleportData = pl.teleportData
-        if not teleportData then 
-            return
-        end
+        if not teleportData then return end
 
         local pos, vel, angles, time = teleportData[2], teleportData[1], teleportData[3], teleportData.time
-        if not pos or not vel or not angles or not time then
-            return
-        end
+        if not pos or not vel or not angles or not time then return end
 
         pl:SetPos(pos)
         pl:SetLocalVelocity(vel)
@@ -128,16 +123,17 @@ function Checkpoints:Teleport(pl)
             pl:SetEyeAngles(angles)
         end
 
-        local tickInterval = engine.TickInterval()
-        pl.time = ct() - time + tickInterval
-
+        pl.time = nil
+        pl.finished = nil
+        pl.bonustime = nil
+        pl.bonusfinished = nil
+        pl:SetNWBool("inPractice", true)
+        
         pl:SetMoveType(MOVETYPE_WALK)
         pl:SetCollisionGroup(COLLISION_GROUP_PLAYER)
         pl:UnLock()
         pl.tpReady = true
         pl.teleportData = nil
-
-        BHDATA:Send(pl, "Timer", { "Start", pl.time })
     end)
 end
 

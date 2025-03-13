@@ -384,7 +384,11 @@ function Zones:FindNearestSpawn(at, tab)
     table.SortByMember(order, "Dist", true)
 
     for i = 1, #order do
-        local tr = util.TraceLine({start = at, endpos = order[i].Vec})
+        local tr = util.TraceLine({
+            start = at,
+            endpos = order[i].Vec,
+            filter = function(ent) return ent:IsPlayer() end
+        })
         if not tr.HitWorld then
             return order[i]
         end
