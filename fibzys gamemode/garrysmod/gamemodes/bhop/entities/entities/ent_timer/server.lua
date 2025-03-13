@@ -18,6 +18,8 @@ local Iv = IsValid
 
 resource.AddWorkshop "3020406990"
 
+util.AddNetworkString("ZoneExitSound")
+
 function ENT:Initialize()
     local BBOX = (self.max - self.min) / 2
 
@@ -52,6 +54,9 @@ local function HandleStartZone(ent, zone)
             TIMER:ResetTimer(ent)
         elseif not ent.time and isJumping and moveType ~= MOVETYPE_NOCLIP then
             TIMER:StartTimer(ent)
+
+            net.Start("ZoneExitSound")
+            net.Send(ent)
         end
     elseif zone == ZONE.BONUS_START then
         ent.InStartZone = false
@@ -130,5 +135,10 @@ function ENT:EndTouch(ent)
 
     if zone == ZONE.SURFGRAVTY then
         ent:SetGravity(1)
+    end
+
+    if not ent:KeyDown(IN_JUMP) then
+        net.Start("ZoneExitSound")
+        net.Send(ent)
     end
 end
