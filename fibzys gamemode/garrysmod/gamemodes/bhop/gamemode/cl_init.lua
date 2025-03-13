@@ -92,6 +92,8 @@ local setting_hints = CreateClientConVar("bhop_hints", "180", true, false)
 local customFOV = CreateClientConVar("bhop_set_fov", "90", true, true, "Set custom FOV", 1, 180)
 local sounds_enabled = CreateClientConVar("bhop_wrsfx", "1", true, true, "WR sounds enabled state", 0, 1)
 local sounds_volume = CreateClientConVar("bhop_wrsfx_volume", "0.4", true, false, "WR sounds volume", 0, 1)
+local chat_sounds = CreateClientConVar("bhop_chatsounds", "0", true, false, "Play chat sounds", 0, 1)
+local zone_sounds = CreateClientConVar("bhop_zonesounds", "1", true, false, "Play sound on zone left", 0, 1)
 
 -- Cvars
 CreateClientConVar("bhop_simpletextures", 0, true, false, "Toggle simple solid textures", 0, 1)
@@ -413,10 +415,20 @@ function GM:OnPlayerChat(ply, szText, bTeam, bDead)
     tab[#tab + 1] = szText
 
     chat.AddText(unpack(tab))
-    -- surface.PlaySound("common/talk.wav") -- Uncomment if you want chat sounds
+
+    if chat_sounds:GetBool() then
+       surface.PlaySound("common/talk.wav")
+    end
 
     return true
 end
+
+-- Play Zone sound
+net.Receive("ZoneExitSound", function()
+    if zone_sounds:GetBool() then
+        surface.PlaySound("start.mp3")
+    end
+end)
 
 local function SetEntityVisibility(classNames, shouldDraw)
     for _, className in ipairs(classNames) do
@@ -635,7 +647,7 @@ end)
 
 -- Client WR sounds
 net.Receive("WRSounds", function(len)
-    if sounds_enabled:GetBool() then return end
+    if not sounds_enabled:GetBool() then return end
     local soundPath = "wrsfx/" .. net.ReadString()
 
     lp():EmitSound(soundPath, 75, 100, sounds_volume:GetFloat())

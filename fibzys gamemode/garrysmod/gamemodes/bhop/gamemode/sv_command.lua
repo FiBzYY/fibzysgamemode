@@ -267,10 +267,6 @@ function Command.Nominate(ply, _, varArgs)
     if not RTV:IsAvailable(varArgs[1]) then return NETWORK:StartNetworkMessageTimer(ply, "Print", {"Notification", "Sorry, this map isn't available on the server itself. Please contact an admin!"}) end
 
     RTV:Nominate(ply, varArgs[1])
-
-    if IsValid(ply) and ply:IsPlayer() then
-        UI:SendToClient(ply, "nominate", {RTV.MapListVersion})
-    end
 end
 
 -- Style commands
@@ -412,7 +408,7 @@ end
 function Command:Init()
     local commands = {
         {
-            {"map"},
+            {"changelevel"},
             function(pl, args)
                 if not pl:IsAdmin() or not args[1] then
                     TIMER:Print(pl, Lang:Get("MapChangeSyntax"))
@@ -708,7 +704,7 @@ function Command:Init()
             ""
         },
         {
-            {"nominate", "rtvmap", "playmap", "addmap", "maps"},
+            {"nominate", "rtvmap", "playmap", "maps"},
            function(ply, args)
                 if args[1] then
                     Command.Nominate(ply, nil, args)
@@ -825,6 +821,8 @@ function Command:Init()
         "Enable or disable LJ stats.", 
         ""
         },
+
+
         {
         {"wrsounds", "wrsound"}, 
         function(pl)
@@ -841,6 +839,31 @@ function Command:Init()
         "Toggle WR sound effects on/off",
         ""
         },
+
+        {
+            {"map", "points"}, 
+            function(pl, args)
+                if #args > 0 then
+                    if not args[1] then return end
+                    if RTV:MapExists(args[1]) then
+                        local data = RTV:GetMapData(args[1])
+                        BHDATA:Send(pl, "Print", { "Notification", Lang:Get("MapInfo", { data[1], data[2] or 0, "No more details available", "" }) })
+                    else
+                        BHDATA:Send(pl, "Print", { "Notification", Lang:Get("MapInavailable", { args[1] }) })
+                    end
+                else
+                    local nMult, bMult = Timer.Multiplier or 0, Timer.BonusMultiplier or 0
+                    local szBonus = Zones.BonusPoint and " (Bonus has a multiplier of " .. bMult .. ")" or ""
+                    local nPoints = TIMER:GetPointsForMap(pl.record, pl.style)
+                    local szPoints = "You have " .. math.floor(nPoints) .. "/" .. nMult .. " points"
+
+                    BHDATA:Send(pl, "Print", { "Notification", Lang:Get("MapInfo", { game.GetMap(), Timer.Multiplier or 1, szPoints, szBonus }) })
+                end
+            end,
+            "Toggle WR sound effects on/off",
+            ""
+        },
+
        {
             {"kick", "kicplayer"},
             function(pl, args)

@@ -91,13 +91,17 @@ function TIMER:Spawn(ply)
 end
 
 function ResetPlayerAttributes( ply, nPrevious, bStart )
-	if ply.style == TIMER:GetStyleID("LG") then
-		ply:SetGravity(0.6)
-	elseif ply:GetGravity() != 0 then
-		ply:SetGravity(0)
-	end
+    if ply.style == TIMER:GetStyleID("LG") then
+        ply:SetGravity(0.6)
+    elseif ply.style == TIMER:GetStyleID("HG") then
+        ply:SetGravity(1.4)
+    elseif ply.style == TIMER:GetStyleID("MOON") then
+        ply:SetGravity(0.1)
+    elseif ply:GetGravity() != 0 then
+        ply:SetGravity(0)
+    end
 
-   if ply.style == TIMER:GetStyleID("Stamina") and ply.style == TIMER:GetStyleID("legit") then
+    if ply.style == TIMER:GetStyleID("Stamina") and ply.style == TIMER:GetStyleID("legit") then
         STAMINA_USE[ply] = true
     else
         STAMINA_USE[ply] = false
