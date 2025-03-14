@@ -352,10 +352,11 @@ local styleIDs = {
     [5] = TIMER:GetStyleID("A"),            [6] = TIMER:GetStyleID("L"),
     [7] = TIMER:GetStyleID("E"),            [8] = TIMER:GetStyleID("Unreal"),
     [9] = TIMER:GetStyleID("Swift"),        [10] = TIMER:GetStyleID("Bonus"),
-    [11] = TIMER:GetStyleID("WTF"),         [12] = TIMER:GetStyleID("LG"),
+    [11] = TIMER:GetStyleID("WTF"),         [12] = TIMER:GetStyleID("Low Gravity"),
     [13] = TIMER:GetStyleID("Backwards"),   [14] = TIMER:GetStyleID("Stamina"),
     [15] = TIMER:GetStyleID("Segment"),     [16] = TIMER:GetStyleID("Practice"),
-    [17] = TIMER:GetStyleID("AS"),          [18] = TIMER:GetStyleID("LG"),
+    [17] = TIMER:GetStyleID("AS"),          [18] = TIMER:GetStyleID("MM"),
+    [19] = TIMER:GetStyleID("HG"),          [20] = TIMER:GetStyleID("SPEED")
 }
 
 UI:AddListener("style", function(client, data)
@@ -668,6 +669,15 @@ function Command:Init()
                 end
             end,
             "Rock the vote commands",
+            "[subcommand]"
+        },
+
+        {
+            {"revoke"},
+            function(pl, args)
+                RTV:Revoke(pl)
+            end,
+            "Revoke Rock the vote",
             "[subcommand]"
         },
         {
