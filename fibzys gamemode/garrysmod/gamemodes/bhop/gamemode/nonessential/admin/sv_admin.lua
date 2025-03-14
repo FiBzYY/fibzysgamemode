@@ -1011,28 +1011,28 @@ end
 local function LoadBans()
     if file.Exists("bans/" .. banFile, "DATA") then
         Bans = util.JSONToTable(file.Read("bans/" .. banFile, "DATA")) or { steam = {}, ip = {} }
-		UTIL:Notify(Color(255, 0, 0), "BanSystem", BanSystem .. "Loaded " .. table.Count(Bans.steam) .. " SteamID bans and " .. table.Count(Bans.ip) .. " IP bans.")
     else
-		UTIL:Notify(Color(255, 0, 0), "BanSystem", BanSystem .. "No ban file found, starting fresh.")
         Bans = { steam = {}, ip = {} }
-    end
-end
-
-local function IsPlayerBanned(steamID)
-    if not steamID or type(steamID) ~= "string" then
-		UTIL:Notify(Color(255, 0, 0), "BanSystem", "Error: Invalid SteamID provided to IsPlayerBanned()")
-        return false
     end
 
     Bans.steam = Bans.steam or {}
+    Bans.ip = Bans.ip or {}
 
-    local banData = Bans.steam[string.upper(steamID)]
+    UTIL:Notify(Color(255, 0, 0), "BanSystem", "Loaded " .. table.Count(Bans.steam) .. " SteamID bans and " .. table.Count(Bans.ip) .. " IP bans.")
+end
+
+local function IsIPBanned(ip)
+    if not ip then return false end
+
+    Bans.ip = Bans.ip or {}
+
+    local banData = Bans.ip[ip]
     if not banData then return false end
 
     if banData.expires == 0 then return true, banData.reason end
 
     if os.time() > banData.expires then
-        Bans.steam[string.upper(steamID)] = nil
+        Bans.ip[ip] = nil
         SaveBans()
         return false
     end
@@ -1260,7 +1260,7 @@ hook.Add("PlayerInitialSpawn", "CheckBannedPlayer", function(ply)
         if not IsValid(ply) then return end
 
         local steamID = ply:SteamID()
-        local ip = ply:IPAddress():match("^(%d+%.%d+%.%d+%.%d+)")
+        local ip = ply:IPAddress() and ply:IPAddress():match("^(%d+%.%d+%.%d+%.%d+)") or "0.0.0.0"
 
         local isSteamBanned, steamReason = IsPlayerBanned(steamID)
         if isSteamBanned then

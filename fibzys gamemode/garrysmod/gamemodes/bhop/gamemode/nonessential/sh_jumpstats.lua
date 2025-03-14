@@ -281,13 +281,26 @@ end
 
 if SERVER then
     util.AddNetworkString("SyncSSJSettings")
+    util.AddNetworkString("SyncSSJFromServer")
 
     net.Receive("SyncSSJSettings", function(len, ply)
         local showSSJ = net.ReadBool()
         local showPre = net.ReadBool()
 
+        local ssjSettings = { showSSJ, showPre }
+        ply:SetPData("SSJ_Settings", util.TableToJSON(ssjSettings))
+
         ply:SetNWBool("bhop_showssj", showSSJ)
         ply:SetNWBool("bhop_showpre", showPre)
+    end)
+
+    hook.Add("PlayerInitialSpawn", "SyncSSJOnSpawn", function(ply)
+        local ssjData = ply:GetPData("SSJ_Settings", nil)
+        if ssjData then
+            net.Start("SyncSSJFromServer")
+            net.WriteString(ssjData)
+            net.Send(ply)
+        end
     end)
 end
 
@@ -297,6 +310,20 @@ if CLIENT then
 
     local lastSSJ = GetConVar("bhop_showssj"):GetBool()
     local lastPre = GetConVar("bhop_showpre"):GetBool()
+
+    net.Receive("SyncSSJFromServer", function()
+        local ssjSettings = util.JSONToTable(net.ReadString()) or {}
+        
+        if ssjSettings[1] ~= nil then
+            RunConsoleCommand("bhop_showssj", ssjSettings[1] and "1" or "0")
+            lastSSJ = ssjSettings[1]
+        end
+        
+        if ssjSettings[2] ~= nil then
+            RunConsoleCommand("bhop_showpre", ssjSettings[2] and "1" or "0")
+            lastPre = ssjSettings[2]
+        end
+    end)
 
     local function SyncSSJSettings()
         local newSSJ = GetConVar("bhop_showssj"):GetBool()
@@ -509,18 +536,21 @@ local function SSJ_PrintStats(ply, lastSpeed, jumpTimeDiff)
     if SSJTOP and jumpCount == 6 and not gB_IllegalSSJ[ply] then
         local steamID = ply:SteamID()
         local wasDucking = playerDuckStatus[steamID] or false
-        local ssjType = wasDucking and "DUCKED" or "NORMAL"
+        local ssjType = wasDucking and "duck" or "normal"
         local jumpSpeed = math.floor(velocity)
 
-        if jumpSpeed > (SSJTOP[steamID] and SSJTOP[steamID][ssjType:lower()] or 0) then
-            local ID = "ssjTop"
-            local Data = { ply:Nick(), tostring(jumpSpeed), ssjType, "6th" }
+        SSJTOP[steamID] = SSJTOP[steamID] or { duck = 0, normal = 0 }
+
+        if jumpSpeed > SSJTOP[steamID][ssjType] then
+            SSJTOP[steamID][ssjType] = jumpSpeed
 
             if SERVER then
+                local ID = "ssjTop"
+                local Data = { ply:Nick(), tostring(jumpSpeed), ssjType:upper(), "6th" }
                 NETWORK:StartNetworkMessageTimer(nil, "Print", { ID, Lang:Get(ID, Data) })
-            end
 
-            UpdateSSJTop(ply, jumpSpeed)
+                timer_Start("SSJTOP_AutoSave")
+            end
         end
     end
 end
@@ -567,6 +597,8 @@ local function Player_Jump(ply)
 end
 
 local function OnPluginStart(ply, cmd)
+    if not IsValid(ply) or not ply:Alive() then return end
+
     local buttons = cmd:GetButtons()
     local wasOnGround = ply:IsFlagSet(FL_ONGROUND)
 
@@ -682,6 +714,8 @@ local function SSJ_GetStats(ply, cmd)
 end
 
 local function OnPlayerStartCmd(ply, cmd)
+    if not IsValid(ply) or not ply:Alive() then return end
+
     -- to reduce table lookups
     local buttons = cmd:GetButtons()
     local speed = GetClientVelocity(ply)

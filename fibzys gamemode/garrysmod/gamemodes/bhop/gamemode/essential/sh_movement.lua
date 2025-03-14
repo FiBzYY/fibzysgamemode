@@ -137,6 +137,47 @@ local function GravityChange(ply, grav)
     end
 end
 
+hook.Add("SetupMove", "JumpVelocity", function(ply, mv, cmd)
+    if not IsValid(ply) or not ply:Alive() then return end
+
+    local style = TIMER:GetStyle(ply)
+    if style ~= TIMER:GetStyleID("SPEED") then return end
+
+    if ply:IsOnGround() and mv:KeyDown(IN_JUMP) and not ply.JumpedThisFrame then
+        ply.JumpedThisFrame = true
+        if SERVER then
+            IncrementJumpCounter(ply)
+        end
+    elseif not ply:IsOnGround() then
+        ply.JumpedThisFrame = false
+    end
+
+    local onGround = ply:IsOnGround()
+    if ply.JumpedThisFrame  and onGround then
+        local velocity = ply:GetVelocity()
+        local speed = math.sqrt(velocity[1]^2 + velocity[2]^2)
+
+        if speed ~= 0 then
+            local velocityMultiplier = 1.2
+            local minVelocity = 750
+
+            if velocityMultiplier ~= 0.0 then
+                velocity[1] = velocity[1] * velocityMultiplier
+                velocity[2] = velocity[2] * velocityMultiplier
+            end
+
+            if minVelocity ~= 0.0 and speed < minVelocity then
+                local factor = (speed / minVelocity)
+                velocity[1] = velocity[1] / factor
+                velocity[2] = velocity[2] / factor
+            end
+
+            -- Since mv:SetVelocity we use ply:SetVelocity for speed updates
+            ply:SetVelocity(velocity - ply:GetVelocity())
+        end
+    end
+end)
+
 -- Main Movement
 function GM:SetupMove(client, data, cmd)
     if not Iv(client) or client:IsBot() or not client:Alive() then return end
@@ -159,7 +200,7 @@ function GM:SetupMove(client, data, cmd)
     data:SetForwardSpeed((moveForward and speedModifier) or (moveBack and -speedModifier) or 0)
 
     -- Zone
-    if currentMap ~= "bhop_coast" and client.InStartZone and not client:GetNWInt("inPractice", false) then
+    if currentMap ~= "bhop_coast" and client.InStartZone and not client:GetNWInt("inPractice", false) and style ~= TIMER:GetStyleID("SPEED") then
         local speedcap = StyleSpeeds[style] or zonecap:GetFloat()
 
         if velocity2d > speedcap and not client.Teleporting then
@@ -281,7 +322,7 @@ function GM:SetupMove(client, data, cmd)
         end
     elseif style == TIMER:GetStyleID("Normal") or style == TIMER:GetStyleID("Unreal") or
            style == TIMER:GetStyleID("WTF") or style == TIMER:GetStyleID("Legit") or 
-           style == TIMER:GetStyleID("Bonus") or style == TIMER:GetStyleID("Segment") or style == TIMER:GetStyleID("LG") or style == TIMER:GetStyleID("HG") or style == TIMER:GetStyleID("MM") then
+           style == TIMER:GetStyleID("Bonus") or style == TIMER:GetStyleID("Segment") or style == TIMER:GetStyleID("LG") or style == TIMER:GetStyleID("HG") or style == TIMER:GetStyleID("MM") or style == TIMER:GetStyleID("SPEED") then
         forwardInput = (forwardPressed and 3 or 0) - (backPressed and 3 or 0)
         sideInput = (rightPressed and 3 or 0) - (leftPressed and 3 or 0)
     end
@@ -443,6 +484,8 @@ function GM:OnPlayerHitGround(client, isWater, onFloater, Speed)
 end
 
 function GM:Move(ply, mv)
+    if not IsValid(ply) or not ply:Alive() then return end
+
     -- Noclip
     if ply:GetMoveType() == MOVETYPE_NOCLIP then
         local smoothnoclip = ply:GetInfoNum("bhop_smoothnoclip", 0) == 1

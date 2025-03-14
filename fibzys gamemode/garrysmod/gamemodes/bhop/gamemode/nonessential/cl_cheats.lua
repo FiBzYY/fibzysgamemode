@@ -8,6 +8,8 @@
     }
 }
 
+CreateClientConVar("bhop_fullbright", "0", true, false, "Enable Fullbright toggle using the flashlight key (1 = enabled, 0 = disabled)")
+
 -- Toggle Fullbright
 function BhopCheats:ToggleFullbright(silent)
     self.Fullbright = not self.Fullbright
@@ -66,9 +68,10 @@ cvars.AddChangeCallback("bhop_map_fog", function(_, _, newVal)
     end
 end)
 
--- Flashlight Activation for Fullbright
-hook.Add("PlayerBindPress", "Bhop_FlashlightToggle", function(_, bind)
-    if bind == "impulse 100" then
+CreateClientConVar("bhop_fullbright", "0", true, false, "Enable Fullbright toggle using the flashlight key")
+
+hook.Add("PlayerBindPress", "Bhop_FlashlightToggle", function(ply, bind, pressed)
+    if GetConVar("bhop_fullbright"):GetBool() and bind:lower() == "impulse 100" and pressed then
         BhopCheats:ToggleFullbright(true)
         return true
     end

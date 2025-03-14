@@ -33,14 +33,14 @@ end
 function UpdateSSJTop(ply, jumpSpeed)
     if not IsValid(ply) then return end
 
-    local steamID, wasDucking = ply:SteamID(), playerDuckStatus[ply:SteamID()] or false
+    local steamID = ply:SteamID()
+    local wasDucking = playerDuckStatus[steamID] or false
     local ssjType = wasDucking and "duck" or "normal"
 
     SSJTOP[steamID] = SSJTOP[steamID] or { duck = 0, normal = 0 }
 
     if jumpSpeed > SSJTOP[steamID][ssjType] then
         SSJTOP[steamID][ssjType] = jumpSpeed
-        if SERVER then timer_Start("SSJTOP_AutoSave") end
     end
 end
 

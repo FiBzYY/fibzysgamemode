@@ -522,7 +522,6 @@ function TIMER:ConcatTables(t1, t2)
 end
 
 -- When the player gets a new WR
--- When the player gets a new WR
 function TIMER:WorldRecordCompletion(ply, time, currentWR, formattedTime)
     local StyleName = TIMER:StyleName(ply.style)
     local styleData = self.Styles[ply.style].Data
@@ -531,31 +530,24 @@ function TIMER:WorldRecordCompletion(ply, time, currentWR, formattedTime)
 
     local ID_WR = "WorldRecord"
     
-    -- ✅ Fix WR Difference Formatting
     local WRDifference
     if currentWR == 0 then
-        -- No previous WR, show "Old WR was X"
-        WRDifference = ("Old WR was %s"):format(TIMER:WRConvert2(time))
+        WRDifference = "No previous WR"
     else
-        -- Player improved WR, show "Improved by -X.XXX"
         local timeDiff = currentWR - time
-        WRDifference = ("Improved by %s%s"):format(timeDiff < 0 and "-" or "", TIMER:WRConvert2(math.abs(timeDiff)))
+       WRDifference = ("%s%s"):format(timeDiff < 0 and "-" or "", TIMER:WRConvert2(math.abs(timeDiff)))
+
     end
 
-    -- ✅ Pass the corrected WRDifference into WRData
     local WRData = { StyleName, ply:Name(), nil, formattedTime, WRDifference }
-
-    -- ✅ Correctly format the WR message
     local worldRecordMessage = Lang:Get(ID_WR, WRData)
     
-    -- ✅ Color & Notifications
     local rainbowText = TIMER:Rainbow("New " .. StyleName .. " World Record! ")
     local fullMessage = TIMER:ConcatTables(rainbowText, worldRecordMessage)
 
     BHDATA:Broadcast("Print", { "Timer", fullMessage })
     SendPopupNotification(nil, "Notification", "New World Record by " .. ply:Name(), 2)
 end
-
 
 -- When the player finished
 function TIMER:Finish(ply, time)
@@ -565,13 +557,13 @@ function TIMER:Finish(ply, time)
     local endTick = isBonusStyle and ply.bonusfinished or ply.finished
 
     local styleID = self:GetStyle(ply) or "Unknown"
-    local nDifference = record > 0 and time - record or nil
-    local szSlower = nDifference and ((nDifference < 0 and "-" or "+") .. self:SecondsToClock(math.abs(nDifference))) or "No previous time"
-    local varSync, szSync = SYNC:GetFinishingSync(ply), ""
+    local diff = record > 0 and time - record or nil
+    local slower = diff and ((diff < 0 and "-" or "+") .. self:SecondsToClock(math.abs(diff))) or "No previous time"
+    local syncvalue, syncfinish = SYNC:GetFinishingSync(ply), ""
 
-    if varSync then
-        szSync = " (With " .. varSync .. "% Sync)"
-        ply.LastSync = varSync
+    if syncvalue then
+        syncfinish = " (With " .. syncvalue .. "% Sync)"
+        ply.LastSync = syncvalue
     end
 
     local style = self:GetStyle(ply)
@@ -583,42 +575,52 @@ function TIMER:Finish(ply, time)
     MySQL:Start("SELECT * FROM timer_times WHERE map = '" .. game.GetMap() .. "' AND style = " .. ply.style .. " ORDER BY time ASC LIMIT 1", function(WR)
         local currentWR = WR and WR[1] and WR[1].time or 0
 
-        MySQL:Start("SELECT t1.*, (SELECT COUNT(*) + 1 FROM timer_times AS t2 WHERE map = '" .. game.GetMap() .. "' AND t2.time < t1.time AND style = " .. ply.style .. ") AS nRank FROM timer_times AS t1 WHERE t1.uid = '" .. ply:SteamID() .. "' AND t1.map = '" .. game.GetMap() .. "' AND t1.style = " .. ply.style, function(Rank)
-            local id = 1
-            if Rank and Rank[1] and Rank[1]["nRank"] then
-                id = tonumber(Rank[1]["nRank"])
-            end
+        MySQL:Start("SELECT COUNT(*) AS totalRecords FROM timer_times WHERE map = '" .. game.GetMap() .. "' AND style = " .. ply.style, function(TotalRecords)
+            local nRec = TotalRecords and TotalRecords[1] and tonumber(TotalRecords[1]["totalRecords"]) or 0
 
-            local styleData = self.Styles[ply.style].Data
-            local nRec = styleData:GetRecordCount()
-            local StyleName = self:StyleName(ply.style)
-            local ID = "TimerFinish"
-            local Data = { StyleName, ply:Name(), "#" .. id, formattedTime, szSlower, id .. "/" .. nRec }
+            MySQL:Start("SELECT COUNT(*) AS nRank FROM timer_times WHERE map = '" .. game.GetMap() .. "' AND time < " .. time .. " AND style = " .. ply.style, function(Rank)
+                local playerRank = Rank and Rank[1] and tonumber(Rank[1]["nRank"]) or 0
+                local id = playerRank + 1
 
-            if time < currentWR or currentWR == 0 then
-                self:WorldRecordCompletion(ply, time, currentWR, formattedTime)
-    
-                self:PostDiscordWR(ply, time, ply.style, currentWR)
-            end
+                if id > (nRec + 1) then
+                    id = nRec + 1
+                elseif id < 1 then
+                    id = 1
+                end
 
-            NETWORK:StartNetworkMessageTimer(ply, "Print", { "Timer", Lang:Get(ID, Data) })
+                local StyleName = self:StyleName(ply.style)
+                local ID = "TimerFinish"
+                local totalRecordsDisplay = record == 0 and (nRec + 1) or nRec
+                local Data = { StyleName, ply:Name(), "#" .. id, formattedTime, slower, id .. "/" .. totalRecordsDisplay }
 
-            local FinishingStatsData = { 
-                ply:Name(),
-                ply.LastSync or 0,
-                self:GetJumps(ply) or 0,
-                ply.TotalStrafes or 0
-            }
-            NETWORK:StartNetworkMessageTimer(ply, "Print", { "Timer", Lang:Get("FinishingStats", FinishingStatsData) })
+                if time < currentWR or currentWR == 0 then
+                    self:LoadMapData()
+                    timer.Simple(1, function()
+                        self:PostDiscordWR(ply, time, ply.style, currentWR)
+                    end)
 
-            SendPopupNotification(nil, "Notification", "New time by " .. ply:Name(), 2)
+                    self:WorldRecordCompletion(ply, time, currentWR, formattedTime)
+                end
 
-            if record ~= 0 and time >= record then return end
-            ply.record = time
-            ply.SpeedRequest = ply.style
+                NETWORK:StartNetworkMessageTimer(nil, "Print", { "Timer", Lang:Get(ID, Data) })
 
-            ply:SetNWFloat("Record", ply.record)
-            self:AddRecord(ply, time, OldRecord)
+                local FinishingStatsData = { 
+                    ply:Name(),
+                    ply.LastSync or 0,
+                    self:GetJumps(ply) or 0,
+                    ply.TotalStrafes or 0
+                }
+                NETWORK:StartNetworkMessageTimer(nil, "Print", { "Timer", Lang:Get("FinishingStats", FinishingStatsData) })
+
+                SendPopupNotification(nil, "Notification", "New time by " .. ply:Name(), 2)
+
+                if record ~= 0 and time >= record then return end
+                ply.record = time
+                ply.SpeedRequest = ply.style
+
+                ply:SetNWFloat("Record", ply.record)
+                self:AddRecord(ply, time, OldRecord)
+            end)
         end)
     end)
 end
@@ -670,24 +672,39 @@ function TIMER:AddRecord(ply, time, old)
     local styleID = ply.style
     local styleData = self.Styles[styleID].Data
 
-    MySQL:Start("SELECT time FROM timer_times WHERE map = '" .. game.GetMap() .. "' AND uid = '" .. ply:SteamID() .. "' AND style = " .. styleID, function(OldEntry)
-        if OldEntry and OldEntry[1] then
-            if time < OldEntry[1].time then
-                styleData:UpdateTotalTime(time, old)
-                
-                MySQL:Start("UPDATE timer_times SET player = " .. sql.SQLStr(ply:Name()) .. ", time = " .. time .. ", date = '" .. TIMER:GetDate() .. "' WHERE map = '" .. game.GetMap() .. "' AND uid = '" .. ply:SteamID() .. "' AND style = " .. styleID, function()
-                    self:HandleRecordCompletion(ply, time, old, styleData)
-                end)
-            else
-                self:HandleRecordCompletion(ply, time, old, styleData)
-            end
-        else
-            styleData:UpdateTotalTime(time, nil)
+    MySQL:Start("SELECT COUNT(*) AS runCount FROM timer_times WHERE map = '" .. game.GetMap() .. "' AND style = " .. styleID, function(RunData)
+        local runID = RunData and RunData[1] and tonumber(RunData[1]["runCount"]) or 0
+        runID = runID + 1
 
-            MySQL:Start("INSERT INTO timer_times (uid, player, map, style, time, points, date) VALUES ('" .. ply:SteamID() .. "', " .. sql.SQLStr(ply:Name()) .. ", '" .. game.GetMap() .. "', " .. styleID .. ", " .. time .. ", 0, '" .. TIMER:GetDate() .. "')", function()
-                self:HandleRecordCompletion(ply, time, old, styleData)
-            end)
-        end
+        MySQL:Start("SELECT time FROM timer_times WHERE map = '" .. game.GetMap() .. "' AND uid = '" .. ply:SteamID() .. "' AND style = " .. styleID, function(OldEntry)
+            if OldEntry and OldEntry[1] then
+                if time < OldEntry[1].time then
+                    styleData:UpdateTotalTime(time, old)
+
+                    MySQL:Start("UPDATE timer_times SET player = " .. sql.SQLStr(ply:Name()) .. ", time = " .. time .. ", date = '" .. TIMER:GetDate() .. "' WHERE map = '" .. game.GetMap() .. "' AND uid = '" .. ply:SteamID() .. "' AND style = " .. styleID, function()
+                        ply.RunID = runID
+                        self:HandleRecordCompletion(ply, time, old, styleData, runID)
+                    end)
+                else
+                    ply.RunID = runID
+                    self:HandleRecordCompletion(ply, time, old, styleData, runID)
+                end
+            else
+                styleData:UpdateTotalTime(time, nil)
+
+                MySQL:Start("INSERT INTO timer_times (uid, player, map, style, time, points, date) VALUES ('" ..
+                    ply:SteamID() .. "', " ..
+                    sql.SQLStr(ply:Name()) .. ", '" ..
+                    game.GetMap() .. "', " ..
+                    styleID .. ", " ..
+                    time .. ", 0, '" ..
+                    TIMER:GetDate() .. "')", function()
+                    
+                    ply.RunID = runID
+                    self:HandleRecordCompletion(ply, time, old, styleData, runID)
+                end)
+            end
+        end)
     end)
 end
 
@@ -705,7 +722,6 @@ function TIMER:PostDiscordWR(ply, time, styleID, currentWR)
     local topSpeed = math.floor((ply.LastSpeedData and ply.LastSpeedData[1]) or 0)  
     local avgSpeed = math.floor((ply.LastSpeedData and ply.LastSpeedData[2]) or 0)  
 
-    local runID = "440493"  
     local points = Timer.Multiplier  
     local serverIP = game.GetIPAddress()  
     local mapName = game.GetMap()  
@@ -715,11 +731,13 @@ function TIMER:PostDiscordWR(ply, time, styleID, currentWR)
 
     local WRDifference
     if currentWR == 0 then
-        WRDifference = ("Old WR was %s"):format(TIMER:WRConvert2(time))
+        WRDifference = "No previous WR"
     else
         local timeDiff = currentWR - time
-        WRDifference = ("%s%s"):format(timeDiff < 0 and "-" or "", TIMER:WRConvert2(math.abs(timeDiff)))
+        WRDifference = ("-%s"):format(TIMER:WRConvert2(math.abs(timeDiff)))
     end
+
+    local runID = ply.RunID or "Unknown"
 
     local fields = {
         {
@@ -735,8 +753,8 @@ function TIMER:PostDiscordWR(ply, time, styleID, currentWR)
         {
             name = "**Additional**",
             value = string.format(
-                "⚡ **Sync:** %s\n💨 **Strafes:** %d\n🦘 **Jumps:** %d\n🚀 **Top Speed:** %d u/s\n📈 **Avg Speed:** %d u/s\n📌 **Run ID:** [%s](https://example.com/run/%s)\n📅 **Date:** %s\n🏆 **Points:** %d",
-                sync, strafes, jumps, topSpeed, avgSpeed, runID, runID, timestamp, points
+                "⚡ **Sync:** %s\n💨 **Strafes:** %d\n🦘 **Jumps:** %d\n🚀 **Top Speed:** %d u/s\n📈 **Avg Speed:** %d u/s\n📌 **Run ID:** `%s`\n📅 **Date:** %s\n🏆 **Points:** %d",
+                sync, strafes, jumps, topSpeed, avgSpeed, runID, timestamp, points
             ),
             inline = false
         },
@@ -901,7 +919,7 @@ end
 function TIMER:LoadRecords()
     if not self.Styles then return end
 
-    self:LoadMapData() -- Load multipliers at the start
+    self:LoadMapData()
 
     for id, _ in pairs(self.Styles) do
         if not self.Styles[id] or not self.Styles[id].Data then
@@ -1279,3 +1297,38 @@ function TIMER:GetDate()
 
     return os.date("%Y-%m-%d %I:%M:%S %p", correctedTime)
 end
+
+util.AddNetworkString("SendAllRecords")
+
+local function SendAllRecords(ply)
+    if not IsValid(ply) then return end
+
+    local recordsTable = {}
+
+    for style, data in pairs(TIMER.Styles) do
+        local styleRecords = data.Data.Records or {}
+
+        if not recordsTable[style] then
+            recordsTable[style] = {}
+        end
+
+        for i, record in ipairs(styleRecords) do
+            table.insert(recordsTable[style], TIMER:WRConvert2(record[3])) 
+
+        end
+    end
+
+    net.Start("SendAllRecords")
+    net.WriteTable(recordsTable)
+    net.Send(ply)
+end
+
+hook.Add("PlayerInitialSpawn", "SendRecordsToClient", function(ply)
+    timer.Simple(2, function()
+        SendAllRecords(ply)
+    end)
+end)
+
+net.Receive("RequestAllRecords", function(len, ply)
+    SendAllRecords(ply)
+end)

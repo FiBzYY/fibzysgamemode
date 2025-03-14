@@ -56,6 +56,7 @@ TIMER.Styles = {
     {"Low Gravity", "LG", {"lg", "lowgrav", "lowgravity"}},
     {"High Gravity", "HG", {"hg", "highgrav", "highgravity"}},
     {"Moon Man", "MOON", {"moon", "moonman", "mm"}},
+    {"Speedrun", "SR", {"speed", "speedrun", "faste"}},
     {"Backwards", "BW", {"bw", "backwards"}},
     {"Stamina", "Stamina", {"stamina", "stam"}},
     {"Segment", "Segment", {"segment"}},
