@@ -457,13 +457,15 @@ function UI:CreateMenu()
         y = y + 60
         self:CreateToggle(container, y, "bhop_showplayers", "Show Players", "Show or hide the players.")
         y = y + 60
-        self:CreateToggle(container, y, "r_WaterDrawReflection", "Toggle Reflection", "This may improve performance by toggling off reflection.")
+        self:CreateToggle(container, y, "r_WaterDrawReflection", "Toggle Reflection", "This may improve performance by toggling off reflection.", { default = 1, off = 0 })
         y = y + 60
-        self:CreateToggle(container, y, "r_WaterDrawRefraction", "Toggle Refraction", "This may improve performance by toggling off refraction.")
+        self:CreateToggle(container, y, "r_WaterDrawRefraction", "Toggle Refraction", "This may improve performance by toggling off refraction.", { default = 1, off = 0 })
         y = y + 60
         self:CreateToggle(container, y, "bhop_map_fog", "Map Fog", "This may make it easier to see by disabling map fog.")
         y = y + 60
         self:CreateToggle(container, y, "bhop_nogun", "No gun toggle", "This will allow you to use guns without seeing them.")
+        y = y + 60
+        self:CreateToggle(container, y, "bhop_fullbright", "Full bright toggle", "This will allow you to see the map in full bright when flashlight is pressed.")
     end },
 
       { text = "SSJ", panelContent = function(parent)
@@ -590,7 +592,8 @@ function UI:CreateMenu()
                 ["hud.flow"] = "Flow Network",
                 ["hud.momentum"] = "Momentum Hud",
                 ["hud.simple"] = "Simple HUD",
-                ["hud.stellar"] = "Stellar Mod HUD"
+                ["hud.stellar"] = "Stellar Mod HUD",
+                ["hud.shavit"] = "CS:S Shavit HUD"
             })
             y = y + 300
             self:CreateThemeToggle(parent, y, 0, "Disable UI")

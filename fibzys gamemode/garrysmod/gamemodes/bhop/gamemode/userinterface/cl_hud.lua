@@ -179,6 +179,31 @@ local function getColorForGain(gain)
     end
 end
 
+local RECORDS = {}
+net.Receive("SendAllRecords", function()
+    RECORDS = net.ReadTable()
+end)
+
+local function GetCurrentPlacement(nCurrent, s)
+    local timetbl = RECORDS[s]
+
+    if not timetbl or next(timetbl) == nil then
+        print("Warning: RECORDS[s] is empty or nil for style:", s)
+        return 1
+    end
+
+    local c = #timetbl + 1
+
+    for k, v in ipairs(timetbl) do
+        if nCurrent < v then
+            c = k
+            break
+        end
+    end
+
+    return c
+end
+
 HUD = {
     Ids = {
         "Counter Strike: Source",
@@ -726,6 +751,138 @@ HUD.Themes = {
             DrawText(isBot and "" or "Sync: " .. sync .. "%", "hud.simplefont", screenWidth - 100, screenHeight - 70, syncColor, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
             DrawText(isBot and "" or "Jumps: " .. jumps, "hud.simplefont", 100, screenHeight - 70, tc, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
         end
+    end,
+
+    ["hud.shavit"] = function(pl, data)
+        if lp():GetActiveWeapon().Primary then
+            if ammo_clip ~= -1 then
+                surface.SetFont("CSS_FONT")
+            
+                local csstext = Color(255, 176, 0, 120)
+                DrawBoxRound(8, screenWidth - 352, screenHeight - 76, 318, 56, Color(0, 0, 0, 90))
+                DrawText(16, "CSS_FONT", screenWidth - 270, screenHeight - 90 + 9, color_white, TEXT_ALIGN_CENTER)
+                DrawText("M", "CSS_ICONS", screenWidth - 75, screenHeight - 75, color_white, TEXT_ALIGN_CENTER) 
+                DrawText(420, "CSS_FONT", screenWidth - 120, screenHeight - 90 + 9, color_white, TEXT_ALIGN_RIGHT)
+                DrawBoxRound(0, screenWidth - 230, screenHeight - 70, 3, 42, color_white)
+            end
+        end
+
+        if lp():Team() == TEAM_SPECTATOR then
+            local backgroundspec = Color(0, 0, 0, 190)
+            surface.SetDrawColor(backgroundspec)
+            surface.DrawRect(0, screenHeight - 116.70, screenWidth, screenHeight)
+
+            DrawText(pl:Name() .. " (100)", "HUDTimer", screenWidth / 2, screenHeight - 60, Color(239, 74, 74), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+
+            surface.SetDrawColor(backgroundspec)
+            surface.DrawRect(0, 0, screenWidth, screenHeight / 0.872)
+
+            DrawText("Counter-Terrorists :   0", "HUDSpecHud", screenWidth - 484, (screenHeight / 35) - 1, Color(241, 176, 13), text, TEXT_ALIGN_RIGHT)
+            DrawText("Map: " .. game.GetMap(), "HUDSpecHud", screenWidth - 220, (screenHeight / 35) - 1, Color(241, 176, 13), text, TEXT_ALIGN_RIGHT)
+            DrawText("Terrorists :   0", "HUDSpecHud", screenWidth - 400, (screenHeight / 18) - 1, Color(241, 176, 13), text, TEXT_ALIGN_RIGHT)
+            DrawText("e", "CounterStrike", screenWidth - 220, (screenHeight / 21) - 1, Color(241, 176, 13), text, TEXT_ALIGN_RIGHT)
+            DrawText("00:00", "HUDSpecHud", screenWidth - 184, (screenHeight / 17) - 1, Color(241, 176, 13), text, TEXT_ALIGN_RIGHT)
+        end
+
+     local velocity = math.floor(GetClientVelocity(pl))
+     local time = "Time: "
+     local pb = "Best: "
+     local style = pl:GetNWInt("Style", 1)
+     local stylename = TIMER:StyleName(style) .. (pl:IsBot() and "" or "")
+     local personal = cTime(data.pb or 0)
+     local current = data.current < 0 and 0 or data.current
+     local currentf = cTime(current)
+
+     local jumps = pl.player_jumps or 0
+     local sync = pl.sync or 0
+
+     local base = Color(0, 0, 0, 70)
+     local activity = current > 0 and 1 or 2
+     activity = (pl:GetNWInt("inPractice", false) or (pl.finished or pl.bonusfinised)) and 3 or activity
+     activity = activity == 1 and (pl:IsBot() and 4 or 1) or activity
+
+     local box_y_css = -4
+     local box_y_css2 = -8
+     local text_y_css = 5
+     local text_y_css2 = -22
+     local text_y_css4 = 2
+
+     local width = {162, 164, 125, 165}
+     local width2 = {162, 164, 38, 165}
+
+     width = width[activity]
+     width2 = width2[activity]
+
+     local height = {136, 95, 56, 90}
+     height = height[activity]
+     local activity_y = {175, 175, 175, 175}
+     activity_y = activity_y[activity]
+
+     local xPos = (screenWidth / 2) - (width / 2)
+     local xPos2 = (screenWidth / 2) - (width2 / 2)
+     local yPos = screenHeight - height - activity_y
+     local CSRound2 = 8
+
+     local wrtext = "WR: "
+
+     local wr, wrn
+     if not TIMER.WorldRecords or not TIMER.WorldRecords[style] or #TIMER.WorldRecords[style] == 0 then 
+         wr = "No Record"
+         wrn = ""
+     else 
+         wr = cCTime(TIMER.WorldRecords[style][2])
+         wrn = "(" .. TIMER.WorldRecords[style][1] .. ")"
+     end
+
+     local pbtext
+     if data.pb == 0 then 
+         pbtext = "No Time"
+     else 
+         pbtext = cCTime(data.pb or 0)
+     end
+
+     DrawText("WR: " .. wr .. " " .. wrn, "HUDcsstop2", 19, 10, color_white, text, TEXT_ALIGN_LEFT)
+     DrawText(pb .. pbtext, "HUDcsstop2", 19, 50, color_white, text, TEXT_ALIGN_LEFT)
+
+     if activity == 1 then
+         DrawText("Sync: " .. sync .. "%", "HUDcssBottom", screenWidth / 2.002, text_y_css + yPos + 79, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+     end
+
+
+     if activity == 1 then
+         local TimeText = "Time: " .. currentf
+         local Vel = "Speed: " .. velocity
+         local Scaling = TimeText
+         local place = GetCurrentPlacement(ConvertTime(current), style)
+         local placetext = " (#" .. place .. ")"
+         local ScalingWidth, _ = surface.GetTextSize(Scaling)
+
+         DrawBoxRound(CSRound2, screenWidth / 2 - ScalingWidth / 2 - 43, yPos + box_y_css, ScalingWidth + 87, height, base)
+         DrawText(stylename, "HUDcss4", screenWidth / 2.002, text_y_css + yPos + 19, text, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+         DrawText(Scaling .. placetext, "HUDcssBottomTimer", screenWidth / 2, text_y_css + yPos + 39, text, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+         DrawText("Jumps: " .. jumps, "HUDcssBottom", screenWidth / 2, text_y_css + yPos + 59, text, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+         DrawText(Vel, "HUDcssBottom", screenWidth / 2.002, text_y_css + yPos + 99, text, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+     elseif activity == 2 then
+         DrawBoxRound(CSRound2, xPos, yPos + box_y_css2, width, height, base)
+         DrawText("In Start Zone", "HUDcss", screenWidth / 2.002, text_y_css2 + yPos + 44, text, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+         DrawText(velocity, "HUDcss", screenWidth / 2.007, text_y_css2 + yPos + 84, text, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+     elseif activity == 3 then
+        local maxWidth = 30
+        local bigScale = 60
+        local velocityScale = math.min(velocity, maxWidth)
+
+        if velocity >= 1000 then
+            velocityScale = bigScale
+        end
+
+        DrawBoxRound(CSRound2, xPos2 - (velocityScale / 2), yPos + box_y_css, width2 + velocityScale, height, base)
+        DrawText(velocity, "HUDcss", screenWidth / 2, text_y_css4 + yPos + 22, text, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+     elseif activity == 4 then
+         DrawBoxRound(CSRound2, xPos, yPos + box_y_css, width, height, base)
+         DrawText(stylename, "HUDcss", screenWidth / 2, text_y_css2 + yPos + 42, text, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+         DrawText("Time: " .. currentf, "HUDcss", screenWidth / 2, text_y_css2 + yPos + 62, text, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+         DrawText("Speed: " .. velocity, "HUDcss", screenWidth / 2, text_y_css2 + yPos + 82, text, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+      end
     end,
 
     -- Added

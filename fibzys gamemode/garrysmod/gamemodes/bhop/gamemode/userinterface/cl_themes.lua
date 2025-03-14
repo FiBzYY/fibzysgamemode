@@ -188,7 +188,7 @@ concommand.Add("bhop_hud", function(ply, cmd, args)
     end
 end)
 
-Settings:Register('selected.hud', 'hud.momentum', {'hud.flow', 'hud.momentum', 'hud.css', 'hud.simple', "hud.stellar"})
+Settings:Register('selected.hud', 'hud.momentum', {'hud.flow', 'hud.momentum', 'hud.css', 'hud.simple', "hud.shavit", "hud.stellar"})
 
 Theme:Register("HUD", "hud.flow", "Flow Network (Re-Design)", {
 	["Transparent"] = {
@@ -277,6 +277,16 @@ Theme:Register("HUD", "hud.simple", "Simplistic", {
             ["Strafe HUD"] = true
         }
     }
+})
+
+Theme:Register("HUD", "hud.shavit", "Shavit CS:S", {
+	["Regular"] = {
+		["Colours"] = {
+		},
+
+		["Toggles"] = {
+		},
+	}
 })
 
 Theme:Register("HUD", "hud.stellar", "Stellar Mod", {

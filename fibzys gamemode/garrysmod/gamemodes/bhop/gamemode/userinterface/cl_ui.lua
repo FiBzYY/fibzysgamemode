@@ -723,7 +723,8 @@ UI:AddListener("ssj", function(_, data)
             {["name"] = "Show Sync", ["function"] = SSJ_Callback(10), ["bool"] = data[10]},
             {["name"] = "Show Last Speed", ["function"] = SSJ_Callback(11), ["bool"] = data[11]},
             {["name"] = "Show Yaw", ["function"] = SSJ_Callback(12), ["bool"] = data[12]},
-            {["name"] = "Show Time", ["function"] = SSJ_Callback(13), ["bool"] = data[13]}
+            {["name"] = "Show Time", ["function"] = SSJ_Callback(13), ["bool"] = data[13]},
+            {["name"] = "Show  Prespeed", ["function"] = SSJ_Callback(14), ["bool"] = data[14]}
         )
     end
 end)
@@ -759,7 +760,9 @@ UI:AddListener("style", function(_, data)
             {["name"] = "Segment", ["function"] = STYLE_Callback(15), ["bool"] = data[15]},
             {["name"] = "Practice", ["function"] = STYLE_Callback(16), ["bool"] = data[16]},
             {["name"] = "Auto-Strafe", ["function"] = STYLE_Callback(17), ["bool"] = data[17]},
-            {["name"] = "Low Gravity", ["function"] = STYLE_Callback(18), ["bool"] = data[18]}
+            {["name"] = "Moon Man", ["function"] = STYLE_Callback(18), ["bool"] = data[18]},
+            {["name"] = "High Gravity", ["function"] = STYLE_Callback(19), ["bool"] = data[19]},
+            {["name"] = "Speedrun", ["function"] = STYLE_Callback(20), ["bool"] = data[20]}
         )
     end
 end)

@@ -544,6 +544,8 @@ local function CreateScoreboard(shouldHide)
             if styles == "Half-Sideways" then styles = "HSW" end                     
             if styles == "Stamina" then styles = "STAM" end  
             if styles == "Legit" then styles = "L" end
+            if styles == "Moon Man" then styles = "MM" end
+            if styles == "High Gravity" then styles = "HG" end
 
             DrawText(styles, "ui.mainmenu.button", x + (w * 0.6), ph / 2, TEXT, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
             DrawText(ConvertTimeWR(ply:GetNWFloat("Record", 0)), "ui.mainmenu.button", x + (w * 0.75), ph / 2, TEXT, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
