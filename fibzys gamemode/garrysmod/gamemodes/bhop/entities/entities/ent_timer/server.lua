@@ -16,7 +16,8 @@ local ZONE = {
 
 local Iv = IsValid
 
-resource.AddWorkshop "3020406990"
+resource.AddWorkshop "3020406990" -- Zone texture DL
+resource.AddWorkshop "3444798278" -- Zone sounds DL
 
 util.AddNetworkString("ZoneExitSound")
 
@@ -55,8 +56,10 @@ local function HandleStartZone(ent, zone)
         elseif not ent.time and isJumping and moveType ~= MOVETYPE_NOCLIP then
             TIMER:StartTimer(ent)
 
-            net.Start("ZoneExitSound")
-            net.Send(ent)
+            if not ent:GetNWBool("inPractice") then
+                net.Start("ZoneExitSound")
+                net.Send(ent)
+            end
         end
     elseif zone == ZONE.BONUS_START then
         ent.InStartZone = false
@@ -137,7 +140,7 @@ function ENT:EndTouch(ent)
         ent:SetGravity(1)
     end
 
-    if not ent:KeyDown(IN_JUMP) then
+    if not ent:KeyDown(IN_JUMP) and not ent:GetNWBool("inPractice") then
         net.Start("ZoneExitSound")
         net.Send(ent)
     end
