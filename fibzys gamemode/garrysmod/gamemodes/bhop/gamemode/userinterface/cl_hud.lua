@@ -7,7 +7,7 @@
 
 ]]--
 
-local selected_hud = CreateClientConVar("bhop_hud_hide", 1, true, false)
+local selected_hud = CreateClientConVar("bhop_hud_hide", 0, true, false)
 local roundedBoxEnabled = CreateConVar("bhop_roundedbox", "1", {FCVAR_ARCHIVE}, "Enable rounded box drawing")
 local simpleBoxEnabled = CreateConVar("bhop_simplebox", "0", {FCVAR_ARCHIVE}, "Enable simple hud box drawing")
 local sidetimer = CreateClientConVar("bhop_sidetimer", 0, true, false, "Display SideTimer Stats")

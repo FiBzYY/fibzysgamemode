@@ -287,8 +287,15 @@ if SERVER then
         local showSSJ = net.ReadBool()
         local showPre = net.ReadBool()
 
-        local ssjSettings = { showSSJ, showPre }
-        ply:SetPData("SSJ_Settings", util.TableToJSON(ssjSettings))
+        print("[SERVER] Received settings from: " .. ply:Nick())
+        print("[SERVER] New SSJ: " .. tostring(showSSJ) .. ", New Pre: " .. tostring(showPre))
+
+        local ssjData = ply:GetPData("SSJ_Settings", nil)
+        local previousSettings = ssjData and util.JSONToTable(ssjData) or {true, true}
+        
+        previousSettings[1] = showSSJ
+        
+        ply:SetPData("SSJ_Settings", util.TableToJSON(previousSettings))
 
         ply:SetNWBool("bhop_showssj", showSSJ)
         ply:SetNWBool("bhop_showpre", showPre)
@@ -313,15 +320,10 @@ if CLIENT then
 
     net.Receive("SyncSSJFromServer", function()
         local ssjSettings = util.JSONToTable(net.ReadString()) or {}
-        
+
         if ssjSettings[1] ~= nil then
             RunConsoleCommand("bhop_showssj", ssjSettings[1] and "1" or "0")
             lastSSJ = ssjSettings[1]
-        end
-        
-        if ssjSettings[2] ~= nil then
-            RunConsoleCommand("bhop_showpre", ssjSettings[2] and "1" or "0")
-            lastPre = ssjSettings[2]
         end
     end)
 
@@ -512,16 +514,23 @@ local function SSJ_PrintStats(ply, lastSpeed, jumpTimeDiff)
         local showSSJ = v:GetNWBool("bhop_showssj", true)
         local showPre = v:GetNWBool("bhop_showpre", true)
 
-        if ssj and ssj[1] and (ssj[2] or jumpCount == 6) and showSSJ then
-            if not showPre then
-                if jumpCount > 1 then
+        if ssj and ssj[1] and showSSJ then
+            -- If mode is "All" (ssj[2] is true), check if we need to hide Jump 1
+            if ssj[2] then
+                if not showPre and jumpCount == 1 then
+                    -- Skip Prestrafe when it's disabled in "All" mode
+                else
                     NETWORK:StartNetworkMessageTimer(v, "Print", {"Timer", str})
                 end
-            else
+            -- If mode is not "All", only show Jump 1 + Jump 6 if Pre is enabled
+            elseif showPre and (jumpCount == 1 or jumpCount == 6) then
+                NETWORK:StartNetworkMessageTimer(v, "Print", {"Timer", str})
+            -- If Pre is disabled, only show Jump 6
+            elseif not showPre and jumpCount == 6 then
                 NETWORK:StartNetworkMessageTimer(v, "Print", {"Timer", str})
             end
         end
-    end 
+    end
 
     -- SSJ HUD Update
     NETWORK:StartNetworkMessageSSJ(ply, "SSJ", jumpCount, coeffsum, velocity, strafes, efficiency, sync, lastSpeed or 0, g_speedDiff[ply])

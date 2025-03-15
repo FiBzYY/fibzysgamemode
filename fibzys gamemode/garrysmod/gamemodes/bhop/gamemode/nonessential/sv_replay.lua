@@ -788,10 +788,16 @@ end
 hook.Add("StartCommand", "ButtonRecord", BotButtonRecord)
 
 -- Load
-hook_Add("Initialize", "SpawnBotsOnMapLoad", function()
+hook.Add("Initialize", "SpawnBotsOnMapLoad", function()
     Replay:Setup()
 
     timer.Simple(5, function()
+        if #player.GetBots() == 0 then
+            Replay:CheckStatus()
+        end
+    end)
+
+    timer.Create("EnsureReplayBots", 10, 0, function()
         if #player.GetBots() == 0 then
             Replay:CheckStatus()
         end

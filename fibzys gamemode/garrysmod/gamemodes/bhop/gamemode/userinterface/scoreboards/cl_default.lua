@@ -30,7 +30,7 @@ end
 function SecondsToClock(seconds)
     seconds = tonumber(seconds) or 0
     local wholeSeconds = math_floor(seconds)
-    local milliseconds = math_floor((seconds - wholeSeconds) * 1000)
+    local milliseconds = math_floor((seconds - wholeSeconds) * 100)
     local hours = math_floor(wholeSeconds / 3600)
     local minutes = math_floor((wholeSeconds % 3600) / 60)
     local secs = wholeSeconds % 60

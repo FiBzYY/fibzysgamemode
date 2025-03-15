@@ -902,15 +902,15 @@ function TIMER:LoadMapData()
 
     MySQL:Start("SELECT multiplier, bonusmultiplier, options FROM timer_map WHERE map = " .. mapName .. " LIMIT 1", function(result)
         if result and result[1] then
-            Timer.Multiplier = tonumber(result[1]["multiplier"]) or 1
-            Timer.BonusMultiplier = tonumber(result[1]["bonusmultiplier"]) or 1
+            Timer.Multiplier = tonumber(result[1]["multiplier"]) or 0
+            Timer.BonusMultiplier = tonumber(result[1]["bonusmultiplier"]) or 0
             Timer.Options = tonumber(result[1]["options"]) or 0
             UTIL:Notify(Color(255, 255, 0), "Timer", "Loaded map multipliers: Multiplier = " .. Timer.Multiplier .. ", BonusMultiplier = " .. Timer.BonusMultiplier .. ", Options = " .. Timer.Options)
         else
             UTIL:Notify(Color(255, 255, 0), "Timer", "No entry found for map " .. mapName .. ". Using default values.")
-            Timer.Multiplier = 1
-            Timer.BonusMultiplier = 1
-            Timer.Options = 0
+            Timer.Multiplier = 0
+            Timer.BonusMultiplier = 0
+            Timer.Options = nil
         end
     end)
 end

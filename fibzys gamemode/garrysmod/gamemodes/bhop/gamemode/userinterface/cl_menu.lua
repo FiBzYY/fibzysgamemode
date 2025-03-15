@@ -509,9 +509,9 @@ function UI:CreateMenu()
         surface.DrawRect(10, y + 35, container:GetWide() - 20, 1)
 
         y = y + 45
-        self:CreateToggle(container, y, "bhop_showssj", "Display SSJ", "Enables or disables show jump stats in chat." ,{ default = 1, off = 0 })
+        self:CreateToggle(container, y, "bhop_showssj", "Display SSJ", "Enables or disables show jump stats in chat.", { default = 1, off = 0 })
         y = y + 60
-        self:CreateToggle(container, y, "bhop_showpre", "Display Prestrafe", "Enables or disables prestrafe in chat.")
+        self:CreateToggle(container, y, "bhop_showpre", "Display Prestrafe", "Enables or disables prestrafe in chat.", { default = 1, off = 0 })
         y = y + 60
         self:CreateToggle(container, y, "bhop_fjt", "Display FJT", "Enables or disables the strafe ground tick.")
         y = y + 60

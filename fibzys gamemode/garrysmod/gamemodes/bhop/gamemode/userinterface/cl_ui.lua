@@ -709,6 +709,8 @@ UI:AddListener("ssj", function(_, data)
 
     if tonumber(data) and UI.ssj then
         UI.ssj:UpdateOptionBool(tonumber(data))
+
+        UI.ssj:UpdateTitle("SSJ Menu") 
     elseif (not UI.ssj) or (not UI.ssj.title) and (not tonumber(data)) then
         UI.ssj = UI:NumberedUIPanel("SSJ Menu",
             {["name"] = "Toggle", ["function"] = SSJ_Callback(1), ["bool"] = data[1]},
@@ -864,11 +866,11 @@ UI:AddListener("nominate", function(_, data)
     for i = startIndex, endIndex do
         local mapItem = Cache.M_Data[i]
         if mapItem and mapItem.name then
-        options[#options + 1] = {
-            ["name"] = mapItem.name .. " (" .. (mapItem.points or 0) .. " points)",
-            ["col"] = (mapItem.name == currentMap) and Color(0, 150, 255) or Color(255, 255, 255),
-            ["function"] = Nominate_Callback(mapItem.name) 
-        }
+            options[#options + 1] = {
+                ["name"] = mapItem.name .. " (" .. (mapItem.points or 0) .. " points)",
+                ["col"] = (mapItem.name == currentMap) and Color(0, 150, 255) or Color(255, 255, 255),
+                ["function"] = Nominate_Callback(mapItem.name) 
+            }
         end
     end
 
@@ -878,8 +880,6 @@ UI:AddListener("nominate", function(_, data)
     if page < totalPages then 
         options[#options + 1] = {["name"] = "9. Next Page", ["function"] = Nominate_Callback("next")} 
     end
-
-    table.insert(options, {["name"] = "0. Close Window", ["function"] = function() UI.nominate:Exit() end})
 
     if UI.nominate and UI.nominate.title then
         UI.nominate.options = options

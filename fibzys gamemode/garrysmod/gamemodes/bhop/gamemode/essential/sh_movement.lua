@@ -291,34 +291,33 @@ function GM:SetupMove(client, data, cmd)
         forwardInput = 0
         sideInput = rightPressed and 3 or 0
     elseif style == TIMER:GetStyleID("AS") then
-        if not client:GetMoveType() ~= MOVETYPE_WALK or (not client:IsFlagSet(FL_ONGROUND) and data:KeyDown(IN_JUMP)) then
-            local moveX, moveY = cmd:GetMouseX(), cmd:GetMouseY()
+        if client:GetMoveType() ~= MOVETYPE_WALK or (not client:IsFlagSet(FL_ONGROUND) and data:KeyDown(IN_JUMP)) then
+            local moveX = cmd:GetMouseX()
+
             if moveX ~= 0 then
                 local strafeDirection = moveX > 0 and 1 or -1
                 sideInput = strafeDirection * 3
             end
 
             if CLIENT then
-                local moveX = cmd:GetMouseX()
-                local strafeDirection = 0
-
-                if moveX ~= 0 then
-                    strafeDirection = moveX > 0 and 1 or -1
-                end
+                local strafeDirection = moveX > 0 and 1 or (moveX < 0 and -1 or 0)
 
                 if strafeDirection == 0 then
                     RunConsoleCommand("-moveleft")
                     RunConsoleCommand("-moveright")
-                end
-
-                if strafeDirection == -1 then
-                    RunConsoleCommand("+moveleft")
-                    --cmd:SetSideMove(-450)
-                elseif strafeDirection == 1 then
-                    RunConsoleCommand("+moveright")
-                    --cmd:SetSideMove(450)
+                else
+                    if strafeDirection == -1 then
+                        RunConsoleCommand("-moveright")
+                        RunConsoleCommand("+moveleft")
+                    elseif strafeDirection == 1 then
+                        RunConsoleCommand("-moveleft")
+                        RunConsoleCommand("+moveright")
+                    end
                 end
             end
+        else
+            RunConsoleCommand("-moveleft")
+            RunConsoleCommand("-moveright")
         end
     elseif style == TIMER:GetStyleID("Normal") or style == TIMER:GetStyleID("Unreal") or
            style == TIMER:GetStyleID("WTF") or style == TIMER:GetStyleID("Legit") or 
