@@ -426,7 +426,7 @@ end
 -- Play Zone sound
 net.Receive("ZoneExitSound", function()
     if zone_sounds:GetBool() then
-        surface.PlaySound("start.mp3")
+        surface.PlaySound("timer/start.mp3")
     end
 end)
 
