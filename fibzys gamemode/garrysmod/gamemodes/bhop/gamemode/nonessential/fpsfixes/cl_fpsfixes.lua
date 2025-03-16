@@ -65,9 +65,11 @@ hook_Add("InitPostEntity", "RemoveSkyBoxOnSpecificMaps", function()
     end
 end)
 
+CreateClientConVar("bhop_enablefpsboost", "1", true, false, "Enable FPS boost settings on load")
+
 -- Load client commands on player load
 hook_Add("InitPostEntity", "Fpsfixes", function()
-    if GetConVar("r_drawsprites"):GetInt() ~= 0 then
+    if GetConVar("bhop_enablefpsboost"):GetBool() then
         RunConsoleCommand("r_drawsprites", "0")
         RunConsoleCommand("cl_interp", "0.05")
         RunConsoleCommand("cl_smoothtime", "0.05")

@@ -159,65 +159,49 @@ local function cTimeWR(ns)
 end
 
 -- Really Good
-CreateClientConVar("bhop_jhud_gain_verygood_r", "0", true, false)
-CreateClientConVar("bhop_jhud_gain_verygood_g", "255", true, false)
-CreateClientConVar("bhop_jhud_gain_verygood_b", "255", true, false)
-CreateClientConVar("bhop_jhud_gain_verygood_a", "255", true, false)
+CreateClientConVar("bhop_jhud_gain_verygood", "0 255 255", true, false)
 
 -- Good
-CreateClientConVar("bhop_jhud_gain_good_r", "39", true, false)
-CreateClientConVar("bhop_jhud_gain_good_g", "255", true, false)
-CreateClientConVar("bhop_jhud_gain_good_b", "0", true, false)
-CreateClientConVar("bhop_jhud_gain_good_a", "255", true, false)
+CreateClientConVar("bhop_jhud_gain_good", "39 255 0", true, false)
 
 -- Meh
-CreateClientConVar("bhop_jhud_gain_meh_r", "39", true, false)
-CreateClientConVar("bhop_jhud_gain_meh_g", "255", true, false)
-CreateClientConVar("bhop_jhud_gain_meh_b", "0", true, false)
-CreateClientConVar("bhop_jhud_gain_meh_a", "255", true, false)
+CreateClientConVar("bhop_jhud_gain_meh", "39 255 0", true, false)
 
 -- Bad
-CreateClientConVar("bhop_jhud_gain_bad_r", "255", true, false)
-CreateClientConVar("bhop_jhud_gain_bad_g", "128", true, false)
-CreateClientConVar("bhop_jhud_gain_bad_b", "0", true, false)
-CreateClientConVar("bhop_jhud_gain_bad_a", "255", true, false)
+CreateClientConVar("bhop_jhud_gain_bad", "255 128 0", true, false)
 
 -- Really Bad
-CreateClientConVar("bhop_jhud_gain_verybad_r", "255", true, false)
-CreateClientConVar("bhop_jhud_gain_verybad_g", "0", true, false)
-CreateClientConVar("bhop_jhud_gain_verybad_b", "0", true, false)
-CreateClientConVar("bhop_jhud_gain_verybad_a", "255", true, false)
+CreateClientConVar("bhop_jhud_gain_verybad", "255 0 0", true, false)
 
-local function GetGainColor(prefix)
-    return Color(
-        GetConVar(prefix .. "_r"):GetInt(),
-        GetConVar(prefix .. "_g"):GetInt(),
-        GetConVar(prefix .. "_b"):GetInt(),
-        GetConVar(prefix .. "_a"):GetInt()
-    )
+
+local function GetGainColor(convar)
+    local colStr = GetConVar(convar):GetString()
+    local r, g, b = string.match(colStr, "(%d+)%s+(%d+)%s+(%d+)")
+    return Color(tonumber(r) or 255, tonumber(g) or 255, tonumber(b) or 255)
 end
 
 function getColorForGain(gain)
     if gain > 115 then
-        return GetGainColor("bhop_jhud_gain_verybad") -- Really Bad
+        return GetGainColor("bhop_jhud_gain_verybad")
     elseif gain > 110 then
-        return GetGainColor("bhop_jhud_gain_verybad") -- Really Bad
+        return GetGainColor("bhop_jhud_gain_verybad")
     elseif gain > 105 then
-        return GetGainColor("bhop_jhud_gain_bad") -- Bad
+        return GetGainColor("bhop_jhud_gain_bad")
     elseif gain > 100 then
-        return GetGainColor("bhop_jhud_gain_good") -- Good
+        return GetGainColor("bhop_jhud_gain_good")
     elseif gain >= 90 then
-        return GetGainColor("bhop_jhud_gain_verygood") -- Really Good
+        return GetGainColor("bhop_jhud_gain_verygood")
     elseif gain >= 80 then
-        return GetGainColor("bhop_jhud_gain_good") -- Good
+        return GetGainColor("bhop_jhud_gain_good")
     elseif gain >= 70 then
-        return GetGainColor("bhop_jhud_gain_meh") -- Meh
+        return GetGainColor("bhop_jhud_gain_meh")
     elseif gain >= 60 then
-        return GetGainColor("bhop_jhud_gain_bad") -- Bad
+        return GetGainColor("bhop_jhud_gain_bad")
     else
-        return GetGainColor("bhop_jhud_gain_verybad") -- Really Bad
+        return GetGainColor("bhop_jhud_gain_verybad")
     end
 end
+
 
 local RECORDS = {}
 net.Receive("SendAllRecords", function()
@@ -1421,44 +1405,38 @@ function GetTimePiece(compare, style)
     end
 end
 
--- Spectator Hud
+-- Spectator HUD
 function DrawSpecHUD()
     local lp = LocalPlayer()
-    if not IsValid(lp) then return end
-    if not disablespec:GetBool() then return end
-
-    local txt = "Spectating %s (%s):"
-    local SpecList = {}
-    local Obs = lp:GetObserverTarget()
+    if not IsValid(lp) or not disablespec:GetBool() then return end
 
     lp.SpectatorList = lp.SpectatorList or {}
+    local Obs = lp:GetObserverTarget()
+    local SpecList = {}
+
+    local txt = ""
 
     if lp:Alive() and #lp.SpectatorList > 0 then
         SpecList = lp.SpectatorList
-        txt = string.format(txt, "You", tostring(#lp.SpectatorList))
-
+        txt = string.format("Spectating You (%d):", #lp.SpectatorList)
+    
     elseif lp:Team() == TEAM_SPECTATOR and IsValid(Obs) then
         Obs.SpectatorList = Obs.SpectatorList or {}
-
-        if #Obs.SpectatorList > 0 then
-            SpecList = Obs.SpectatorList
-            txt = string.format(txt, Obs:GetName(), tostring(#Obs.SpectatorList))
-        end
-    end
-
-    local botName = nil
-    if IsValid(Obs) and Obs:IsBot() then
-        botName = Obs:GetName()
-        txt = string.format(txt, "Replay", "Watching")
 
         for _, v in ipairs(player.GetAll()) do
             if IsValid(v) and v:GetObserverTarget() == Obs then
                 table.insert(SpecList, v)
             end
         end
+
+        if Obs:IsBot() then
+            txt = "Spectating Replay (Watching):"
+        else
+            txt = string.format("Spectating %s (%d):", Obs:GetName(), #SpecList)
+        end
     end
 
-    if #SpecList == 0 and not (IsValid(Obs) and Obs:IsBot()) then return end
+    if #SpecList == 0 then return end
 
     DrawText(txt, "ui.mainmenu.button", ScrW() - 20, ScrH() / 2 - (#SpecList * 10), color_white, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
 
@@ -1475,17 +1453,17 @@ function DrawSpecHUD()
         end
     end
 
-    for _, name in pairs(CSList or {}) do
-        if not seenNames[name] then
-            seenNames[name] = true
-            table.insert(combinedList, name)
+    if IsValid(Obs) and Obs:IsBot() then
+        for _, name in pairs(CSList or {}) do
+            if not seenNames[name] then
+                seenNames[name] = true
+                table.insert(combinedList, name)
+            end
         end
     end
 
     for i = 1, #combinedList do
-        local drawName = combinedList[i]
-
-        DrawText(drawName, "ui.mainmenu.button", ScrW() - 20, ScrH() / 2 + (i * 20) - (#combinedList * 10), color_white, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+        DrawText(combinedList[i], "ui.mainmenu.button", ScrW() - 20, ScrH() / 2 + (i * 20) - (#combinedList * 10), color_white, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
     end
 end
 

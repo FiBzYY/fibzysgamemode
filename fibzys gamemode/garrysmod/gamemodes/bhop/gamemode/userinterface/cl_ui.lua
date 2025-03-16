@@ -1386,6 +1386,7 @@ function OpenBhopJHUDMenu()
     AddToggleColor("bhop_jhud_gain_meh", "Change Gain Meh Color", "Changes color for meh gain.")
     AddToggleColor("bhop_jhud_gain_bad", "Change Gain Bad Color", "Changes color for bad gain.")
     AddToggleColor("bhop_jhud_gain_verybad", "Change Gain Really Bad Color", "Changes color for REALLY bad gain.")
+
 end
 concommand.Add("bhop_jhudmenu", OpenBhopJHUDMenu)
 

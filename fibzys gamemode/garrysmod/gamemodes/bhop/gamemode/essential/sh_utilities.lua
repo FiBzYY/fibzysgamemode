@@ -210,36 +210,59 @@ DynamicColors = {
     RankColors = {}
 }
 
-function GeneratePlayerColors(ply)
-    local hue = math.random(0, 359)
+if CLIENT then
+    CreateClientConVar("bhop_use_custom_color", "0", true, false, "Enable custom static color")
+    CreateClientConVar("bhop_color", "255 255 255", true, false, "Custom R value")
+end
 
+function GeneratePlayerColors(ply)
+    if CLIENT and GetConVar("bhop_use_custom_color"):GetBool() then
+        -- Split the string into r, g, b
+        local colStr = GetConVar("bhop_color"):GetString()
+        local r, g, b = string.match(colStr, "(%d+)%s+(%d+)%s+(%d+)")
+        r, g, b = tonumber(r) or 255, tonumber(g) or 255, tonumber(b) or 255
+
+        local customColor = Color(math.Clamp(r, 0, 255), math.Clamp(g, 0, 255), math.Clamp(b, 0, 255))
+
+        DynamicColors.TextColor = customColor
+        DynamicColors.PanelColor = customColor
+        DynamicColors.TextColorJhud = customColor
+
+        -- still use dynamic rank colors
+        if TIMER and TIMER.Ranks then
+            local rankColors = {}
+            local rLength = table.Count(TIMER.Ranks) - 1
+            local baseHue = math.random()
+            for k, _ in pairs(TIMER.Ranks) do
+                if k > 0 then
+                    local hueRank = (baseHue - baseHue * (k / rLength)) * 360
+                    rankColors[k] = HSVToColor(hueRank % 360, 1, 0.9) or color_white
+                end
+            end
+            DynamicColors.RankColors = rankColors
+        end
+        return
+    end
+
+    local hue = math.random(0, 359)
     local neonSaturation = 1
     local neonValue = 0.9
-    local HSV = HSVToColor
+    DynamicColors.TextColor = HSVToColor(hue, neonSaturation, neonValue)
+    DynamicColors.PanelColor = HSVToColor(hue, neonSaturation * 0.9, neonValue * 0.8)
 
-    DynamicColors.TextColor = HSV(hue, neonSaturation, neonValue)
-    DynamicColors.PanelColor = HSV(hue, neonSaturation * 0.9, neonValue * 0.8)
-
-    local jhudHue
-    if (hue >= 0 and hue <= 60) or (hue >= 300 and hue <= 359) then
-        jhudHue = 120
-    else
-        jhudHue = hue
-    end
-    DynamicColors.TextColorJhud = HSV(jhudHue, neonSaturation, neonValue)
+    local jhudHue = (hue >= 0 and hue <= 60) or (hue >= 300 and hue <= 359) and 120 or hue
+    DynamicColors.TextColorJhud = HSVToColor(jhudHue, neonSaturation, neonValue)
 
     if TIMER and TIMER.Ranks then
         local rankColors = {}
         local rLength = table.Count(TIMER.Ranks) - 1
         local baseHue = math.random()
-
         for k, _ in pairs(TIMER.Ranks) do
             if k > 0 then
                 local hueRank = (baseHue - baseHue * (k / rLength)) * 360
-                rankColors[k] = HSV(hueRank % 360, neonSaturation, neonValue) or color_white
+                rankColors[k] = HSVToColor(hueRank % 360, neonSaturation, neonValue) or color_white
             end
         end
-
         DynamicColors.RankColors = rankColors
     end
 end

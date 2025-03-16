@@ -28,21 +28,13 @@ function UI:ColorBox(parent, y, convarName, labelText, infoText)
     pnl:SetSize(parent:GetWide(), 80)
     pnl:SetPos(0, y)
 
-    local color = Color(255, 255, 255)
-
-    if ConVarExists(convarName .. "_r") then
-        color = Color(
-            GetConVar(convarName .. "_r"):GetInt(),
-            GetConVar(convarName .. "_g"):GetInt(),
-            GetConVar(convarName .. "_b"):GetInt(),
-            GetConVar(convarName .. "_a") and GetConVar(convarName .. "_a"):GetInt() or 255
-        )
-    end
+    local colStr = GetConVar(convarName):GetString()
+    local r, g, b = string.match(colStr, "(%d+)%s+(%d+)%s+(%d+)")
+    local color = Color(tonumber(r) or 255, tonumber(g) or 255, tonumber(b) or 255)
 
     pnl.Paint = function(self, w, h)
         surface.SetDrawColor(colors.box)
         surface.DrawOutlinedRect(w - 50, 10, 30, 30, 2)
-
         surface.SetDrawColor(color)
         surface.DrawRect(w - 46, 14, 22, 22)
     end
@@ -59,43 +51,33 @@ function UI:ColorBox(parent, y, convarName, labelText, infoText)
             draw.SimpleText("Pick a Color", "DermaDefaultBold", w / 2, 10, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
         end
 
+        local mixer = vgui.Create("DColorMixer", frame)
+        mixer:SetSize(280, 200)
+        mixer:SetPos(10, 40)
+        mixer:SetPalette(true)
+        mixer:SetAlphaBar(false)
+        mixer:SetWangs(true)
+        mixer:SetColor(color)
+        mixer.ValueChanged = function(_, newColor)
+            color = newColor
+            RunConsoleCommand(convarName, newColor.r .. " " .. newColor.g .. " " .. newColor.b)
+        end
+
         local close = vgui.Create("DButton", frame)
         close:SetSize(20, 20)
         close:SetPos(frame:GetWide() - 28, 8)
         close:SetText("")
         close.Paint = function(self, w, h)
-            if self:IsHovered() then
-                surface.SetDrawColor(255, 0, 0)
-            else
-                surface.SetDrawColor(200, 200, 200)
-            end
+            surface.SetDrawColor(self:IsHovered() and Color(255, 0, 0) or Color(200, 200, 200))
             surface.DrawLine(5, 5, w - 5, h - 5)
             surface.DrawLine(w - 5, 5, 5, h - 5)
         end
         close.DoClick = function()
             frame:Close()
         end
-
-        local mixer = vgui.Create("DColorMixer", frame)
-        mixer:SetSize(280, 200)
-        mixer:SetPos(10, 40)
-        mixer:SetPalette(true)
-        mixer:SetAlphaBar(true)
-        mixer:SetWangs(true)
-        mixer:SetColor(color)
-        mixer.ValueChanged = function(_, newColor)
-            color = newColor
-            if ConVarExists(convarName .. "_r") then
-                RunConsoleCommand(convarName .. "_r", tostring(newColor.r))
-                RunConsoleCommand(convarName .. "_g", tostring(newColor.g))
-                RunConsoleCommand(convarName .. "_b", tostring(newColor.b))
-                if ConVarExists(convarName .. "_a") then
-                    RunConsoleCommand(convarName .. "_a", tostring(newColor.a))
-                end
-            end
-        end
     end
 
+    -- Labels
     local lbl = vgui.Create("DLabel", parent)
     lbl:SetPos(10, y + 8)
     lbl:SetText(labelText)

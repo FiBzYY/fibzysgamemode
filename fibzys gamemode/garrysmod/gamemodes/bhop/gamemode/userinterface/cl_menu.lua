@@ -65,27 +65,66 @@ function UI:CreateButton(parent, text, dock, dockMargin, isTopNav, font)
     return btn
 end
 
+local clickableWords = {
+    ["FiBzY"] = {
+        color = Color(255, 50, 50),
+        url = "https://steamcommunity.com/id/fibzy_"
+    },
+    ["Obvixus"] = {
+        color = Color(50, 150, 255),
+        url = "https://steamcommunity.com/id/obvixus"
+    }
+}
+
 function UI:CreatePanel(parent, textLines)
     if not Iv(parent) then return nil end
 
     local pnl = vgui.Create("DPanel", parent)
     pnl:Dock(FILL)
+    pnl.clickables = {}
 
     pnl.Paint = function(self, w, h)
         local y = 10
         local firstEntry = true
+        self.clickables = {}
 
         for i, line in ipairs(textLines) do
-            local font = i == 1 and "TopNavFont" or "SmallTextFont"              
-            draw.SimpleText(line, font, 10, y, colors.text, TEXT_ALIGN_LEFT)
+            local font = i == 1 and "TopNavFont" or "SmallTextFont"
+            local x = 10
+
+            for word in string.gmatch(line, "%S+") do
+                local spacing = " "
+                local wordClean = word:gsub("[,%s]", "")
+
+                if clickableWords[wordClean] then
+                    local info = clickableWords[wordClean]
+                    local wordW, wordH = surface.GetTextSize(word .. spacing)
+                    draw.SimpleText(word .. spacing, font, x, y, info.color, TEXT_ALIGN_LEFT)
+                    table.insert(self.clickables, {x = x, y = y, w = wordW, h = wordH, url = info.url})
+                    x = x + wordW
+                else
+                    local wordW, wordH = surface.GetTextSize(word .. spacing)
+                    draw.SimpleText(word .. spacing, font, x, y, colors.text, TEXT_ALIGN_LEFT)
+                    x = x + wordW
+                end
+            end
 
             y = y + 25
-
             if firstEntry then
                 surface.SetDrawColor(120, 120, 120)
                 surface.DrawRect(10, y, w - 20, 1)
                 y = y + 15
                 firstEntry = false
+            end
+        end
+    end
+
+    pnl.OnMousePressed = function(self, mcode)
+        local mx, my = self:CursorPos()
+        for _, clickable in ipairs(self.clickables) do
+            if mx >= clickable.x and mx <= clickable.x + clickable.w and
+               my >= clickable.y and my <= clickable.y + clickable.h then
+                gui.OpenURL(clickable.url)
             end
         end
     end
@@ -234,7 +273,7 @@ function UI:CreateMenu()
             panelContent = {
                 "Information Overview", 
                 "Gamemode by FiBzY", 
-                "Play Testers: FiBzY"
+                "Play Testers: FiBzY, Obvixus"
             }, 
             isActive = true 
         },
@@ -449,6 +488,8 @@ function UI:CreateMenu()
         y = y + 60
         self:CreateToggle(container, y, "mat_antialias", "Antialias", "This may improve performance by disabling antialias.", { default = 8, off = 0 })
         y = y + 60
+        self:CreateToggle(container, y, "bhop_enablefpsboost", "Fps Boost", "This may improve performance by running commands to improve fps.", { default = 1, off = 0 })
+        y = y + 60
         self:CreateToggle(container, y, "bhop_showzones", "Display Zones", "Show or hide the timer zones.")
         y = y + 60
         self:CreateInputBox(container, y, "bhop_thickness", 1, "Zones Thickness", "How thick you want the zones to be.")
@@ -616,6 +657,16 @@ function UI:CreateMenu()
             self:CreateToggle(parent, y, "bhop_chatbox", "Custom Chatbox", "Enables or disables the custom chat box.")
         end },
 
+        { text = "Colors", panelContent = function(parent)
+        local x, y = 10, 0
+            self:CreatePanel(parent, {"Colors"})
+            y = y + 45
+            self:CreateToggle(parent, y, "bhop_use_custom_color", "Use a soild color", "Enables or disables soild color for UI.")
+            y = y + 60
+            self:ColorBox(parent, y, "bhop_color", "Main Color", "Color for all UI highlights.")
+            y = y + 80
+        end },
+
         { text = "Presets", panelContent = function(parent)
             local x, y = 10, 0
             self:CreatePanel(parent, {"Presets Picker"})
@@ -640,7 +691,7 @@ function UI:CreateMenu()
            self:CreateDropdown(parent, y, "Set zones preset", {["Default"] = "change_zones_preset Default", ["Kawaii"] = "change_zones_preset Kawaii"}, "Choose Preset...")
             y = y + 75
            self:CreateDropdown(parent, y, "Set scoreboard style", {["Default"] = "bhop_scoreboard_style Default", ["Kawaii"] = "bhop_scoreboard_style Kawaii"}, "Choose Style...")--]]
-        end },
+        end }
     })
 
     if lp():IsAdmin() then
@@ -716,10 +767,12 @@ function UI:CreateMenu()
     CloseButton:SetSize(24, 24)
     CloseButton:SetPos(Frame:GetWide() - 28, 4)
     CloseButton.Paint = function(self, w, h)
-        local btnColor = self:IsHovered() and colors.buttonHover or colors.button
-        surface.SetDrawColor(Color(0, 0, 0, 0))
+        surface.SetDrawColor(0, 0, 0, 0)
         surface.DrawRect(0, 0, w, h)
-        DrawText("X", "DermaDefaultBold", w / 1.8, h / 2, colors.text, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+
+        local xColor = self:IsHovered() and Color(255, 50, 50) or colors.text
+
+        draw.SimpleText("X", "SmallTextFont", w / 2, h / 2, xColor, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
     end
     CloseButton.DoClick = function()
         Frame:Close()
@@ -738,12 +791,28 @@ function UI:CreateMenu()
 
     BuildCircularAvatarPic(Frame, Frame:GetWide() - 140, 14, 18, lp():SteamID64())
 
+    local steamID64 = lp():SteamID64()
+    local profileURL = "https://steamcommunity.com/profiles/" .. steamID64
+
     local playerNameLabel = vgui.Create("DLabel", Frame)
     playerNameLabel:SetText(lp():Nick())
     playerNameLabel:SetFont("SmallTextFont")
-    playerNameLabel:SetTextColor(Color(255, 255, 255))
+    playerNameLabel:SetTextColor(Color(0, 150, 255))
     playerNameLabel:SizeToContents()
     playerNameLabel:SetPos(Frame:GetWide() - 140 + 36 + 10, 24)
+    playerNameLabel:SetCursor("hand")
+    playerNameLabel:SetMouseInputEnabled(true)
+
+    playerNameLabel.OnMousePressed = function()
+        gui.OpenURL(profileURL)
+    end
+
+    playerNameLabel.OnCursorEntered = function()
+        playerNameLabel:SetTextColor(Color(255, 50, 50))
+    end
+    playerNameLabel.OnCursorExited = function()
+        playerNameLabel:SetTextColor(Color(0, 150, 255))
+    end
 
     InfoButton:DoClick()
 end

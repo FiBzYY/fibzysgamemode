@@ -12,7 +12,15 @@ end
 
 function UpdateSpectateData(isBot, playerName, startTime, bestRecord)
     SpectateData.Replay = isBot
-    SpectateData.Start = startTime and startTime + TIMER:GetDifference() or nil
+
+    local diff = TIMER:GetDifference() or 0 -- fallback to 0 if nil!
+
+    if startTime ~= nil then
+        SpectateData.Start = startTime + diff
+    else
+        SpectateData.Start = nil
+    end
+
     SpectateData.Best = bestRecord or 0
     SpectateData.Contains = true
 
@@ -25,6 +33,7 @@ function UpdateSpectateData(isBot, playerName, startTime, bestRecord)
 
     TIMER:SpectateUpdate()
 end
+
 
 function SpectatePlayer(startTime, bestRecord)
     UpdateSpectateData(false, "Player", startTime, bestRecord)
@@ -193,19 +202,31 @@ NETWORK:GetNetworkMessage("TimerNetworkProtocol", function(actionType, data, ply
     if actionType == "GUI_Update" then Window:Update(tostring(data[1]), data[2]) end
     if actionType == "Print" then TIMER:Print(tostring(data[1]), data[2]) end
 
-    if actionType == "Spectate" then
-        local spectateType = tostring(data[1])
+if actionType == "Spectate" then
+    local spectateType = tostring(data[1])
 
-        if spectateType == "Clear" then 
-            CS_Clear() 
-        elseif spectateType == "Mode" then 
-            CS_Mode(tonumber(data[2])) 
-        elseif spectateType == "Viewer" then 
-            CS_Viewer(data[2], data[3], data[4]) 
-        elseif spectateType == "Timer" then 
+    if spectateType == "Clear" then 
+        CS_Clear()
+
+    elseif spectateType == "Mode" then 
+        CS_Mode(tonumber(data[2]))
+
+    elseif spectateType == "Viewer" then 
+        CS_Viewer(data[2], data[3], data[4])
+
+    elseif spectateType == "Timer" then 
+        -- Assuming data[2] is your "isReplay" boolean!
+        local isReplay = data[2]
+        if isReplay == true then
+            -- ✅ BOT/REPLAY branch ONLY!
             CS_Bot(data[3], data[4], data[5], data[6], data[7])
+        else
+            -- 🧍 PLAYER branch goes here, if needed:
+            SpectatePlayer(data[3], data[5])
         end
     end
+end
+
 
     if actionType == "Admin" then Admin:Receive(data) end
 
