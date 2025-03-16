@@ -398,6 +398,8 @@ function UI:CreateMenu()
         self:CreateToggle(container, y, "bhop_smoothnoclip", "Smooth Noclip", "Enables or disables noclip smoothing.", { default = 1, off = 0 })
         y = y + 60
         self:CreateToggle(container, y, "bhop_nosway", "Weapon Sway", "Controls how weapon view models move.")
+        y = y + 60
+        self:CreateToggle(container, y, "bhop_alwaysshowtriggers", "Always Show Triggers", "Enables or disables showtriggers on spawn.")
     end, isActive = true },
 
     { text = "Graphics", panelContent = function(parent)

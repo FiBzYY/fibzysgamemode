@@ -1,4 +1,4 @@
-local PREFIX_CLIPS = "ShowClips"
+﻿local PREFIX_CLIPS = "ShowClips"
 local PREFIX_TRIGGERS = "ShowTriggers"
 local PREFIX_PROPS = "ShowProps"
 local PREFIX_COLORS = {
@@ -6,6 +6,8 @@ local PREFIX_COLORS = {
 	[PREFIX_TRIGGERS] = Color(255, 192, 0, 200),
 	[PREFIX_PROPS] =    Color(0, 255, 128, 200),
 }
+
+CreateClientConVar("bhop_alwaysshowtriggers", "0", true, false, "Always show triggers automatically on map load.", 0, 1)
 
 local MaterialEnum = ShowHidden.MaterialEnum
 
@@ -164,6 +166,23 @@ local function ToggleTriggers(cv, old, new)
 		ChatMessage(PREFIX_TRIGGERS, enabled and "showtriggers.msg.enabled" or "showtriggers.msg.disabled")
 	end
 end
+
+-- AUTO ENABLE SHOWTRIGGERS ON SPAWN IF bhop_alwaysshowtriggers IS 1
+hook.Add("InitPostEntity", "AutoEnableShowTriggersOnSpawn", function()
+    if GetConVar("bhop_alwaysshowtriggers"):GetBool() then
+        RunConsoleCommand("showtriggers_enabled", "1")
+    end
+end)
+
+hook.Add("OnEntityCreated", "ForceTriggersWhenSpawning", function(ent)
+    if ent:IsPlayer() and ent == LocalPlayer() then
+        timer.Simple(0, function()
+            if GetConVar("bhop_alwaysshowtriggers"):GetBool() then
+                RunConsoleCommand("showtriggers_enabled", "1")
+            end
+        end)
+    end
+end)
 
 -- Update material and color of trigger type
 local function UpdateTriggerTypeMaterial(ply, cmd, args)

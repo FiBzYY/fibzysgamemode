@@ -158,25 +158,64 @@ local function cTimeWR(ns)
 	end
 end
 
-local function getColorForGain(gain)
+-- Really Good
+CreateClientConVar("bhop_jhud_gain_verygood_r", "0", true, false)
+CreateClientConVar("bhop_jhud_gain_verygood_g", "255", true, false)
+CreateClientConVar("bhop_jhud_gain_verygood_b", "255", true, false)
+CreateClientConVar("bhop_jhud_gain_verygood_a", "255", true, false)
+
+-- Good
+CreateClientConVar("bhop_jhud_gain_good_r", "39", true, false)
+CreateClientConVar("bhop_jhud_gain_good_g", "255", true, false)
+CreateClientConVar("bhop_jhud_gain_good_b", "0", true, false)
+CreateClientConVar("bhop_jhud_gain_good_a", "255", true, false)
+
+-- Meh
+CreateClientConVar("bhop_jhud_gain_meh_r", "39", true, false)
+CreateClientConVar("bhop_jhud_gain_meh_g", "255", true, false)
+CreateClientConVar("bhop_jhud_gain_meh_b", "0", true, false)
+CreateClientConVar("bhop_jhud_gain_meh_a", "255", true, false)
+
+-- Bad
+CreateClientConVar("bhop_jhud_gain_bad_r", "255", true, false)
+CreateClientConVar("bhop_jhud_gain_bad_g", "128", true, false)
+CreateClientConVar("bhop_jhud_gain_bad_b", "0", true, false)
+CreateClientConVar("bhop_jhud_gain_bad_a", "255", true, false)
+
+-- Really Bad
+CreateClientConVar("bhop_jhud_gain_verybad_r", "255", true, false)
+CreateClientConVar("bhop_jhud_gain_verybad_g", "0", true, false)
+CreateClientConVar("bhop_jhud_gain_verybad_b", "0", true, false)
+CreateClientConVar("bhop_jhud_gain_verybad_a", "255", true, false)
+
+local function GetGainColor(prefix)
+    return Color(
+        GetConVar(prefix .. "_r"):GetInt(),
+        GetConVar(prefix .. "_g"):GetInt(),
+        GetConVar(prefix .. "_b"):GetInt(),
+        GetConVar(prefix .. "_a"):GetInt()
+    )
+end
+
+function getColorForGain(gain)
     if gain > 115 then
-        return Color(255, 0, 0, 255)       -- GainReallyBad
+        return GetGainColor("bhop_jhud_gain_verybad") -- Really Bad
     elseif gain > 110 then
-        return Color(255, 69, 0, 255)      -- GainReallyBad
+        return GetGainColor("bhop_jhud_gain_verybad") -- Really Bad
     elseif gain > 105 then
-        return Color(255, 128, 0, 255)     -- GainBad
+        return GetGainColor("bhop_jhud_gain_bad") -- Bad
     elseif gain > 100 then
-        return Color(39, 255, 0, 255)      -- GainGood
+        return GetGainColor("bhop_jhud_gain_good") -- Good
     elseif gain >= 90 then
-        return Color(0, 255, 255, 255)     -- GainReallyGood
+        return GetGainColor("bhop_jhud_gain_verygood") -- Really Good
     elseif gain >= 80 then
-        return Color(39, 255, 0, 255)      -- GainGood
+        return GetGainColor("bhop_jhud_gain_good") -- Good
     elseif gain >= 70 then
-        return Color(39, 255, 0, 255)      -- GainMeh
+        return GetGainColor("bhop_jhud_gain_meh") -- Meh
     elseif gain >= 60 then
-        return Color(255, 128, 0, 255)     -- GainBad
+        return GetGainColor("bhop_jhud_gain_bad") -- Bad
     else
-        return Color(255, 0, 0, 255)       -- GainReallyBad
+        return GetGainColor("bhop_jhud_gain_verybad") -- Really Bad
     end
 end
 
@@ -242,8 +281,21 @@ HUD.Themes = {
         
         local jumps = pl.player_jumps or 0
         local activity = current > 0 and 1 or 2
-        activity = (pl:GetNWInt("inPractice", false) or (pl.finishedTick or pl.bonusfinishedTick)) and 3 or activity
-        activity = (activity == 1 and (pl:IsBot() and 4 or 1) or activity)
+        local isInPractice = pl:GetNWInt("inPractice", false)
+        local isInStart = pl.InStartZone and not isInPractice
+        local isFinished = pl.finishedTick or pl.bonusfinishedTick
+
+        if isFinished or isInPractice then
+            activity = 3 -- Speed Only HUD
+        elseif pl:IsBot() then
+            activity = 4 -- Replay HUD
+        elseif current > 0 then
+            activity = 1 -- Active Timer HUD
+        elseif isInStart then
+            activity = 2 -- Start Zone HUD
+        else
+            activity = 3 -- unknown state
+        end
         
         local width = string.len(StyleName) < 15 and 130 or 200
         width = string.len(StyleName) < 25 and width or 260
@@ -562,7 +614,7 @@ HUD.Themes = {
         DrawText(ceil(speed), "HUDTimerKindaUltraBig", ScrW() / 2, yPos - 80, (pl:GetMoveType() == MOVETYPE_NOCLIP) and tc or pl.speedcol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
         DrawText(status, "HUDTimerKindaUltraBig", screenWidth / 2, yPos + 20, textColor, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 
-        if current < 0.1 and not pl:GetNWInt("inPractice", true) and pl:GetMoveType() ~= MOVETYPE_NOCLIP then 
+        if current < 0.1 and pl.InStartZone and not pl:GetNWInt("inPractice", true) and pl:GetMoveType() ~= MOVETYPE_NOCLIP then 
             DrawText("Start Zone", "HUDTimer", screenWidth / 2, yPos - 14, textColor, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
         end
 
@@ -665,7 +717,8 @@ HUD.Themes = {
 
         local sync = pl.sync or 0
         local style = pl:GetNWInt("Style", 1)
-        local stylename = (current == 0 and not isInPractice) and "Start Zone" or TIMER:StyleName(style) .. (isBot and " Replay" or "")
+        local stylename = (current == 0 and pl.InStartZone and not isInPractice) and "Start Zone" or TIMER:StyleName(style) .. (isBot and " Replay" or "")
+
 
         local worldRecord = TIMER.WorldRecords and TIMER.WorldRecords[style]
         local wr = "No time recorded"
@@ -696,7 +749,7 @@ HUD.Themes = {
         local ssjtext = ""
         local rank = pl:GetNWInt("Rank", false)
 
-        if (not pl:GetNWInt("inPractice", false)) and (current == 0) then
+        if not pl:GetNWInt("inPractice", false) and current == 0 and pl.InStartZone then
             zonestatus = "Start Zone"
 
             if not pl:IsBot() then
@@ -707,24 +760,37 @@ HUD.Themes = {
                     ssjtext = "Rank: #" .. rank
                 end
 
-                jumps = ""
+                speed = ""
                 sync = ""
             end
         else
-            if SSJStats.speed == 1 then
-                ssjtext = speed
-                addition = ""
-            else
-                local syncText = (SSJStats.gain > 0) and (math.Round(SSJStats.gain, 2) .. "%") or ""
-                local gainText = (SSJStats.difference > 0) and ("+" .. math.Round(SSJStats.difference, 2)) or ""
-
-                if syncText ~= "" or gainText ~= "" then
-                    addition = " (" .. (syncText ~= "" and syncText or "") .. ((syncText ~= "" and gainText ~= "") and ", " or "") .. (gainText ~= "" and gainText or "") .. ")"
-                else
+            if SSJStats then
+                if SSJStats.speed == 1 then
+                    ssjtext = speed
                     addition = ""
-                end
+                else
+                    local syncText = (SSJStats.gain and SSJStats.gain > 0) and (math.Round(SSJStats.gain, 2) .. "%") or ""
+                    local gainText = (SSJStats.difference and SSJStats.difference > 0) and ("+" .. math.Round(SSJStats.difference, 2)) or ""
 
-                ssjtext = (SSJStats.jumps ~= 0 and SSJStats.jumps or "")
+                    if syncText ~= "" or gainText ~= "" then
+                        addition = " (" .. (syncText ~= "" and syncText or "") .. ((syncText ~= "" and gainText ~= "") and ", " or "") .. (gainText ~= "" and gainText or "") .. ")"
+                    else
+                        addition = ""
+                    end
+
+                    ssjtext = (SSJStats.speed and SSJStats.speed ~= 0 and SSJStats.speed or "")
+                end
+            else
+                if not pl:IsBot() then
+                    if rank == false or rank <= 0 then
+                        ssjtext = "Unranked"
+                    else
+                        ssjtext = "Rank: #" .. rank
+                    end
+                else
+                    ssjtext = ""
+                end
+                addition = ""
             end
         end
 
@@ -800,9 +866,21 @@ HUD.Themes = {
      local sync = pl.sync or 0
 
      local base = Color(0, 0, 0, 70)
-     local activity = current > 0 and 1 or 2
-     activity = (pl:GetNWInt("inPractice", false) or (pl.finished or pl.bonusfinised)) and 3 or activity
-     activity = activity == 1 and (pl:IsBot() and 4 or 1) or activity
+    local isInPractice = pl:GetNWInt("inPractice", false)
+    local isInStart = pl.InStartZone and not isInPractice
+    local isFinished = pl.finished or pl.bonusfinised
+
+    if isFinished or isInPractice then
+        activity = 3 -- Speed Display
+    elseif pl:IsBot() then
+        activity = 4 -- Replay Mode
+    elseif current > 0 then
+        activity = 1 -- Normal Timer HUD
+    elseif isInStart then
+        activity = 2 -- In Start Zone
+    else
+        activity = 3 -- no timer + no start zone = practice area maybe
+    end
 
      local box_y_css = -4
      local box_y_css2 = -8

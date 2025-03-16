@@ -314,6 +314,8 @@ function TIMER:SetFinish(ply)
 end
 
 function TIMER:Reset(ply)
+    if not IsValid(ply) then return end
+
     self.TickStart = nil
     self.TickEnd = nil
     self.BonusTickStart = nil

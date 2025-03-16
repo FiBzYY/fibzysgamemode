@@ -1263,6 +1263,11 @@ end)
 
 concommand.Add("ssjtop_menu", RequestSSJTop)
 
+local function ColorToText(col)
+    return string.format("R:%d G:%d B:%d A:%d", col.r, col.g, col.b, col.a or 255)
+end
+
+
 -- JHUD Menu
 function OpenBhopJHUDMenu()
     local wide, tall = ScrW() * 0.4, ScrH() * 0.45
@@ -1350,6 +1355,37 @@ function OpenBhopJHUDMenu()
     AddToggle("bhop_jhud_difference", "Enable Difference", "Enable or disable difference speed on JHUD.")
 
     container:SetTall(y + 30)
+
+    local colorHeader = vgui.Create("DPanel", scrollPanel)
+    colorHeader:SetTall(40)
+    colorHeader:Dock(TOP)
+    colorHeader.Paint = function(self, w, h)
+        draw.SimpleText("Colors", "TopNavFont", 5, 5, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+        surface.SetDrawColor(255, 255, 255, 100)
+        surface.DrawLine(0, h - 5, w, h - 5)
+    end
+
+    local colorContainer = vgui.Create("DPanel", scrollPanel)
+    colorContainer:Dock(TOP)
+    colorContainer:SetTall((60 * 5) + 30)
+    colorContainer.Paint = function() end
+
+    local y = 10
+    local function AddToggleColor(cmd, label, desc)
+        local pnl, lbl, info = UI:ColorBox(colorContainer, y, cmd, label, desc)
+        timer.Simple(0.01, function()
+            if IsValid(pnl) then
+                pnl:SetWide(colorContainer:GetWide())
+            end
+        end)
+        y = y + 60
+    end
+
+    AddToggleColor("bhop_jhud_gain_verygood", "Change Gain Really Good Color", "Changes color for REALLY good gain.")
+    AddToggleColor("bhop_jhud_gain_good", "Change Good Gain Color", "Changes color for good gain.")
+    AddToggleColor("bhop_jhud_gain_meh", "Change Gain Meh Color", "Changes color for meh gain.")
+    AddToggleColor("bhop_jhud_gain_bad", "Change Gain Bad Color", "Changes color for bad gain.")
+    AddToggleColor("bhop_jhud_gain_verybad", "Change Gain Really Bad Color", "Changes color for REALLY bad gain.")
 end
 concommand.Add("bhop_jhudmenu", OpenBhopJHUDMenu)
 

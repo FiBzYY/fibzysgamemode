@@ -1,4 +1,4 @@
-local ShowHidden, TriggerType = ShowHidden, ShowHidden.TriggerType
+﻿local ShowHidden, TriggerType = ShowHidden, ShowHidden.TriggerType
 
 -- [[ ShowTriggers ]] --
 
