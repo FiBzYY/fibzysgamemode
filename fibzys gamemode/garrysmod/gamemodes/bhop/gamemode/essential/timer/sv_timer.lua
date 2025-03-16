@@ -276,7 +276,7 @@ function TIMER:StartTimer(ply)
 
     -- Send Start Timer | InStartZone | ScoreBoard
     NETWORK:StartNetworkMessage(ply, "UpdateSingleVar", ply, "InStartZone", ply.InStartZone)
-    NETWORK:StartNetworkMessage(ply, "TIMER/Start", ply.time)
+    NETWORK:StartNetworkMessage(ply, "TIMER/Start", ply, ply.time)
     NETWORK:StartNetworkMessageTimer(player.GetAll(), "Scoreboard", {"normal", ply, ply.time})
 
     -- Send Timer Update
@@ -317,7 +317,7 @@ function TIMER:ResetTimer(ply)
 
     -- Send Start Timer | InStartZone | ScoreBoard
     NETWORK:StartNetworkMessage(ply, "UpdateSingleVar", ply, "InStartZone", ply.InStartZone)
-    NETWORK:StartNetworkMessage(ply, "TIMER/Reset")
+    NETWORK:StartNetworkMessage(ply, "TIMER/Reset", ply)
     NETWORK:StartNetworkMessageTimer(player.GetAll(), "Scoreboard", {"normal", ply, ply.time})
 
     SendTimerUpdate(ply, 0, 0, 0)
@@ -366,7 +366,7 @@ function TIMER:StopTimer(ply)
     local tickTimeDiff = TIMER:ConvertTick(ply, ply.time, ply.finished, true, nil)
 
     -- Send Stop Timer | InStartZone | ScoreBoard
-    NETWORK:StartNetworkMessage(ply, "TIMER/Finish", tickTimeDiff)
+    NETWORK:StartNetworkMessage(ply, "TIMER/Finish",  ply, tickTimeDiff)
     NETWORK:StartNetworkMessageTimer(player.GetAll(), "Scoreboard", {"normal", ply, ply.finished})
 
 	if self:GetStyle(ply) == self:GetStyleID("Segment") then 

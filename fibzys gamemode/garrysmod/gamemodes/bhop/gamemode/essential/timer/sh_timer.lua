@@ -285,10 +285,9 @@ function TIMER:SetJumps(ply, jumpCount)
 end
 
 TickInterval = engine.TickInterval()
-TimerFinished = false
 
-function TIMER:SetStart(timeType)
-    TimerFinished = false
+function TIMER:SetStart(ply, timeType)
+    ply.TimerFinished = false
 
     local tick = engine.TickCount()
     if timeType == 0 then
@@ -301,10 +300,10 @@ function TIMER:SetStart(timeType)
     end
 end
 
-function TIMER:SetFinish()
+function TIMER:SetFinish(ply)
     if not self.TickStart and not self.BonusTickStart then return end
 
-    TimerFinished = true
+    ply.TimerFinished = true
     local tick = engine.TickCount()
 
     if self.TickStart then
@@ -314,28 +313,35 @@ function TIMER:SetFinish()
     end
 end
 
-function TIMER:Reset()
+function TIMER:Reset(ply)
     self.TickStart = nil
     self.TickEnd = nil
     self.BonusTickStart = nil
     self.BonusTickEnd = nil
-    TimerFinished = false
+    ply.TimerFinished = false
 end
 
 -- Networked Timer Start | Finish | Reset
 NETWORK:GetNetworkMessage("TIMER/Start", function(_, data)
-    local timeType = data[1]
-    TIMER:SetStart(timeType)
+    local timeType = data[2]
+    local ply = data[1]
+    TIMER:SetStart(ply, timeType)
 
     if ResetStrafes then ResetStrafes() end
 end)
 
 NETWORK:GetNetworkMessage("TIMER/Finish", function(_, data)
-    TIMER:SetFinish()
+    local ply = data[1]
+    local tickTimeDiff = data[2]
+
+    ply.tickTimeDiffEnd = tickTimeDiff
+
+    TIMER:SetFinish(ply)
 end)
 
 NETWORK:GetNetworkMessage("TIMER/Reset", function(_, data)
-    TIMER:Reset()
+    local ply = data[1]
+    TIMER:Reset(ply)
 
     if ResetStrafes then ResetStrafes() end
 end)
@@ -362,7 +368,7 @@ function TIMER:GetTickCount(ply)
 
     local timescale = 1 -- (style == TIMER:GetStyleID("TAS")) and GetConVar("bhop_timescale"):GetFloat() or 1
 
-    if TimerFinished then
+    if ply.TimerFinished then
         if self.BonusTickEnd then
             return (self.BonusTickEnd - self.BonusTickStart) * timescale
         elseif self.TickEnd then
@@ -385,7 +391,7 @@ function TIMER:GetTickCount(ply)
             totalSegmentTime = totalSegmentTime + segmentTime
         end
 
-        if not TimerFinished then
+        if not ply.TimerFinished then
             totalSegmentTime = totalSegmentTime + (ticksElapsed * timescale)
         end
 
@@ -396,13 +402,13 @@ function TIMER:GetTickCount(ply)
 end
 
 -- Reset the checkpoint
-function TIMER:ResetToCheckpoint(checkpointTick)
+function TIMER:ResetToCheckpoint(ply, checkpointTick)
     self.TickStart = checkpointTick
     self.TickEnd = nil
     self.BonusTickStart = nil
     self.BonusTickEnd = nil
     self.CompletedSegments = nil
-    TimerFinished = false
+    ply.TimerFinished = false
     timerActive = true
 
     fractionalTicks = 0

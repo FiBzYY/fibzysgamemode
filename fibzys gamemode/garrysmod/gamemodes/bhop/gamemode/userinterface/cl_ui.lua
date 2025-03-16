@@ -726,7 +726,7 @@ UI:AddListener("ssj", function(_, data)
             {["name"] = "Show Last Speed", ["function"] = SSJ_Callback(11), ["bool"] = data[11]},
             {["name"] = "Show Yaw", ["function"] = SSJ_Callback(12), ["bool"] = data[12]},
             {["name"] = "Show Time", ["function"] = SSJ_Callback(13), ["bool"] = data[13]},
-            {["name"] = "Show  Prespeed", ["function"] = SSJ_Callback(14), ["bool"] = data[14]}
+            {["name"] = "Show Pre-Speed", ["function"] = SSJ_Callback(14), ["bool"] = data[14]}
         )
     end
 end)
@@ -760,7 +760,7 @@ UI:AddListener("style", function(_, data)
             {["name"] = "Backwards", ["function"] = STYLE_Callback(13), ["bool"] = data[13]},
             {["name"] = "Stamina", ["function"] = STYLE_Callback(14), ["bool"] = data[14]},
             {["name"] = "Segment", ["function"] = STYLE_Callback(15), ["bool"] = data[15]},
-            {["name"] = "Practice", ["function"] = STYLE_Callback(16), ["bool"] = data[16]},
+            {["name"] = "Low Gravity", ["function"] = STYLE_Callback(16), ["bool"] = data[16]},
             {["name"] = "Auto-Strafe", ["function"] = STYLE_Callback(17), ["bool"] = data[17]},
             {["name"] = "Moon Man", ["function"] = STYLE_Callback(18), ["bool"] = data[18]},
             {["name"] = "High Gravity", ["function"] = STYLE_Callback(19), ["bool"] = data[19]},
@@ -1262,3 +1262,97 @@ net.Receive("SSJTOP_SendData", function()
 end)
 
 concommand.Add("ssjtop_menu", RequestSSJTop)
+
+-- JHUD Menu
+function OpenBhopJHUDMenu()
+    local wide, tall = ScrW() * 0.4, ScrH() * 0.45
+    local frameColor = Color(42, 42, 42, 255)
+    local headerColor = Color(30, 30, 30, 255)
+
+    local frame = vgui.Create("DFrame")
+    frame:SetSize(wide, tall)
+    frame:Center()
+    frame:SetTitle("")
+    frame:ShowCloseButton(false)
+    frame:SetDraggable(false)
+    frame:MakePopup()
+    frame.Paint = function(self, w, h)
+        surface.SetDrawColor(frameColor)
+        surface.DrawRect(0, 0, w, h)
+
+        surface.SetDrawColor(headerColor)
+        surface.DrawRect(0, 0, w, 40)
+
+        draw.SimpleText("JHUD Menu", "TopNavFont", w / 2, 20, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+    end
+
+    local closeButton = vgui.Create("DButton", frame)
+    closeButton:SetSize(24, 24)
+    closeButton:SetPos(wide - 34, 8)
+    closeButton:SetText("")
+    closeButton.Paint = function(self, w, h)
+        if self:IsHovered() then
+            surface.SetDrawColor(255, 0, 0, 200)
+        else
+            surface.SetDrawColor(255, 255, 255, 200)
+        end
+        surface.DrawLine(6, 6, w - 6, h - 6)
+        surface.DrawLine(w - 6, 6, 6, h - 6)
+    end
+    closeButton.DoClick = function()
+        frame:Close()
+    end
+
+    local scrollPanel = vgui.Create("DScrollPanel", frame)
+    scrollPanel:Dock(FILL)
+    scrollPanel:DockMargin(8, 25, 8, 8)
+
+    local vBar = scrollPanel:GetVBar()
+    vBar:SetWide(6)
+    vBar.Paint = function(self, w, h) surface.SetDrawColor(40, 40, 40) surface.DrawRect(0, 0, w, h) end
+    vBar.btnUp.Paint = function(self, w, h) surface.SetDrawColor(60, 60, 60) surface.DrawRect(0, 0, w, h) end
+    vBar.btnDown.Paint = function(self, w, h) surface.SetDrawColor(60, 60, 60) surface.DrawRect(0, 0, w, h) end
+    vBar.btnGrip.Paint = function(self, w, h) surface.SetDrawColor(255, 255, 255) surface.DrawRect(0, 0, w, h) end
+
+    local header = vgui.Create("DPanel", scrollPanel)
+    header:SetTall(40)
+    header:Dock(TOP)
+    header.Paint = function(self, w, h)
+        draw.SimpleText("Settings", "TopNavFont", 5, 5, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+        surface.SetDrawColor(255, 255, 255, 100)
+        surface.DrawLine(0, h - 5, w, h - 5)
+    end
+
+    local container = vgui.Create("DPanel", scrollPanel)
+    container:Dock(TOP)
+    container:SetTall(400)
+    container.Paint = function(self, w, h)
+        surface.SetDrawColor(frameColor)
+        surface.DrawRect(0, 0, w, h)
+    end
+
+    local y = 10
+    local function AddToggle(cmd, label, desc)
+        local pnl, lbl, info = UI:CreateToggle(container, y, cmd, label, desc, { default = 1, off = 0 })
+        timer.Simple(0.01, function()
+            if IsValid(pnl) then
+                pnl:SetWide(container:GetWide())
+            end
+        end)
+        y = y + 60
+    end
+
+    AddToggle("bhop_jhud", "Enable JHUD", "Enable or disable the JHUD display.")
+    AddToggle("bhop_jhud_gain", "Enable Gain", "Enable or disable Gain display on JHUD.")
+    AddToggle("bhop_jhud_sync", "Enable Sync", "Enable or disable Sync display on JHUD.")
+    AddToggle("bhop_jhud_strafes", "Enable Strafes", "Enable or disable Strafe counter on JHUD.")
+    AddToggle("bhop_jhud_efficiency", "Enable Efficiency", "Enable or disable Efficiency on JHUD.")
+    AddToggle("bhop_jhud_difference", "Enable Difference", "Enable or disable difference speed on JHUD.")
+
+    container:SetTall(y + 30)
+end
+concommand.Add("bhop_jhudmenu", OpenBhopJHUDMenu)
+
+net.Receive("JHUD_SendData", function()
+    RunConsoleCommand("bhop_jhudmenu")
+end)

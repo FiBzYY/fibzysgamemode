@@ -126,15 +126,15 @@ hook.Add("PlayerInitialSpawn", "OnClientPutInServer", function(ply)
             false,   -- 3: Speed Difference
             false,    -- 4: Height Difference
             true,       -- 5: Observers Stats
-            true,        -- 6: Gain Percentage
-            true,          -- 7: Strafes Per Jump
-            true,           -- 8: Show JSS
-            true,          -- 9: Show Eff
-            true,         -- 10: Show Sync
-            true,       -- 11: Show Last Speed
-            true,      -- 12: Show Yaw
-            true,    -- 13: Show Time
-            false  -- 14 Offsets
+            false,        -- 6: Gain Percentage
+            false,          -- 7: Strafes Per Jump
+            false,           -- 8: Show JSS
+            false,          -- 9: Show Eff
+            false,         -- 10: Show Sync
+            false,       -- 11: Show Last Speed
+            false,      -- 12: Show Yaw
+            false,    -- 13: Show Time
+            true  -- 14 Pre-Speed
         }
     }
 end)
@@ -365,9 +365,13 @@ local function SSJ_PrintStats(ply, lastSpeed, jumpTimeDiff)
     -- Jump Sync Stats
     local avgDiff = g_fAvgDiffFromPerf[ply] or 0
     local avgAbsJSS = g_fAvgAbsoluteJss[ply] or 0
-    local jss = avgDiff / (strafeTicks or 1) or 0
-    local absjss = avgAbsJSS / (strafeTicks or 1) or 0
-    local yawwing = (g_iYawwingTick[ply] / (strafeTicks or 1)) * 100
+    local yawTick = g_iYawwingTick[ply] or 0
+    local strafeTicks = g_iStrafeTick[ply] or 1 -- fallback to 1 to avoid division by 0
+
+    local jss = avgDiff / strafeTicks
+    local absjss = avgAbsJSS / strafeTicks
+    local yawwing = (yawTick / strafeTicks) * 100
+
 
     -- Colors
     local ColorSSJ = Color(255, 255, 0)
@@ -392,15 +396,15 @@ local function SSJ_PrintStats(ply, lastSpeed, jumpTimeDiff)
             false,   -- 3: Speed Difference
             false,    -- 4: Height Difference
             true,       -- 5: Observers Stats
-            true,        -- 6: Gain Percentage
-            true,          -- 7: Strafes Per Jump
-            true,           -- 8: Show JSS
-            true,          -- 9: Show Eff
-            true,         -- 10: Show Sync
-            true,       -- 11: Show Last Speed
-            true,      -- 12: Show Yaw
-            true,    -- 13: Show Time
-            false  -- 14 Offsets
+            false,        -- 6: Gain Percentage
+            false,          -- 7: Strafes Per Jump
+            false,           -- 8: Show JSS
+            false,          -- 9: Show Eff
+            false,         -- 10: Show Sync
+            false,       -- 11: Show Last Speed
+            false,      -- 12: Show Yaw
+            false,    -- 13: Show Time
+            true  -- 14 Pre-Speed
         }
     }
     local settings = ply.SSJ["Settings"]
@@ -422,10 +426,12 @@ local function SSJ_PrintStats(ply, lastSpeed, jumpTimeDiff)
         str[#str + 1] = tostring(velocity)
         str[#str + 1] = color_white
 
-        str[#str + 1] = " | ΔS: "
-        str[#str + 1] = ColorSSJ
-        str[#str + 1] = tostring(g_speedDiff[ply])
-        str[#str + 1] = color_white
+        if settings[3] then
+            str[#str + 1] = " | ΔS: "
+            str[#str + 1] = ColorSSJ
+            str[#str + 1] = tostring(g_speedDiff[ply])
+            str[#str + 1] = color_white
+        end
 
         if settings[6] then
             str[#str + 1] = " | Gn: "
@@ -515,17 +521,23 @@ local function SSJ_PrintStats(ply, lastSpeed, jumpTimeDiff)
         local showPre = v:GetNWBool("bhop_showpre", true)
 
         if ssj and ssj[1] and showSSJ then
-            -- If mode is "All" (ssj[2] is true), check if we need to hide Jump 1
-            if ssj[2] then
+            -- "Prestrafe Only" (Setting 14) toggle
+            if settings[14] and jumpCount == 1 then
+                NETWORK:StartNetworkMessageTimer(v, "Print", {"Timer", str})
+        
+            -- Normal "All" mode
+            elseif ssj[2] then
                 if not showPre and jumpCount == 1 then
                     -- Skip Prestrafe when it's disabled in "All" mode
                 else
                     NETWORK:StartNetworkMessageTimer(v, "Print", {"Timer", str})
                 end
-            -- If mode is not "All", only show Jump 1 + Jump 6 if Pre is enabled
+
+            -- Limited mode (Jump 1 + 6 only if Prestrafe shown)
             elseif showPre and (jumpCount == 1 or jumpCount == 6) then
                 NETWORK:StartNetworkMessageTimer(v, "Print", {"Timer", str})
-            -- If Pre is disabled, only show Jump 6
+
+            -- Limited mode (Jump 6 only if Prestrafe disabled)
             elseif not showPre and jumpCount == 6 then
                 NETWORK:StartNetworkMessageTimer(v, "Print", {"Timer", str})
             end
@@ -558,7 +570,7 @@ local function SSJ_PrintStats(ply, lastSpeed, jumpTimeDiff)
                 local Data = { ply:Nick(), tostring(jumpSpeed), ssjType:upper(), "6th" }
                 NETWORK:StartNetworkMessageTimer(nil, "Print", { ID, Lang:Get(ID, Data) })
 
-                timer_Start("SSJTOP_AutoSave")
+                timer.Start("SSJTOP_AutoSave")
             end
         end
     end

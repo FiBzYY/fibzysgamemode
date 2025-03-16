@@ -55,8 +55,13 @@ local StyleInfo = {
 local function UpdateStyleInfo(client, style)
     if style == TIMER:GetStyleID("Unreal") or style == TIMER:GetStyleID("WTF") then
         StyleInfo.mv = movementspeedunreal:GetFloat()
+        StyleInfo.cap = movementcap:GetFloat()
+    elseif style == TIMER:GetStyleID("L") then
+        StyleInfo.mv = movementspeed:GetFloat()
+        StyleInfo.cap = 100
     else
         StyleInfo.mv = movementspeed:GetFloat()
+        StyleInfo.cap = movementcap:GetFloat()
     end
 end
 
@@ -316,12 +321,16 @@ function GM:SetupMove(client, data, cmd)
                 end
             end
         else
-            RunConsoleCommand("-moveleft")
-            RunConsoleCommand("-moveright")
+            if CLIENT then
+                RunConsoleCommand("-moveleft")
+                RunConsoleCommand("-moveright")
+            end
         end
     elseif style == TIMER:GetStyleID("Normal") or style == TIMER:GetStyleID("Unreal") or
            style == TIMER:GetStyleID("WTF") or style == TIMER:GetStyleID("Legit") or 
-           style == TIMER:GetStyleID("Bonus") or style == TIMER:GetStyleID("Segment") or style == TIMER:GetStyleID("LG") or style == TIMER:GetStyleID("HG") or style == TIMER:GetStyleID("MM") or style == TIMER:GetStyleID("SPEED") then
+           style == TIMER:GetStyleID("Bonus") or style == TIMER:GetStyleID("Segment") or style == TIMER:GetStyleID("LG") or 
+           style == TIMER:GetStyleID("HG") or style == TIMER:GetStyleID("MM") or 
+           style == TIMER:GetStyleID("SPEED") or style == TIMER:GetStyleID("E") or style == TIMER:GetStyleID("Stamina") then
         forwardInput = (forwardPressed and 3 or 0) - (backPressed and 3 or 0)
         sideInput = (rightPressed and 3 or 0) - (leftPressed and 3 or 0)
     end
@@ -379,6 +388,57 @@ function GM:SetupMove(client, data, cmd)
         TIMER.SyncAngles[client] = ang[2]
     end
 end
+
+hook.Add("SetupMove", "Stamina", function(client, data, cmd)
+    if not IsValid(client) or not client:Alive() then return end
+
+    local style = TIMER:GetStyle(client)
+    local onGround = client:IsOnGround()
+    local velocity = data:GetVelocity()
+    local velocity2d = velocity:Length2D()
+    local c = CurTime()
+
+    if (style ==  TIMER:GetStyleID("L") or TIMER:GetStyleID("Stamina")) and onGround and not client:IsBot() then
+        if client.AirStam then
+            data:SetVelocity(velocity)
+            if client.AirStam == 4 then
+                client.Gtime = c
+            end
+            client.AirStam = client.AirStam - 1
+            if client.AirStam < 0 then
+                client.AirStam = nil
+            end
+        end
+
+        if client.Gtime then
+            if client.Gtime == c then
+                client.Gset = 0
+            elseif client.Gset then
+                if client.Gset < 4 then
+                    client.Gset = client.Gset + 1
+                    return
+                end
+                local dt = c - client.Gtime
+                if dt < 1 then
+                    local p = (1 - dt) / 16
+                    data:SetVelocity(velocity - (p * velocity))
+                else
+                    client.Gtime = nil
+                    client.Gset = nil
+                end
+            end
+        end
+    end
+
+    if (style == TIMER:GetStyleID("L") or style ==  TIMER:GetStyleID("Stamina")) and not onGround then
+        if not client.AirStam or client.AirStam < 4 then 
+            client.AirStam = 4 
+        end
+        if client.Gset then 
+            client.Gset = nil 
+        end
+    end
+end)
 
 -- Footsteps
 function GM:PlayerFootstep(ply, pos, foot, sound, volume, rf)

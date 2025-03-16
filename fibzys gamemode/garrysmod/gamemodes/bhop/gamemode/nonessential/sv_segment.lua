@@ -52,7 +52,6 @@ function Segment:GotoWaypoint(client)
     end
 
     local waypoint = client.waypoints[#client.waypoints]
-
     client:SetMoveType(MOVETYPE_NONE)
     client:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
     client:Lock()
@@ -60,41 +59,43 @@ function Segment:GotoWaypoint(client)
     client.tpTime = ct() + client.freezeDelay
     client.teleportWaypoint = waypoint
 
+    local savedWaypoint = waypoint
+
     timer.Simple(client.freezeDelay, function()
         if not IsValid(client) then return end
 
-        -- the waypoint data
-        local elapsedTicks = client.teleportWaypoint.tick
-        local waypointPos = client.teleportWaypoint.pos
-        local waypointAngles = client.teleportWaypoint.angles
-        local waypointVel = client.teleportWaypoint.vel
+        if not savedWaypoint then
+            NETWORK:StartNetworkMessageTimer(client, "Print", {"Timer", "Failed to load waypoint: Invalid data."})
+            return
+        end
+
+        local elapsedTicks = savedWaypoint.tick
+        local waypointPos = savedWaypoint.pos
+        local waypointAngles = savedWaypoint.angles
+        local waypointVel = savedWaypoint.vel
 
         if elapsedTicks then
             client:SetPos(waypointPos)
             client:SetLocalVelocity(waypointVel)
             client:SetEyeAngles(waypointAngles)
 
-            -- timer with waypoint tick data
             client.time = engine.TickCount() - elapsedTicks
             client.iFractionalTicks = 0
             client.iFullTicks = elapsedTicks
 
-            -- finish and bonus ticks to ensure the timer starts fresh
             client.finished = nil
             client.bonustime = nil
             client.bonusfinished = nil
 
             SendTimerUpdate(client, client.time, 0, client.iFractionalTicks)
-            Replay:StripFromFrame(client, client.teleportWaypoint.frame)
+            Replay:StripFromFrame(client, savedWaypoint.frame)
 
-            -- timer resumes updating live after teleporting
             client:SetMoveType(MOVETYPE_WALK)
             client:SetCollisionGroup(COLLISION_GROUP_PLAYER)
             client:UnLock()
             client.wpReady = true
             client.teleportWaypoint = nil
             client.lastTele = ct() + 0.5 + engine.TickInterval()
-
         else
             NETWORK:StartNetworkMessageTimer(client, "Print", {"Timer", "Failed to load waypoint: Invalid data."})
         end

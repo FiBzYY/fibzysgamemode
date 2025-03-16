@@ -315,6 +315,55 @@ function UI:CreateInputBox(parent, y, command, defaultVal, labelText, infoText, 
     return pnl, lbl, infoLbl, inputBox
 end
 
+function UI:CreateInputBoxWide(parent, y, command, defaultVal, labelText, infoText)
+    local pnl = vgui.Create("DPanel", parent)
+    pnl:SetSize(parent:GetWide(), 80)
+    pnl:SetPos(0, y)
+    pnl.Paint = function(self, w, h)
+        surface.SetDrawColor(0, 0, 0, 0)
+        surface.DrawRect(0, 0, w, h)
+    end
+
+    local boxSize = 31
+    local cvarValue = GetConVar(command) and GetConVar(command):GetFloat() or defaultVal
+    cvarValue = tonumber(string.format("%.2f", cvarValue))
+
+    local inputBox = vgui.Create("DTextEntry", pnl)
+    inputBox:SetPos(pnl:GetWide() - 60, 15)
+    inputBox:SetSize(boxSize + 20, boxSize)
+    inputBox:SetNumeric(true)
+    inputBox:SetText(tostring(cvarValue))
+    inputBox:SetFont("ToggleButtonFont")
+
+    inputBox.Paint = function(self, w, h)
+        surface.SetDrawColor(colors.toggleButton)
+        surface.DrawRect(0, 0, w, h)
+        self:DrawTextEntryText(Color(255, 255, 255), Color(30, 130, 255), Color(255, 255, 255))
+    end
+
+    inputBox.OnEnter = function(self)
+        local value = tonumber(self:GetValue()) or defaultVal
+        value = tonumber(string.format("%.2f", value))
+        lp():ConCommand(command .. " " .. tostring(value))
+    end
+
+    local lbl = vgui.Create("DLabel", parent)
+    lbl:SetPos(10, y + 8)
+    lbl:SetText(labelText)
+    lbl:SetTextColor(colors.text)
+    lbl:SetFont("ToggleButtonFont")
+    lbl:SizeToContents()
+
+    local infoLbl = vgui.Create("DLabel", parent)
+    infoLbl:SetPos(10, y + 28)
+    infoLbl:SetText(infoText)
+    infoLbl:SetTextColor(colors.infoText)
+    infoLbl:SetFont("SmallTextFont")
+    infoLbl:SizeToContents()
+
+    return pnl, lbl, infoLbl, inputBox
+end
+
 function UI:CreateInputBoxText(parent, y, command, defaultVal, labelText, infoText)
     local pnl = vgui.Create("DPanel", parent)
     pnl:SetSize(parent:GetWide(), 80)
@@ -823,6 +872,10 @@ function CreateSettingRow(labelText, buttonText, parentPanel, onClickFunc)
     button:SetWidth(100)
 end
 
+local function ConVarExists(name)
+    return GetConVar(name) ~= nil
+end
+
 function UI:CreateInputBoxSettings(parent, y, command, defaultVal, labelText, infoText, minVal, maxVal)
     local pnl = vgui.Create("DPanel", parent)
     pnl:SetSize(parent:GetWide(), 80)
@@ -840,7 +893,10 @@ function UI:CreateInputBoxSettings(parent, y, command, defaultVal, labelText, in
     inputBox:SetPos(pnl:GetWide() - 60, 0)
     inputBox:SetSize(boxSize, boxSize)
     inputBox:SetNumeric(true)
-    inputBox:SetText(tostring(defaultVal))
+
+    local convarVal = ConVarExists(command) and GetConVar(command):GetFloat() or defaultVal
+    inputBox:SetText(string.format("%.2f", convarVal))
+
     inputBox:SetFont("ToggleButtonFont")
 
     inputBox.Paint = function(self, w, h)

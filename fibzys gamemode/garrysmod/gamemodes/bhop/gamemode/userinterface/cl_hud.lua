@@ -55,12 +55,13 @@ local function ConvertTimeMS(ns)
 end
 
 net.Receive("Timer_Update", function()
+    local ply = LocalPlayer()
     startTick = net.ReadInt(32)
     endTick = net.ReadInt(32)
     fractionalTicks = net.ReadInt(32)
 
     if startTick > 0 and endTick == 0 then
-        TIMER:ResetToCheckpoint(startTick)
+        TIMER:ResetToCheckpoint(ply, startTick)
     end
 
     timerActive = startTick > 0 and (endTick == 0 or endTick > startTick)
@@ -356,7 +357,6 @@ HUD.Themes = {
 
         end
 
-
 		if lp():Team() == TEAM_SPECTATOR then
 			local ob = pl
 			if Iv(ob) and ob:IsPlayer() then
@@ -399,13 +399,16 @@ HUD.Themes = {
             timeLabel = "Timer Disabled"
             pbLabel = "Leave the zone to start timer"
         else
-            if pl:IsBot() then
-                currentFormatted = ConvertTimeWR(current)
-            elseif pl:Team() == TEAM_SPECTATOR and not pl:IsBot() then
-                currentFormatted = ConvertTimeWR(current)
-            else
-                currentFormatted =  ConvertTime(current) .. ConvertTimeMS(current)
-            end
+        if pl.TimerFinished then
+            currentFormatted = ConvertTimeWR(pl.tickTimeDiffEnd)
+        elseif pl:IsBot() then
+            currentFormatted = ConvertTimeWR(current)
+        elseif pl:Team() == TEAM_SPECTATOR and not pl:IsBot() then
+            currentFormatted = ConvertTimeWR(current)
+        else
+            currentFormatted = ConvertTime(current) .. ConvertTimeMS(current)
+        end
+
         end
 
         surface.SetDrawColor(BASE)
@@ -767,22 +770,22 @@ HUD.Themes = {
             end
         end
 
-        if lp():Team() == TEAM_SPECTATOR then
-            local backgroundspec = Color(0, 0, 0, 190)
-            surface.SetDrawColor(backgroundspec)
-            surface.DrawRect(0, screenHeight - 116.70, screenWidth, screenHeight)
+    if lp():Team() == TEAM_SPECTATOR then
+        local backgroundspec = Color(0, 0, 0, 190)
+        surface.SetDrawColor(backgroundspec)
+        surface.DrawRect(0, screenHeight - 116.70, screenWidth, screenHeight)
 
-            DrawText(pl:Name() .. " (100)", "HUDTimer", screenWidth / 2, screenHeight - 60, Color(239, 74, 74), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+        DrawText(pl:Name() .. " (100)", "HUDTimer", screenWidth / 2, screenHeight - 60, Color(239, 74, 74), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 
-            surface.SetDrawColor(backgroundspec)
-            surface.DrawRect(0, 0, screenWidth, screenHeight / 0.872)
+        surface.SetDrawColor(backgroundspec)
+        surface.DrawRect(0, 0, screenWidth, 100)
 
-            DrawText("Counter-Terrorists :   0", "HUDSpecHud", screenWidth - 484, (screenHeight / 35) - 1, Color(241, 176, 13), text, TEXT_ALIGN_RIGHT)
-            DrawText("Map: " .. game.GetMap(), "HUDSpecHud", screenWidth - 220, (screenHeight / 35) - 1, Color(241, 176, 13), text, TEXT_ALIGN_RIGHT)
-            DrawText("Terrorists :   0", "HUDSpecHud", screenWidth - 400, (screenHeight / 18) - 1, Color(241, 176, 13), text, TEXT_ALIGN_RIGHT)
-            DrawText("e", "CounterStrike", screenWidth - 220, (screenHeight / 21) - 1, Color(241, 176, 13), text, TEXT_ALIGN_RIGHT)
-            DrawText("00:00", "HUDSpecHud", screenWidth - 184, (screenHeight / 17) - 1, Color(241, 176, 13), text, TEXT_ALIGN_RIGHT)
-        end
+        DrawText("Counter-Terrorists :   0", "HUDSpecHud", screenWidth - 484, (screenHeight / 35) - 1, Color(241, 176, 13), text, TEXT_ALIGN_RIGHT)
+        DrawText("Map: " .. game.GetMap(), "HUDSpecHud", screenWidth - 220, (screenHeight / 35) - 1, Color(241, 176, 13), text, TEXT_ALIGN_RIGHT)
+        DrawText("Terrorists :   0", "HUDSpecHud", screenWidth - 400, (screenHeight / 18) - 1, Color(241, 176, 13), text, TEXT_ALIGN_RIGHT)
+        DrawText("e", "CounterStrike", screenWidth - 220, (screenHeight / 21) - 1, Color(241, 176, 13), text, TEXT_ALIGN_RIGHT)
+        DrawText("00:00", "HUDSpecHud", screenWidth - 184, (screenHeight / 17) - 1, Color(241, 176, 13), text, TEXT_ALIGN_RIGHT)
+    end
 
      local velocity = math.floor(GetClientVelocity(pl))
      local time = "Time: "
@@ -1091,21 +1094,32 @@ local function drawSpeed(speed, color)
     DrawText(math.Round(speed, 0), "JHUDMainBIG", screenWidth / 2, screenHeight / 2 - 100, color, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 end
 
+CreateConVar("bhop_jhud", "1", FCVAR_ARCHIVE, "Enable or disable the JHUD HUD element.")
+CreateConVar("bhop_jhud_gain", "1", FCVAR_ARCHIVE, "Enable or disable Gain display on JHUD.")
+CreateConVar("bhop_jhud_sync", "1", FCVAR_ARCHIVE, "Enable or disable Sync display on JHUD.")
+CreateConVar("bhop_jhud_strafes", "1", FCVAR_ARCHIVE, "Enable or disable Strafe counter on JHUD.")
+CreateConVar("bhop_jhud_efficiency", "1", FCVAR_ARCHIVE, "Enable or disable Efficiency on JHUD.")
+CreateConVar("bhop_jhud_difference", "1", FCVAR_ARCHIVE, "Enable or disable Difference speed on JHUD.")
+
 -- JHUD Styles
 local hudStyles = {
     pyramid = function(scrW, scrH, data, fadedWhite, colorToUse)
         drawSpeed(data.speed, colorToUse)
 
         if data.jumps > 1 then
-            DrawText(math.Round(data.lastspeed, 0), "JHUDMainBIG2", scrW / 2, scrH / 2 - 140, fadedWhite, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-            DrawText(math.Round(data.gain, 2) .. "%", "JHUDMainBIG2", scrW / 2, scrH / 2 - 60, fadedWhite, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            if GetConVar("bhop_jhud_difference"):GetBool() then
+                DrawText(math.Round(data.lastspeed, 0), "JHUDMainBIG2", scrW / 2, scrH / 2 - 140, fadedWhite, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            end
+            if GetConVar("bhop_jhud_gain"):GetBool() then
+                DrawText(math.Round(data.gain, 2) .. "%", "JHUDMainBIG2", scrW / 2, scrH / 2 - 60, fadedWhite, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            end
         end
 
-        if data.strafes > 0 then
+        if data.strafes > 0 and GetConVar("bhop_jhud_strafes"):GetBool() then
             DrawText(data.strafes, "JHUDEFF", scrW / 2, scrH / 2 - 30, fadedWhite, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
         end
 
-        if data.efficiency > 0 then
+        if data.efficiency > 0 and GetConVar("bhop_jhud_efficiency"):GetBool() then
             DrawText(math.Round(data.efficiency), "JHUDEFF", scrW / 2, scrH / 2 - 168, fadedWhite, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
         end
     end,
@@ -1116,28 +1130,49 @@ local hudStyles = {
         if data.jumps == 1 then
             DrawText(data.jumps .. ": " .. data.speed, "HUDTimerUltraBig", scrW / 2, scrH / 2 - 100, speedColorCached, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
         elseif data.jumps > 1 then
-            local textToDraw = data.jumps <= 6 and (data.jumps .. ": " .. data.speed) or (data.jumps % 6 == 0 and (data.jumps .. ": " .. gainkawaii) or gainkawaii)
+            local textToDraw
+            if GetConVar("bhop_jhud_gain"):GetBool() then
+                textToDraw = data.jumps <= 6 and (data.jumps .. ": " .. data.speed) or (data.jumps % 6 == 0 and (data.jumps .. ": " .. gainkawaii) or gainkawaii)
+            else
+                textToDraw = data.jumps .. ": " .. data.speed
+            end
             DrawText(textToDraw, "HUDTimerUltraBig", scrW / 2, scrH / 2 - 100, baseColorCached, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
         end
     end,
 
     claz = function(scrW, scrH, data)
-        local gainclaz = math.Round(data.gain, 2) .. "%"
+        local elements = {}
+
         local speed = math.Round(data.speed, 2)
-        local difference = math.Round(data.difference, 0)
+        local gain = math.Round(data.gain, 2) .. "%"
+        local diff = math.Round(data.difference, 0)
         local efficiency = math.Round(data.efficiency, 2)
         local sync = math.Round(data.sync, 2)
-    
+        local strafes = data.strafes
+
         if data.jumps > 1 then
-            DrawText(
-                (data.jumps) .. ": " .. speed .. " (" .. difference .. ") " .. gainclaz ..
-                " | " .. efficiency .. " | " .. data.strafes .. " | " .. sync .. "%",
-                "ClazJHUD", scrW / 2, scrH / 2 - 100, baseColorCached, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER
-            )
+            if GetConVar("bhop_jhud_difference"):GetBool() then
+                table.insert(elements, "(" .. diff .. ")")
+            end
+            if GetConVar("bhop_jhud_gain"):GetBool() then
+                table.insert(elements, gain)
+            end
+            if GetConVar("bhop_jhud_efficiency"):GetBool() then
+                table.insert(elements, efficiency)
+            end
+            if GetConVar("bhop_jhud_strafes"):GetBool() then
+                table.insert(elements, strafes)
+            end
+            if GetConVar("bhop_jhud_sync"):GetBool() then
+                table.insert(elements, sync .. "%")
+            end
+
+            local text = (data.jumps) .. ": " .. speed .. " | " .. table.concat(elements, " | ")
+            DrawText(text, "ClazJHUD", scrW / 2, scrH / 2 - 100, baseColorCached, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
         else
             DrawText("Pre-Speed: " .. speed, "ClazJHUD", scrW / 2, scrH / 2 - 100, speedColorCached, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
         end
-    end
+end
 }
 
 -- Main HUD Display
