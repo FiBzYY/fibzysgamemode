@@ -17,6 +17,7 @@ local insert, explode, lower, sub = table.insert, string.Explode, string.lower, 
 -- New Networking
 util.AddNetworkString("ChangePlayerName")
 util.AddNetworkString("SendNewMapsList")
+util.AddNetworkString("JHUD_SendData")
 
 function SendSSJTopToClient(ply)
     if not IsValid(ply) then return end
@@ -354,7 +355,7 @@ local styleIDs = {
     [9] = TIMER:GetStyleID("Swift"),        [10] = TIMER:GetStyleID("Bonus"),
     [11] = TIMER:GetStyleID("WTF"),         [12] = TIMER:GetStyleID("Low Gravity"),
     [13] = TIMER:GetStyleID("Backwards"),   [14] = TIMER:GetStyleID("Stamina"),
-    [15] = TIMER:GetStyleID("Segment"),     [16] = TIMER:GetStyleID("Practice"),
+    [15] = TIMER:GetStyleID("Segment"),     [16] = TIMER:GetStyleID("LG"),
     [17] = TIMER:GetStyleID("AS"),          [18] = TIMER:GetStyleID("MM"),
     [19] = TIMER:GetStyleID("HG"),          [20] = TIMER:GetStyleID("SPEED")
 }
@@ -461,6 +462,16 @@ function Command:Init()
         end,
         "Restart or respawn the player",
         ""
+        },
+        {
+            {"jhud", "jumphud"},
+            function(pl, args)
+                if not IsValid(pl) then return end
+                net.Start("JHUD_SendData")
+                net.Send(pl)
+            end,
+            "Jhud Menu command",
+            "<arguments>"
         },
         {
             {"spectate", "spec", "watch", "view"},

@@ -90,7 +90,7 @@ function TIMER:Spawn(ply)
     self:SpawnChecks(ply)
 end
 
-function ResetPlayerAttributes( ply, nPrevious, bStart )
+function TIMER:ResetPlayerAttributes(ply, previous, start)
     if ply.style == TIMER:GetStyleID("LG") then
         ply:SetGravity(0.6)
     elseif ply.style == TIMER:GetStyleID("HG") then
@@ -101,17 +101,17 @@ function ResetPlayerAttributes( ply, nPrevious, bStart )
         ply:SetGravity(0)
     end
 
-    if ply.style == TIMER:GetStyleID("Stamina") and ply.style == TIMER:GetStyleID("legit") then
+    --[[if ply.style == TIMER:GetStyleID("Stamina") and ply.style == TIMER:GetStyleID("legit") then
         STAMINA_USE[ply] = true
     else
         STAMINA_USE[ply] = false
-    end
+    end--]]
 end
 
 local LastPlayerAngles = {}
 function TIMER:SpawnChecks(ply)
     self:SetJumps(ply, 0)
-   	ResetPlayerAttributes( ply )
+   	self:ResetPlayerAttributes(ply)
 
     local steamID = ply:SteamID()
     local map = game.GetMap()
@@ -277,7 +277,7 @@ function TIMER:LoadStyle(ply, style)
     ply:SetNWInt("Style", ply.style)
     ply:SetNWFloat("Record", ply.record)
 
-   	ResetPlayerAttributes( ply, ply.style )
+   	self:ResetPlayerAttributes(ply, ply.style)
 
     timer.Simple(0.1, function()
         if IsValid(ply) then

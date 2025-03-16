@@ -19,8 +19,7 @@ local files = {
         "nonessential/sh_fjt.lua",
        -- "nonessential/sh_edgehelper.lua",
        -- "nonessential/sh_rampometer.lua",
-        "nonessential/sh_unreal.lua",
-        "nonessential/sh_stamina.lua"
+        "nonessential/sh_unreal.lua"
     },
     movementFixes = {
         "nonessential/movementfixes/sh_rngfix.lua",
