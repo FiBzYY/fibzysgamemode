@@ -18,6 +18,8 @@ local insert, explode, lower, sub = table.insert, string.Explode, string.lower, 
 util.AddNetworkString("ChangePlayerName")
 util.AddNetworkString("SendNewMapsList")
 util.AddNetworkString("JHUD_SendData")
+util.AddNetworkString("PAINT_SendData")
+util.AddNetworkString("TRAINER_SendData")
 
 function SendSSJTopToClient(ply)
     if not IsValid(ply) then return end
@@ -433,6 +435,8 @@ function Command:Init()
             "Change the current map to the specified map (Admin only)",
             "<mapname>"
         },
+
+        -- Admin Menu
         {
             {"admin"},
             function(pl, args)
@@ -445,14 +449,18 @@ function Command:Init()
             "Admin command",
             "<arguments>"
         },
+
+        -- Themes Menu
         {
             {"theme", "themeeditor", "themes"},
             function(pl)
                 pl:ConCommand("bhop_thememanager")
             end,
             "Opens the theme manager",
-            ""
+            "[subcommand]"
         },
+
+        -- Restart
         {
         {"restart", "r", "respawn"},
         function(pl)
@@ -461,8 +469,10 @@ function Command:Init()
             SendPopupNotification(pl, "Notification", "Your timer has been restarted.", 2)
         end,
         "Restart or respawn the player",
-        ""
+        "[subcommand]"
         },
+
+        -- JHUD Menu
         {
             {"jhud", "jumphud"},
             function(pl, args)
@@ -473,6 +483,34 @@ function Command:Init()
             "Jhud Menu command",
             "<arguments>"
         },
+
+        -- Strafe Trainer Menu
+        {
+            {"strafetrainer", "strafetrainermenu"},
+            function(pl, args)
+                if not IsValid(pl) then return end
+                net.Start("TRAINER_SendData")
+                net.Send(pl)
+                TIMER:Print(pl, "Strafe Trainer Menu has been opened!")
+            end,
+            "Paint Menu command",
+            "<arguments>"
+        },
+
+        -- Paint Menu
+        {
+            {"paint", "paintmenu"},
+            function(pl, args)
+                if not IsValid(pl) then return end
+                net.Start("PAINT_SendData")
+                net.Send(pl)
+                TIMER:Print(pl, "Paint Menu has been opened!")
+            end,
+            "Paint Menu command",
+            "<arguments>"
+        },
+
+        -- Spectate
         {
             {"spectate", "spec", "watch", "view"},
             function(pl, _, varArgs)
@@ -501,6 +539,8 @@ function Command:Init()
             "Toggle spectate mode or spectate a specific player",
             "[playerID]"
         },
+
+        -- Noclip
         {
             {"noclip", "freeroam", "clip", "wallhack"},
             function(pl, _, varArgs)
@@ -518,8 +558,10 @@ function Command:Init()
                 pl:ConCommand("noclip")
             end,
             "Toggle noclip mode",
-            ""
+            "[subcommand]"
         },
+
+        -- Showtriggers
         {
             {"showtriggers", "st", "maptriggers"},
             function(pl, _, varArgs)
@@ -534,8 +576,10 @@ function Command:Init()
                 end
             end,
             "Toggle triggers",
-            ""
+            "[subcommand]"
         },
+
+        -- Showclips
         {
             {"showclips", "clips", "mapclips"},
             function(pl, _, varArgs)
@@ -550,8 +594,10 @@ function Command:Init()
                 end
             end,
             "Toggle triggers",
-            ""
+            "[subcommand]"
         },
+
+        -- Goto Player
         {
             {"tp", "tpto", "goto", "teleport", "tele"},
             function(pl, args)
@@ -579,6 +625,8 @@ function Command:Init()
             "Teleport to a player",
             "<playername>"
         },
+
+        -- Goto Start
         {
             {"start", "gostart", "gotostart", "tpstat"},
             function(pl, args)
@@ -598,6 +646,8 @@ function Command:Init()
             "Go to end zone",
             "[subcommand]"
         },
+
+        -- Goto End
         {
             {"end", "goend", "gotoend", "tpend"},
             function(pl, args)
@@ -617,6 +667,8 @@ function Command:Init()
             "Go to end zone",
             "[subcommand]"
         },
+
+        -- Goto Bonus Start
         {
             {"bonusstart", "gobstart", "gotobonusstart", "tpbonustart"},
             function(pl, args)
@@ -636,6 +688,8 @@ function Command:Init()
             "Go to end zone",
             "[subcommand]"
         },
+
+        -- Goto Bonus End
         {
             {"bonusend", "gobend", "gotobend", "tptobend", "bend"},
             function(pl, args)
@@ -655,6 +709,8 @@ function Command:Init()
             "Go to end zone",
             "[subcommand]"
         },
+
+        -- RTV
         {
             {"rtv", "vote", "votemap"},
             function(pl, args)
@@ -683,6 +739,7 @@ function Command:Init()
             "[subcommand]"
         },
 
+        -- Revoke RTV
         {
             {"revoke"},
             function(pl, args)
@@ -691,6 +748,8 @@ function Command:Init()
             "Revoke Rock the vote",
             "[subcommand]"
         },
+
+        -- Revote
         {
             {"revote", "openrtv"},
             function(pl, args)
@@ -706,8 +765,10 @@ function Command:Init()
                 end
             end,
             "Re-open the RTV voting menu",
-            ""
+            "[subcommand]"
         },
+
+        -- Time Left
         {
             {"timeleft", "time", "remaining"},
             function(pl)
@@ -716,6 +777,8 @@ function Command:Init()
             "Displays the time left for the current map",
             ""
         },
+
+        -- Show HUD
         {
             {"showgui", "showhud", "hidegui", "hidehud", "togglegui", "togglehud"},
             function(pl, args)
@@ -724,6 +787,8 @@ function Command:Init()
             "Toggle GUI visibility",
             ""
         },
+
+        -- Nominate
         {
             {"nominate", "rtvmap", "playmap", "maps"},
            function(ply, args)
@@ -736,21 +801,40 @@ function Command:Init()
             "Nominate a map for the next round",
             "[mapname]"
         },
+
+        -- WR List
         {
             {"wr", "wrlist", "records"},
             function(ply, args)
-                local nStyle, nPage = ply.style, 1
+                local stylename, page = ply.style, 1
                 if #args > 0 then
-                    Player:SendRemoteWRList(ply, args[1], nStyle, nPage)
+                    TIMER:SendRemoteWRList(ply, args[1], stylename, page)
                 else
-                    TIMER:GetRecordList(nStyle, nPage, function(wrList)
-                        UI:SendToClient(ply, "wr", wrList, nStyle, nPage, TIMER:GetRecordCount(nStyle))
+                    TIMER:GetRecordList(stylename, page, function(wrList)
+                        UI:SendToClient(ply, "wr", wrList, stylename, page, TIMER:GetRecordCount(stylename))
                     end)
                 end
             end,
             "Displays world records or record list",
             "<style> [page]"
         },
+
+        -- Normal WR DO TO:
+        {
+            {"nwr", "normalwr", "wrnormal"},
+            function(ply, args)
+		        local nStyle, page = TIMER:GetStyleID("N"), 1
+		        if #args > 0 then
+			        TIMER:SendRemoteWRList(ply, args[1], stylename, page)
+		        else
+			        UI:SendToClient(ply, "wr", TIMER:GetRecordList(stylename, page), stylename, page, TIMER:GetRecordCount(stylename))
+		        end
+            end,
+            "Displays normal world records or record list",
+            "<style> [page]"
+        },
+
+        -- Style Menu
         {
             {"style", "mode", "bhop", "styles", "modes"},
             function(pl)
@@ -759,14 +843,18 @@ function Command:Init()
             "Opens the style selection menu",
             ""
         },
+
+        -- Main Menu
         {
             {"menu", "options", "mainmenu"},
             function(pl)
                 UI:SendToClient(pl, "menu", {})
             end,
             "Opens the main bhop menu",
-            ""
+            "[subcommand]"
         },
+
+        -- Segment
         {
             {"segment", "segmented", "tas", "seg"},
             function(client)
@@ -779,8 +867,10 @@ function Command:Init()
                 UI:SendToClient(client, "segment")
             end,
             "Activate segmented mode and open the segment menu",
-            ""
+            "[subcommand]"
         },
+
+        -- Give weapons
         {
             {"glock", "usp", "knife", "p90", "deagle", "scout", "awp", "crowbar"},
             function(pl, args)
@@ -789,6 +879,8 @@ function Command:Init()
             "Gives the player a specific weapon",
             "<weapon>"
         },
+
+        -- Remove weapons
         {
             {"g", "remove", "strip", "stripweapons"},
             function(pl)
@@ -800,8 +892,10 @@ function Command:Init()
                 end
             end,
             "Remove all weapons from the player",
-            ""
+            "[subcommand]"
         },
+
+        -- Save Replay
         {
             {"replaysave", "saverun", "savereplay", "replay save"},
             function(pl)
@@ -818,8 +912,10 @@ function Command:Init()
                 SendPopupNotification(nil, "Notification", "Replay has been saved!", 2)
             end,
             "Save the current replay data (Admin only)",
-            ""
+            "[subcommand]"
         },
+
+        -- Long Jump
         {
         {"lj", "ljstats"}, 
         function(pl)
@@ -832,18 +928,20 @@ function Command:Init()
             end
         end,
         "Enable or disable LJ stats.", 
-        ""
+        "[subcommand]"
         },
+
+        -- SSJTop
         {
          {"ssjtop", "topssj", "speedjump", "leaderboard"},
         function(pl)
             SendSSJTopToClient(pl)
         end,
         "Enable or disable LJ stats.", 
-        ""
+        "[subcommand]"
         },
 
-
+        -- Wr Sounds
         {
         {"wrsounds", "wrsound"}, 
         function(pl)
@@ -858,9 +956,10 @@ function Command:Init()
             end
         end,
         "Toggle WR sound effects on/off",
-        ""
+        "[subcommand]"
         },
 
+        -- Map/Points
         {
             {"map", "points"}, 
             function(pl, args)
@@ -882,9 +981,10 @@ function Command:Init()
                 end
             end,
             "Toggle WR sound effects on/off",
-            ""
+            "[subcommand]"
         },
 
+        -- Kick
        {
             {"kick", "kicplayer"},
             function(pl, args)
@@ -931,7 +1031,7 @@ function Command:Init()
                 end
             end,
             "Kick player",
-            ""
+            "[subcommand]"
         },
     }
 
@@ -947,6 +1047,130 @@ function Command:Init()
         end, "Switch to style: " .. styleData[1], "<styleID>")
     end
 end
+
+
+
+--[[	self:Register( { "wrn", "wrnormal", "nwr" }, function( ply, args )
+		local nStyle, nPage = _C.Style.Normal, 1
+		if #args > 0 then
+			Player:SendRemoteWRList( ply, args[ 1 ], nStyle, nPage )
+		else
+			UI:SendToClient(ply, "wr", Timer:GetRecordList( nStyle, nPage ), nStyle, nPage, Timer:GetRecordCount( nStyle ))
+		end
+	end )
+
+	self:Register( { "wrsw", "wrsideways", "swwr" }, function( ply, args )
+		local nStyle, nPage = _C.Style.SW, 1
+		if #args > 0 then
+			Player:SendRemoteWRList( ply, args[ 1 ], nStyle, nPage )
+		else
+			UI:SendToClient(ply, "wr", Timer:GetRecordList( nStyle, nPage ), nStyle, nPage, Timer:GetRecordCount( nStyle ))
+		end
+	end )
+
+	self:Register( { "wrhsw", "wrhalf", "wrhalfsw", "wrhalfsideways", "hswwr" }, function( ply, args )
+		local nStyle, nPage = _C.Style.HSW, 1
+		if #args > 0 then
+			Player:SendRemoteWRList( ply, args[ 1 ], nStyle, nPage )
+		else
+			UI:SendToClient(ply, "wr", Timer:GetRecordList( nStyle, nPage ), nStyle, nPage, Timer:GetRecordCount( nStyle ))
+		end
+	end )
+
+	self:Register( { "wrw", "wrwonly", "wwr", "wonlywr" }, function( ply, args )
+		local nStyle, nPage = _C.Style["W-Only"], 1
+		if #args > 0 then
+			Player:SendRemoteWRList( ply, args[ 1 ], nStyle, nPage )
+		else
+			UI:SendToClient(ply, "wr", Timer:GetRecordList( nStyle, nPage ), nStyle, nPage, Timer:GetRecordCount( nStyle ))
+		end
+	end )
+
+	self:Register( { "wra", "wraonly", "awr", "aonlywr" }, function( ply, args )
+		local nStyle, nPage = _C.Style["A-Only"], 1
+		if #args > 0 then
+			Player:SendRemoteWRList( ply, args[ 1 ], nStyle, nPage )
+		else
+			UI:SendToClient(ply, "wr", Timer:GetRecordList( nStyle, nPage ), nStyle, nPage, Timer:GetRecordCount( nStyle ))
+		end
+	end )
+
+	self:Register( { "wrl", "wrlegit", "lwr" }, function( ply, args )
+		local nStyle, nPage = _C.Style.Legit, 1
+		if #args > 0 then
+			Player:SendRemoteWRList( ply, args[ 1 ], nStyle, nPage )
+		else
+			UI:SendToClient(ply, "wr", Timer:GetRecordList( nStyle, nPage ), nStyle, nPage, Timer:GetRecordCount( nStyle ))
+		end
+	end )
+
+	self:Register( { "wrs", "wrscroll", "swr", "scrollwr", "wre", "ewr" }, function( ply, args )
+		local nStyle, nPage = _C.Style["Easy Scroll"], 1
+		if #args > 0 then
+			Player:SendRemoteWRList( ply, args[ 1 ], nStyle, nPage )
+		else
+			UI:SendToClient(ply, "wr", Timer:GetRecordList( nStyle, nPage ), nStyle, nPage, Timer:GetRecordCount( nStyle ))
+		end
+	end )
+
+	self:Register( { "wrb", "wrbonus", "bwr" }, function( ply, args )
+		local nStyle, nPage = _C.Style.Bonus, 1
+		if #args > 0 then
+			Player:SendRemoteWRList( ply, args[ 1 ], nStyle, nPage )
+		else
+			UI:SendToClient(ply, "wr", Timer:GetRecordList( nStyle, nPage ), nStyle, nPage, Timer:GetRecordCount( nStyle ))
+		end
+	end )
+	
+	self:Register( { "wrunreal", "wrun", "unrealwr" }, function( ply, args )
+		local nStyle, nPage = _C.Style.Unreal, 1
+		if #args > 0 then
+			Player:SendRemoteWRList( ply, args[ 1 ], nStyle, nPage )
+		else
+			Core:Send( ply, "GUI_Open", { "WR", { 2, Timer:GetRecordList( nStyle, nPage ), nStyle, nPage, Timer:GetRecordCount( nStyle ) } } )
+		end
+	end )
+	
+	self:Register( { "wrswi", "wrswift", "swiftwr" }, function( ply, args )
+		local nStyle, nPage = _C.Style.Swift, 1
+		if #args > 0 then
+			Player:SendRemoteWRList( ply, args[ 1 ], nStyle, nPage )
+		else
+			Core:Send( ply, "GUI_Open", { "WR", { 2, Timer:GetRecordList( nStyle, nPage ), nStyle, nPage, Timer:GetRecordCount( nStyle ) } } )
+		end
+	end )
+	
+	self:Register( { "wrshsw", "wrshalf", "shswwr" }, function( ply, args )
+		local nStyle, nPage = _C.Style.SHSW, 1
+		if #args > 0 then
+			Player:SendRemoteWRList( ply, args[ 1 ], nStyle, nPage )
+		else
+			Core:Send( ply, "GUI_Open", { "WR", { 2, Timer:GetRecordList( nStyle, nPage ), nStyle, nPage, Timer:GetRecordCount( nStyle ) } } )
+		end
+	end )
+	
+	self:Register( { "wrwtf", "wrwat", "wtfwr" }, function( ply, args )
+		local nStyle, nPage = _C.Style.WTF, 1
+		if #args > 0 then
+			Player:SendRemoteWRList( ply, args[ 1 ], nStyle, nPage )
+		else
+			Core:Send( ply, "GUI_Open", { "WR", { 2, Timer:GetRecordList( nStyle, nPage ), nStyle, nPage, Timer:GetRecordCount( nStyle ) } } )
+		end
+	end )
+	
+	self:Register( { "wrd", "wrdonly", "dwr", "donlywr" }, function( ply, args )
+		local nStyle, nPage = _C.Style["D-Only"], 1
+		if #args > 0 then
+			Player:SendRemoteWRList( ply, args[ 1 ], nStyle, nPage )
+		else
+			Core:Send( ply, "GUI_Open", { "WR", { 2, Timer:GetRecordList( nStyle, nPage ), nStyle, nPage, Timer:GetRecordCount( nStyle ) } } )
+		end
+	end )
+
+	self:Register( { "swtop", "hswtop", "wtop", "atop" }, function( ply )
+		local nPage = 1
+		Core:Send( ply, "GUI_Open", { "Top", { 2, Player:GetTopPage( nPage, _C.Style.SW ), nPage, Player:GetTopCount( _C.Style.SW ), Player:GetRankType( _C.Style.SW, true ) } } )
+	end )--]]
 
 UI:AddListener("nominate", function(client, data)
     local mapName = data[1]

@@ -403,7 +403,7 @@ function TIMER:CachePointSum(style, id, callback)
                 callback(pointSum)
             end
         else
-            UTIL:Notify(Color(255, 0, 0), "Database Error", "No users to fetch points for:", id)
+            UTIL:Notify(Color(255, 0, 0), "Database", "No users have any points yet")
         end
     end)
 end
@@ -515,13 +515,13 @@ function TIMER:SetRankMedal(ply, nPos)
                 for _, d in pairs(Query) do
                     if p:SteamID() == d.uid then
                         bSet = true
-                        p.SpecialRank = tonumber(d.nRank) > 3 and 0 or tonumber(d.nRank)
-                        p:SetNWInt("SpecialRank", p.SpecialRank)
+                        p.SpecialRankMap = tonumber(d.nRank) > 3 and 0 or tonumber(d.nRank)
+                        p:SetNWInt("SpecialRankMap", p.SpecialRank)
                     end
                 end
                 if not bSet and p.SpecialRank then
-                    p.SpecialRank = 0
-                    p:SetNWInt("SpecialRank", p.SpecialRank)
+                    p.SpecialRankMap = 0
+                    p:SetNWInt("SpecialRankMap", p.SpecialRank)
                 end
             end
         end
@@ -788,6 +788,9 @@ function TIMER:Disconnect(ply)
             end
         end
     end
+
+    local connectMessage = Lang:Get("Disconnect", { ply:Nick(), ply:SteamID(), "left the game" })
+    BHDATA:Broadcast("Print", { "Server", connectMessage })
 end
 
 hook_Add("PlayerDisconnected", "PlayerDisconnect", function(ply) 

@@ -13,7 +13,7 @@ local files = {
         "essential/sh_utilities.lua",
         "essential/timer/sh_timer.lua",
         "nonessential/sh_multi_hops.lua",
-       -- "nonessential/vip/sh_paint.lua",
+        "nonessential/sh_paint.lua",
         "nonessential/sh_ssjtop.lua",
         "nonessential/sh_jumpstats.lua",
         "nonessential/sh_fjt.lua",
@@ -93,6 +93,7 @@ local sounds_enabled = CreateClientConVar("bhop_wrsfx", "1", true, true, "WR sou
 local sounds_volume = CreateClientConVar("bhop_wrsfx_volume", "0.4", true, false, "WR sounds volume", 0, 1)
 local chat_sounds = CreateClientConVar("bhop_chatsounds", "0", true, false, "Play chat sounds", 0, 1)
 local zone_sounds = CreateClientConVar("bhop_zonesounds", "1", true, false, "Play sound on zone left", 0, 1)
+local bhop_showplayers = CreateConVar("bhop_showplayerslabel", "1", FCVAR_ARCHIVE, "Show or hide player names when looking at them")
 
 -- Cvars
 CreateClientConVar("bhop_simpletextures", 0, true, false, "Toggle simple solid textures", 0, 1)
@@ -220,22 +221,17 @@ concommand.Add("bhop_interp", function()
 end)
 
 -- Base FOV ConVar reference
---[[local baseFOVConVar = GetConVar("bhop_set_fov")
+local baseFOVConVar = GetConVar("bhop_set_fov")
 
-local function MouseSensitivity(fDefault)
+function GM:AdjustMouseSensitivity(fDefault)
     local ply = LocalPlayer()
     if not IsValid(ply) then return fDefault end
 
     local baseFOV = 75
     local currentFOV = ply:GetFOV()
 
-    if GetConVar("bhop_absolutemousesens"):GetBool() then
-        return fDefault * (baseFOV / currentFOV)
-    end
-
     return GetConVar("bhop_sourcesensitivity"):GetBool() and 0.96875 or fDefault
 end
-hook_Add("AdjustMouseSensitivity", "MouseSensitivity", MouseSensitivity)--]]
 
 local view = {}
 local cameraDistance = 7
@@ -677,3 +673,63 @@ end
 function GetTrailConfig(name)
     return trailConfig[name]:GetBool()
 end]]--
+
+-- Show Player labels
+local Markers = Markers or {}
+local function ValidLP()
+    local ply = LocalPlayer()
+    return IsValid(ply) and ply or nil
+end
+
+function SetPlayerMarkers(list)
+    Markers = {}
+    if list then
+        for _, id in ipairs(list) do
+            local ply = Entity(id)
+            if IsValid(ply) then
+                Markers[ply] = true
+            end
+        end
+    end
+end
+
+local function DrawTargetIDs()
+    if not Markers then return end
+    if not bhop_showplayers:GetBool() then return end
+
+    local lpc = lp()
+    if not Iv(lpc) then return end
+
+    if not Players or ct() - LastCheck > 2 then
+        Players = player.GetAll()
+        LastCheck = ct()
+    end
+
+    local pos = lpc:GetPos()
+
+    for i = 1, #Players do
+        local ply = Players[i]
+        if ply == lpc or not ply:Alive() then continue end
+
+        local ppos = ply:GetPos()
+        local diff = (ppos - pos):Length()
+
+        if diff < 90 then
+            local pos2d = Vector(ppos.x, ppos.y, ppos.z + 50):ToScreen()
+            if ply:IsBot() then
+                draw.SimpleText("Replay Bot", "HUDTimerMedThick", pos2d.x, pos2d.y, DynamicColors.PanelColor, DrawPos)
+            else
+                draw.SimpleText("Player: " .. ply:Name(), "HUDTimerMedThick", pos2d.x, pos2d.y, DynamicColors.PanelColor, DrawPos)
+            end
+        end
+
+        if Markers[ply] then
+            local pos2d = Vector(ppos.x, ppos.y, ppos.z + 100):ToScreen()
+            if pos2d.visible then
+                surface.SetDrawColor(DynamicColors.PanelColor)
+                surface.DrawTexturedRect(pos2d.x - 8, pos2d.y, 16, 16)
+            end
+        end
+    end
+end
+hook.Add("HUDPaint", "TargetIDDraw", DrawTargetIDs)

@@ -23,7 +23,7 @@ local files = {
     shared = {
         "essential/timer/sh_timer.lua",
         "nonessential/sh_multi_hops.lua",
-        -- "nonessential/vip/sh_paint.lua",
+        "nonessential/sh_paint.lua",
         "nonessential/sh_ssjtop.lua",
         "nonessential/sh_jumpstats.lua",
         "nonessential/sh_fjt.lua",
