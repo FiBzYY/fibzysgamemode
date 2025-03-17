@@ -463,6 +463,3 @@ INSERT INTO `timer_map` (`map`, `multiplier`, `bonusmultiplier`, `plays`, `optio
 	('bhop_bfur', 5, 0, 344, NULL),
 	('bhop_fibzy_v2', 15, NULL, 4, NULL),
 	('bhop_fuckcreepy', 100, 120, 4, NULL);
-/*!40014 SET FOREIGN_KEY_CHECKS=IFNULL(@OLD_FOREIGN_KEY_CHECKS, 1) */;
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40111 SET SQL_NOTES=IFNULL(@OLD_SQL_NOTES, 1) */;
