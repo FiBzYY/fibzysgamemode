@@ -1,4 +1,4 @@
-# Bunny Hop by FiBzY v13 🐰
+# Bunny Hop by FiBzY v13
 
 Welcome to **Bunny Hop by FiBzY!**  
 This project is built with love for movement-based gameplay, making Bhop smoother, faster, and more fun! Whether you're using this for personal projects, community servers, or commercial purposes, you're free to **use, modify, and build upon** it. 
@@ -10,9 +10,9 @@ This is a **Bunny Hop (Bhop) system** designed for Garry’s Mod, optimized for 
 
 ## Usage Guidelines
 This project is **free to use**, but I ask for a few simple things:  
-1️⃣ **No rebranding or misrepresentation** – Feel free to modify or remix, but don’t claim it as your own work.  
-2️⃣ **Give credit** – If you use this in a public project or share it, a small mention of **"Original work by FiBzY"** would be awesome!  
-3️⃣ **Open-Use Policy** – You can use this for **personal, open-source, or commercial projects**. No restrictions!  
+1️ **No rebranding or misrepresentation** – Feel free to modify or remix, but don’t claim it as your own work.  
+2️ **Give credit** – If you use this in a public project or share it, a small mention of **"Original work by FiBzY"** would be awesome!  
+3️ **Open-Use Policy** – You can use this for **personal, open-source, or commercial projects**. No restrictions!  
 
 If you find this useful, let me know! Your support helps improve and refine this work.
 
@@ -35,17 +35,17 @@ This is **fully modular** and can be integrated into any Bhop server setup!
 
 ---
 
-# 🚀 Installation Guide
+# Installation Guide
 
-📥 Download the **Bhop** gamemode and place it into your **`gamemodes/`** folder.  
-🗄️ Set up a **MySQL server**. This requires sqloo addon!
-📂 Move `sv.db` into the **`garrysmod/`** directory.  
-📌 Use the `timer.sql` file to import the required database tables.  
-🔧 Open `server.cfg` and set up your **SQL connection details** to match your MySQL server.  
-⚙️ Ensure your **server settings** are properly configured in `server.cfg`.  
-🎨 Modify the **config files** to adjust game settings as needed.
-🔄 Set -tickrate 100. Otherwise it will feel very weird.  
-🔄 Restart your server and **start bhopping**! 🏃💨  
+- Download the **Bhop** gamemode and place it into your **`gamemodes/`** folder.  
+- Set up a **MySQL server**. This requires sqloo addon!
+- Move `sv.db` into the **`garrysmod/`** directory.  
+- Use the `timer.sql` file to import the required database tables.  
+- Open `server.cfg` and set up your **SQL connection details** to match your MySQL server.  
+- Ensure your **server settings** are properly configured in `server.cfg`.  
+- Modify the **config files** to adjust game settings as needed.
+- Set -tickrate 100. Otherwise it will feel very weird.  
+- Restart your server and **start bhopping**!  
 
 ---
 
@@ -63,7 +63,7 @@ If you have **questions, feedback, or need help**, feel free to reach out!
 ![20250309234550_1](https://github.com/user-attachments/assets/c8bc321c-b1c6-4229-a1f1-26d88f0237d9)
 
 
-## 🏆 Credits  
+## Credits  
 
 Special thanks to the following people for their contributions and inspiration:  
 
@@ -87,5 +87,5 @@ Special thanks to the following people for their contributions and inspiration:
 
 ---
 
-## 🎉 Thanks for using Bunny Hop by FiBzY!
+## Thanks for using Bunny Hop by FiBzY!
 I appreciate every single person who tries out my work. **Enjoy the smooth movement and happy bhopping!** 
