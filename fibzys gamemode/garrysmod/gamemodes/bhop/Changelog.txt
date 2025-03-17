@@ -1,0 +1,74 @@
+Changelog:
+
+Segment fixes completed
+Started work on checkpoint fixes
+Whitelist system added
+New menu system implemented
+Updated settings.lua and themes.lua
+Show triggers system set up
+Added modded RTV file
+Added modded long jump file
+Added modded set spawn file
+Integrated custom networking system
+Utility functions added
+Scoreboard system implemented
+Updated cl_init.lua
+Updated init.lua
+Updated spectator handling
+Updated sh_movement.lua
+Overhauled sv_zones.lua (modded)
+Began updating shared.lua
+Working on sv_playerclass.lua and sv_commands.lua
+Fixed syntax errors in sv_zones.lua
+Added modded sv_chat.lua
+Updated zoning entities
+Updated cl_strafe.lua
+Updated modded UI files
+Fixed segment and checkpoint menus
+Added ShowKeys and Strafe Trainer addons
+Fixed UI conflicts
+Fixed CS:S hull bot conflicts
+Added modded cl_gui.lua
+Added modded cl_ui.lua (HUD)
+Fixed TIMER:Print() output messages
+Added custom info commands in chatbox
+Segment style waypoint display + fixes
+Timer display improvements
+Custom themes added for chat, timer, and SSJ colors
+Implemented new themes manager
+Added EFFI, SYNC, JSS, and more stats to JHUD and SSJ
+Added user location API for join messages
+Added tabs for SSJ and Strafe Trainer settings
+Updated styles, implemented Auto-Strafe option
+Created Global WR MySQL database and integrated into menu
+Added TAS and 1-tick auto-strafer functionality
+Expanded menu features
+Linked TAS timescale to timer system
+Added blur options
+Further expanded settings menu
+Auto-Strafe re-enabled with styles (Unreal, etc.)
+Added Style menu with commands (!bhop, !style, !mode, etc.)
+Customizable scoreboards added (Default, Kawaii, Flow, Sof, etc.)
+Re-added solid AC zone correctly
+Restart zone added
+CS:S Strafe Tick Offset system ported
+Optimized gamemode to reduce HUD-related lag
+Implemented file stealer blocker
+Added SSJ Top functionality
+Dynamic zoning admin handler ported from CS:S
+General bug fixes and added Edge Helper
+Fully recoded RNGFix, SurfFix, TPFix, EdgeFix CB, and updated TIMER system
+SSJ fully recoded (1:1 Shavit Timer port)
+Implemented SSJTOP and patched SSJ-related exploits
+Patched crouch sliding bug
+Surf fix reworked for GMod (best available version)
+Added Rampometer (1:1 CS:S port)
+Added Edge Helper (1:1 CS:S port)
+TODO: Recode sv_replay.lua to fully support segmented second finishes
+Fixed replay crouch twitching issue
+General bug fixes
+CS:S-style HUD with live placement indicator
+Speedrun style added
+Fixed replay spawn logic
+Added menus for Paint, JHUD, and Strafe Trainer
+Added sound feedback for non-improved run times
