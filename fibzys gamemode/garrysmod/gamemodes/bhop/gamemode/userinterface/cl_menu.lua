@@ -616,6 +616,8 @@ function UI:CreateMenu()
             self:CreateToggle(parent, y, "bhop_wrsfx", "WR Sounds", "Enables or disables the World Record sounds.")
             y = y + 60
             self:CreateInputBoxWide(parent, y, "bhop_wrsfx_volume", 0.4, "WR Sounds Volume", "Customize your WR sound volume, 1 is loud 0.4 is default.")
+            y = y + 60
+            self:CreateToggle(parent, y, "bhop_wrsfx_bad", "Bad Improvement Sounds", "Enables or disables the bad improvement sounds.")
         end },
 
         { text = "Controls", panelContent = function(parent)

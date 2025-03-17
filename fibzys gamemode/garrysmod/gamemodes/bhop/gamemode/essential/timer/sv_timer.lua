@@ -23,6 +23,8 @@ Timer = {
 }
 
 util.AddNetworkString("WRSounds")
+util.AddNetworkString("BadImprovement")
+
 timer_sounds = {}
 
 require "reqwest"
@@ -615,7 +617,13 @@ function TIMER:Finish(ply, time)
 
                 SendPopupNotification(nil, "Notification", "New time by " .. ply:Name(), 2)
 
-                if record ~= 0 and time >= record then return end
+                -- Didn't improve Bad Sounds
+                if record ~= 0 and time >= record then
+                    net.Start("BadImprovement")
+                    net.Broadcast()
+                    return
+                end
+
                 ply.record = time
                 ply.SpeedRequest = ply.style
 
@@ -854,11 +862,23 @@ function TIMER:HandleRecordCompletion(ply, time, old, styleData)
 end
 
 function TIMER:LoadSounds()
-    timer_sounds = file.Find("sound/wrsfx/*", "GAME")
+    -- Bad Improvment sounds
+    local exclude = {
+        ["wrsfx/baka.wav"] = true,
+        ["wrsfx/no_improvement.mp3"] = true
+    }
 
-    for i, snd in ipairs(timer_sounds) do
-        resource.AddFile("sound/wrsfx/" .. snd)
-        util.PrecacheSound("wrsfx/" .. snd)
+    timer_sounds = {}
+
+    local foundSounds = file.Find("sound/wrsfx/*", "GAME")
+    for _, snd in ipairs(foundSounds) do
+        local fullPath = "wrsfx/" .. snd
+
+        if not exclude[fullPath] then
+            table.insert(timer_sounds, snd)
+            resource.AddFile("sound/wrsfx/" .. snd)
+            util.PrecacheSound(fullPath)
+        end
     end
 end
 
