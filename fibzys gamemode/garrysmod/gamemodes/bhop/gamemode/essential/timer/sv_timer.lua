@@ -762,7 +762,7 @@ function TIMER:PostDiscordWR(ply, time, styleID, currentWR)
         {
             name = "**Additional**",
             value = string.format(
-                "⚡ **Sync:** %s\n💨 **Strafes:** %d\n🦘 **Jumps:** %d\n🚀 **Top Speed:** %d u/s\n📈 **Avg Speed:** %d u/s\n📌 **Run ID:** `%s`\n📅 **Date:** %s\n🏆 **Points:** %d",
+                "**Sync:** %s\n **Strafes:** %d\n **Jumps:** %d\n **Top Speed:** %d u/s\n **Avg Speed:** %d u/s\n **Run ID:** `%s`\n **Date:** %s\n **Points:** %d",
                 sync, strafes, jumps, topSpeed, avgSpeed, runID, timestamp, points
             ),
             inline = false
@@ -777,7 +777,7 @@ function TIMER:PostDiscordWR(ply, time, styleID, currentWR)
     local compiled = {
         username = "Server Record",
         embeds = {{
-            title = string.format("🏆 **%s Record | %s**", styleID == TIMER:GetStyleID("Normal") or styleID == TIMER:GetStyleID("Bonus") and "Main" or "Offstyle", mapName),
+            title = string.format("**%s Record | %s**", styleID == TIMER:GetStyleID("Normal") or styleID == TIMER:GetStyleID("Bonus") and "Main" or "Offstyle", mapName),
             color = 16755200,
             fields = fields,
             timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ"),
@@ -804,10 +804,10 @@ function TIMER:PostDiscordWR(ply, time, styleID, currentWR)
         },
         timeout = 5,
         success = function(status, body, headers)
-            print("[TIMER] Discord WR Webhook sent successfully! Status: " .. status)
+            UTIL:Notify(Color(0, 0, 255), "Discord", "Discord WR Webhook sent successfully! Status: " .. status)
         end,
         failed = function(err, errExt)
-            print("[TIMER] Discord WR Webhook failed! Error: " .. tostring(err))
+            UTIL:Notify(Color(0, 0, 255), "Discord", "Discord WR Webhook failed! Error: " .. tostring(err))
         end
     })
 end
@@ -1062,9 +1062,7 @@ function TIMER:AddSpeedData(ply, tab)
         local szDataEscaped = sql.SQLStr(szData)
 
         timer.Simple(0.25, function()
-            MySQL:Start("UPDATE timer_times SET data = " .. szDataEscaped ..
-                        " WHERE uid = '" .. ply:SteamID() .. 
-                        "' AND map = '" .. game.GetMap() .. "' AND style = " .. styleID)
+            MySQL:Start("UPDATE timer_times SET data = " .. szDataEscaped .. " WHERE uid = '" .. ply:SteamID() .. "' AND map = '" .. game.GetMap() .. "' AND style = " .. styleID)
         end)
     end
 end

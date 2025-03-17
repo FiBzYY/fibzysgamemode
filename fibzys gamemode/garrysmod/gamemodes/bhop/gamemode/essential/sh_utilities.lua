@@ -103,7 +103,9 @@ UTIL.Colour = {
 	["AntiCheat"] = Color(186, 85, 211),
 	["Hint"] = Color(0, 200, 200),
 	["Settings"] = Color(255, 200, 255),
-	
+	["Paint"] = Color(0, 0, 255),
+ 	["RTV"] = Color(255, 0, 255),
+    
 	["White"] = Color(255, 255, 255),
 	["Green"] = Color(107, 142, 35),
 	["Red"] = Color(255, 0, 0)
@@ -256,7 +258,7 @@ end
 
 hook.Add("Initialize", "AssignPlayerColors", function()
     timer.Simple(0, function()
-        GeneratePlayerColors(LocalPlayer())
+        GeneratePlayerColors(ply)
     end)
 end)
 
