@@ -1,91 +1,98 @@
 # Bunny Hop by FiBzY v13
 
-Welcome to **Bunny Hop by FiBzY!**  
-This project is built with love for movement-based gameplay, making Bhop smoother, faster, and more fun! Whether you're using this for personal projects, community servers, or commercial purposes, you're free to **use, modify, and build upon** it. 
+Welcome to **Bunny Hop by FiBzY!**
 
-##  What is this?
-This is a **Bunny Hop (Bhop) system** designed for Garry’s Mod, optimized for **fluid movement, precision, and a great player experience**. It includes key mechanics like auto-hop, movement fixes, networking, and more!
+I've put a lot of love and care into crafting this project for anyone passionate about fluid, movement-based gameplay. Whether you're using it for your personal enjoyment, community servers, or commercial projects, you're welcome to **use, modify, and expand upon** this work.
 
 ---
 
-## Usage Guidelines
-This project is **free to use**, but I ask for a few simple things:  
-1️ **No rebranding or misrepresentation** – Feel free to modify or remix, but don’t claim it as your own work.  
-2️ **Give credit** – If you use this in a public project or share it, a small mention of **"Original work by FiBzY"** would be awesome!  
-3️ **Open-Use Policy** – You can use this for **personal, open-source, or commercial projects**. No restrictions!  
-
-If you find this useful, let me know! Your support helps improve and refine this work.
+## What Exactly is This?
+This is a specialized **Bunny Hop (Bhop) system** built specifically for Garry's Mod, designed with precision and smooth player experiences in mind. It incorporates key mechanics like auto-hop, improved movement, network optimizations, and a whole lot more!
 
 ---
 
-## Features
-- **Smooth Auto-Hop System** – Ensures perfect hops with no inconsistencies.  
-- **Air Strafing Enhancements** – Optimized for better control and movement gains.  
-- **Edge & Crouch Bug Fixes**️ – Fixes common GMod movement glitches.  
-- **Networking Optimizations** – Ensures minimal latency and smooth player input.  
-- **Custom Bhop Styles** – Supports HSW, W-Only, Sideways, and segmented runs.  
-- **Accurate Timer System**  – Uses tick-based timers for precision in speedruns.  
-- **Replay System** – Save and analyze movement runs for improvement.  
-- **Jump Stats** – Jump display stats and Jump Hud.  
-- **Long Jump** – Long jump stats 
-- **RNGFix** – RNG Bug fixes  
-- **MISC** – Misc files if you want to add them
+## How You Can Use It
+This project is completely **free to use**, with just a few simple requests:
 
-This is **fully modular** and can be integrated into any Bhop server setup!  
+1️ **Respect the Branding** – Modify, remix, and build as you please, but please don’t rebrand or claim it as your original creation.
+
+2️ **Give Credit** – A quick acknowledgment such as **"Original work by FiBzY"** would be genuinely appreciated whenever you use this publicly.
+
+3️ **Open Usage** – You're totally free to use this for any personal, open-source, or commercial purposes without restrictions!
+
+Your feedback and appreciation mean a lot—feel free to share your experiences!
 
 ---
 
-# Installation Guide
+## Key Features
+- **Smooth Auto-Hop System** – Enjoy perfect hops every time, without inconsistencies.
+- **Enhanced Air Strafing** – Refined controls for precise movement and maximum speed gains.
+- **Edge & Crouch Bug Fixes**️ – Eliminates common movement glitches found in Garry's Mod.
+- **Networking Improvements** – Optimized to provide minimal latency and smooth inputs.
+- **Custom Bhop Styles** – Includes styles like HSW, W-Only, Sideways, and segmented runs.
+- **Accurate Timing System** – Uses tick-based timing for precise speedrun records.
+- **Replay System** – Save and review your runs to sharpen your technique.
+- **Jump Stats & HUD** – Provides detailed jump metrics and intuitive displays.
+- **Long Jump Tracking** – Detailed statistics for long jumps.
+- **RNGFix** – Addresses and fixes RNG-related bugs.
+- **Miscellaneous Additions** – Extra useful files for customization.
 
-- Download the **Bhop** gamemode and place it into your **`gamemodes/`** folder.  
-- Set up a **MySQL server**. This requires sqloo addon!
-- Move `sv.db` into the **`garrysmod/`** directory.  
-- Use the `timer.sql` file to import the required database tables.  
-- Open `server.cfg` and set up your **SQL connection details** to match your MySQL server.  
-- Ensure your **server settings** are properly configured in `server.cfg`.  
-- Modify the **config files** to adjust game settings as needed.
-- Set -tickrate 100. Otherwise it will feel very weird.  
-- Restart your server and **start bhopping**!  
-
----
-
-## Support & Contact
-If you have **questions, feedback, or need help**, feel free to reach out!  
-- Discord: *[https://discord.gg/EhUFYJxZya]*  
-- GitHub: *[https://github.com/FiBzYY]*  
-- Steam: *[https://steamcommunity.com/id/fibzy_/]*  
-- Report issues in github for any problems
+This system is designed to be **fully modular**, allowing easy integration into any Bhop server setup!
 
 ---
 
-## Pictures
-![20250309234544_1](https://github.com/user-attachments/assets/f77d7c93-d4f4-4f6b-a7e8-fc77c3a84bb7)
-![20250309234550_1](https://github.com/user-attachments/assets/c8bc321c-b1c6-4229-a1f1-26d88f0237d9)
+## Quick Installation Guide
 
+1. Download the **Bhop** gamemode and place it in your **`gamemodes/`** folder.
+2. Set up a **MySQL server** (requires the sqloo addon).
+3. Move `sv.db` into your **`garrysmod/`** folder.
+4. Import the database tables using the provided `timer.sql` file.
+5. Edit your `server.cfg` to include your **SQL connection details** matching your MySQL setup.
+6. Double-check your server settings in `server.cfg`.
+7. Customize the config files to fine-tune gameplay according to your preferences.
+8. Remember to set **`-tickrate 100`** for optimal performance.
+9. Restart your server, and you're ready to **start hopping!**
 
-## Credits  
+---
 
-Special thanks to the following people for their contributions and inspiration:  
+## Need Help or Have Feedback?
+I'm here to support you! Feel free to reach out:
+
+- **Discord**: [Join Here](https://discord.gg/EhUFYJxZya)
+- **GitHub**: [FiBzYY](https://github.com/FiBzYY)
+- **Steam**: [FiBzY](https://steamcommunity.com/id/fibzy_/)
+- **Report Issues**: Please use GitHub to report any problems.
+
+---
+
+## Screenshots
+![Bhop Image 1](https://github.com/user-attachments/assets/f77d7c93-d4f4-4f6b-a7e8-fc77c3a84bb7)
+![Bhop Image 2](https://github.com/user-attachments/assets/c8bc321c-b1c6-4229-a1f1-26d88f0237d9)
+
+---
+
+## Special Thanks
+Huge shoutout to these amazing contributors and inspirations:
 
 - **justa** – [Steam Profile](https://steamcommunity.com/id/just_adam)  
-  *Provided UI Layouts, Default Scoreboard Layout, and Menu Inspiration.*  
+*Provided UI layouts, scoreboard, and menu ideas.*
 
 - **ClazStudio** – [GitHub](https://github.com/ClazStudio)  
-  *Helped with bash2, RNGFix, Showtriggers, and various codes and improvements.*  
+*Contributions include bash2, RNGFix, Showtriggers, and various code improvements.*
 
 - **Shavit** – [Steam Profile](https://steamcommunity.com/id/shavit/)  
-  *Gave ideas for porting the gamemode to Lua.*  
+*Inspired ideas for porting to Lua.*
 
 - **Gravious** – [Steam Profile](https://steamcommunity.com/id/Graviousdev/)  
-  *Created the Base Flow Gamemode, which helped in understanding the code structure.*  
+*Base Flow Gamemode creator, helping clarify structure.*
 
 - **Geroge** – [Steam Profile](https://steamcommunity.com/id/Gerogeri/)  
-  *Created the default bhop movement code, helped with Long Jump.*
+*Default bhop movement code and assistance with Long Jump.*
 
-- **OpenAI** – [Website](https://openai.com/)
-  *Countless lua synax bugs ect. with a custom ai version for werid problems*
+- **OpenAI** – [Website](https://openai.com/)  
+*Helped squash countless Lua syntax bugs with custom AI insights.*
 
 ---
 
-## Thanks for using Bunny Hop by FiBzY!
-I appreciate every single person who tries out my work. **Enjoy the smooth movement and happy bhopping!** 
+## Thank You for Choosing Bunny Hop by FiBzY!
+Every player matters greatly to me. Hope you enjoy the smooth and refined Bhop experience—happy hopping!
