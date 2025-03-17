@@ -1,28 +1,28 @@
-# LICENSE
+License
+What You Can Do
+Hey there! You're welcome to:
 
-## Permissions
-You are free to:
-- **Use** this work in any project, whether personal, open-source, or commercial.
-- **Modify** and build upon this work to suit your needs.
-- **Distribute** copies or modifications of this work, as long as you meet the conditions below.
+Use this project however you like — personal projects, open-source collabs, or even commercial gigs, it’s all fair game.
+Tweak and modify the code to suit your needs, add cool new features, or build something entirely fresh.
+Share your version or fork it — just stick to a couple of simple guidelines below.
+A Few Simple Guidelines
+Let’s keep things fair and respectful:
 
-## Conditions
-To ensure fair use and proper credit, the following conditions must be met:
-1. **Attribution** � Proper credit must be given to the original author. This can be done by:
-   - Including a clear mention of the original author in relevant files, documentation, or credits.
-   - Linking back to the original source when applicable.
-2. **No Misrepresentation** � You may not:
-   - Claim this work as your own.
-   - Distribute a modified version under a different name without clear distinction.
-3. **Derivative Works** � Modifications and improvements are encouraged, but if you distribute them, you should:
-   - Retain this license or a compatible one that provides the same freedoms and obligations.
-   - Clearly state what modifications you have made.
+Give credit where it’s due
+If you’re using or sharing this project, please give a shout-out to the original creator:
 
-## Limitations
-- **No Warranty** � This work is provided "as is," without warranty of any kind, express or implied.
-- **Liability Disclaimer** � The author is not responsible for any issues arising from the use of this work, including but not limited to performance issues, legal matters, or damages.
+Mention them in your readme, docs, or wherever you give credits.
+Drop a link back to this original project when you can — it’s appreciated!
+Be upfront about your changes
+Don’t claim this project (or your modified version) as 100% your own creation.
+If you give it a new name or branding, just let folks know it’s based on this project.
+Sharing your mods? Awesome!
+Keep this license (or something similar) in your version so others can enjoy the same freedoms.
+Let people know what changes or improvements you’ve made!
+Just a Heads Up
+No warranties – This project is provided “as is.” No promises about how well it’ll work for your specific needs.
+No liability – If anything goes sideways while using this (bugs, issues, legal stuff, etc.), the original author isn't responsible.
+Why This License?
+The whole idea here is to keep things open, creative, and respectful. Feel free to build on this work, share it, improve it — just don’t forget to give credit where it’s due!
 
-## Purpose
-This license is designed to be flexible, allowing developers to freely use and improve upon this work while ensuring credit is given to the original creator.
-
-Thank you for respecting these terms and supporting fair use in the development community!
+Thanks for keeping the dev community awesome!
