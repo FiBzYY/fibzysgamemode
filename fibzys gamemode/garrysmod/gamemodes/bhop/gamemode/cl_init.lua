@@ -97,15 +97,15 @@ local bhop_showplayers = CreateConVar("bhop_showplayerslabel", "1", FCVAR_ARCHIV
 
 -- Cvars
 CreateClientConVar("bhop_simpletextures", 0, true, false, "Toggle simple solid textures", 0, 1)
-CreateClientConVar("bhop_sourcesensitivity", 0, true, false, "Toggle sensitivity adjustment (1 = ON, 0 = OFF)")
-CreateClientConVar("bhop_absolutemousesens", 0, true, false, "Toggle absolute mouse sensitivity adjustment (1 = ON, 0 = OFF)")
+CreateClientConVar("bhop_sourcesensitivity", 0, true, false, "Toggle sensitivity adjustment")
+CreateClientConVar("bhop_absolutemousesens", 0, true, false, "Toggle absolute mouse sensitivity adjustment")
 CreateClientConVar("bhop_showchatbox", "1", true, false, "Toggle chatbox visibility: 1 for show, 0 for hide", 0, 1)
-CreateClientConVar("bhop_nogun", "0", true, false, "Enable or disable no-gun mode (1 = enabled, 0 = disabled)")
-CreateClientConVar("bhop_nosway", "1", true, false, "Enable or disable gun sway mode (1 = enabled, 0 = disabled)")
+CreateClientConVar("bhop_nogun", "0", true, false, "Enable or disable no-gun mode")
+CreateClientConVar("bhop_nosway", "1", true, false, "Enable or disable gun sway mode")
 CreateClientConVar("bhop_showplayers", 1, true, false, "Shows bhop players", 0, 1)
 CreateClientConVar("bhop_viewtransfrom", 0, true, false, "Shows transfrom view type", 0, 1)
 CreateClientConVar("bhop_thirdperson", 0, true, false, "Shows third person view type", 0, 1)
-CreateClientConVar("bhop_viewpunch", "1", true, false, "Disable view punch effect")
+CreateClientConVar("bhop_viewpunch", "1", true, false, "Enable or disable view punch effect")
 CreateClientConVar("bhop_weaponpickup", "1", true, false, "Enable or disable weapon pickup for yourself.")
 CreateClientConVar("bhop_viewinterp", "0", true, false, "Enable or disable view interpolation.")
 
