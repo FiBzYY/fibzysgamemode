@@ -1,76 +1,81 @@
-Spectator = {}
+﻿Spectator = {}
 Spectator.Modes = {
 	OBS_MODE_IN_EYE,
 	OBS_MODE_CHASE,
 	OBS_MODE_ROAMING
 }
 
-local SMAFK = {}
-local ct = CurTime
-local afkMinutes = 5
+local AFK = {}
+local afkMinutes = 25
 local afkKickMinutes = 999
 local adminBypass = false
 local adminNotify = false
 local hook_Add = hook.Add
 
-hook_Add("PlayerInitialSpawn", "sm_afk_playerinitialspawn", function(ply)
+hook_Add("PlayerInitialSpawn", "AFKSpawn", function(ply)
     ply.AFK = {
         Away = false,
-        LastActivity = ct()
+        LastActivity = CurTime()
     }
 end)
 
-hook_Add("PlayerSay", "sm_afk_playersay", function(ply)
-    ply.AFK.LastActivity = ct()
-
+hook_Add("PlayerSay", "PlayerTyped", function(ply)
+    ply.AFK.LastActivity = CurTime()
     if ply.AFK.Away then
-        SMAFK:SetAFK(ply, false)
+        AFK:SetAFK(ply, false)
     end
 end)
 
-hook_Add("KeyPress", "sm_afk_keypress", function(ply)
-    ply.AFK.LastActivity = ct()
-
+hook_Add("KeyPress", "KeyPressed", function(ply)
+    ply.AFK.LastActivity = CurTime()
     if ply.AFK.Away then
-        SMAFK:SetAFK(ply, false)
+        AFK:SetAFK(ply, false)
     end
 end)
 
 local function IsImmune(ply)
-    return adminBypass and Admin:CanAccess(ply, Admin.Level.Moderator)
+    return adminBypass and Admin and Admin.CanAccess and Admin:CanAccess(ply, Admin.Level.Moderator)
 end
 
-function SMAFK:SetAFK(ply, afk)
+function AFK:SetAFK(ply, afk)
     ply.AFK.Away = afk
-    ply:SetNWBool("sm_afk", afk)
+    ply:SetNWBool("afk", afk)
+
+    if afk then
+		NETWORK:StartNetworkMessageTimer(ply, "Print", { "RTV", "You are AFK, RTV removed." })
+    else
+		NETWORK:StartNetworkMessageTimer(ply, "Print", { "RTV", "You are no longer AFK." })
+    end
 end
 
-function SMAFK:CheckAFK()
-    for _,ply in ipairs(player.GetHumans()) do
-        if (!ply.AFK.Away and !IsImmune(ply) and (ct() - ply.AFK.LastActivity) > (afkMinutes * 60)) then
-            SMAFK:SetAFK(ply, true)
+function AFK:CheckAFK()
+    for _, ply in ipairs(player.GetHumans()) do
+        local idleTime = CurTime() - ply.AFK.LastActivity
+        if not ply.AFK.Away and not IsImmune(ply) and idleTime > (afkMinutes * 60) then
+            print(ply:Nick() .. " idle for " .. idleTime .. "s, marking AFK.")
+            AFK:SetAFK(ply, true)
         end
     end
 
     RTV:CheckVotes()
 end
 
-function SMAFK:KickAFK()
-    if (player.GetCount() < game.MaxPlayers()) then return end
+function AFK:KickAFK()
+    if player.GetCount() < game.MaxPlayers() then return end
 
-    for _,ply in ipairs(player.GetHumans()) do
-        if (ply.AFK.Away and !IsImmune(ply) and (ct() - ply.AFK.LastActivity) > (afkKickMinutes * 60)) then
-            ply.DCReason = "Kicked for being AFK too long"
-            ply:Kick "You were kicked from the server for being AFK too long"
+    for _, ply in ipairs(player.GetHumans()) do
+        local idleTime = CurTime() - ply.AFK.LastActivity
+        if ply.AFK.Away and not IsImmune(ply) and idleTime > (afkKickMinutes * 60) then
+            ply:Kick("You were kicked from the server for being AFK too long")
         end
     end
 end
 
 local function AFKController()
-    SMAFK:CheckAFK()
-    SMAFK:KickAFK()
+    AFK:CheckAFK()
+    AFK:KickAFK()
 end
-timer.Create("sm_afk_controller", 60, 0, AFKController)
+timer.Create("AFKTimer", 60, 0, AFKController)
 
 function Spectator:GetAFK()
     local tab = {}
@@ -222,7 +227,7 @@ function Spectator:NewById( ply, szSteam, bSwitch, szName )
 		
 		Spectator:Checks( ply, previous )
 	else
-		BHDATA:Send( ply, "Print", { "General", Lang:Get( "SpectateTargetInvalid" ) } )
+		BHDATA:Send( ply, "Print", { "Spectator", Lang:Get( "SpectateTargetInvalid" ) } )
 	end
 end
 

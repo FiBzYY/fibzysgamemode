@@ -1,22 +1,28 @@
-UTIL = UTIL or {}
+﻿UTIL = UTIL or {}
 
 local normalmat = Material(BHOP.Zone.ZoneMaterial)
 
 -- Zone drawing
-function UTIL:DrawZoneTypes(min, max, colour, normal, pos, thickness)
+function UTIL:DrawZoneTypes(min, max, colour, normal, pos, thickness, flatzone)
     if not colour or not min or not max then return end
 
     local vec = Vector
     local drawbeams = render.DrawBeam
 
     local set1 = {
-        vec(min.x, min.y, min.z), vec(min.x, max.y, min.z),
-        vec(max.x, max.y, min.z), vec(max.x, min.y, min.z)
+        vec(min.x, min.y, min.z),
+        vec(min.x, max.y, min.z),
+        vec(max.x, max.y, min.z),
+        vec(max.x, min.y, min.z)
     }
+
     local set2 = {
-        vec(min.x, min.y, max.z), vec(min.x, max.y, max.z),
-        vec(max.x, max.y, max.z), vec(max.x, min.y, max.z)
-    } 
+        vec(min.x, min.y, max.z),
+        vec(min.x, max.y, max.z),
+        vec(max.x, max.y, max.z),
+        vec(max.x, min.y, max.z)
+    }
+
     local overlap = 0.5
 
     local function ExtendBeam(p1, p2)
@@ -25,15 +31,20 @@ function UTIL:DrawZoneTypes(min, max, colour, normal, pos, thickness)
         return p1 - direction * overlap, p2 + direction * overlap
     end
 
-    if normal then
+    if flatzone then
         render.SetMaterial(normalmat)
         for i = 1, 4 do
             local i2 = (i == 4 and 1 or i + 1)
-
+            local start, endpos = ExtendBeam(set1[i], set1[i2])
+            drawbeams(start, endpos, thickness, 0, 1, colour)
+        end
+    elseif normal then
+        render.SetMaterial(normalmat)
+        for i = 1, 4 do
+            local i2 = (i == 4 and 1 or i + 1)
             local start1, end1 = ExtendBeam(set1[i], set1[i2])
             local start2, end2 = ExtendBeam(set2[i], set2[i2])
             local start3, end3 = ExtendBeam(set1[i], set2[i])
-
             drawbeams(start1, end1, thickness, 0, 1, colour)
             drawbeams(start2, end2, thickness, 0, 1, colour)
             drawbeams(start3, end3, thickness, 0, 1, colour)
@@ -212,63 +223,41 @@ DynamicColors = {
 
 if CLIENT then
     CreateClientConVar("bhop_use_custom_color", "0", true, false, "Enable custom static color")
-    CreateClientConVar("bhop_color", "255 255 255", true, false, "Custom R value")
+    CreateClientConVar("bhop_color", "0 255 0", true, false, "Custom RGB color as string (like 255 0 0)")
 end
 
 function GeneratePlayerColors(ply)
-    if CLIENT and GetConVar("bhop_use_custom_color"):GetBool() then
-        -- Split the string into r, g, b
-        local colStr = GetConVar("bhop_color"):GetString()
-        local r, g, b = string.match(colStr, "(%d+)%s+(%d+)%s+(%d+)")
-        r, g, b = tonumber(r) or 255, tonumber(g) or 255, tonumber(b) or 255
+    if CLIENT then
+        if GetConVar("bhop_use_custom_color"):GetBool() then
+            local colStr = GetConVar("bhop_color"):GetString()
+            local r, g, b = string.match(colStr, "(%d+)%s+(%d+)%s+(%d+)")
+            r, g, b = tonumber(r) or 255, tonumber(g) or 255, tonumber(b) or 255
 
-        local customColor = Color(math.Clamp(r, 0, 255), math.Clamp(g, 0, 255), math.Clamp(b, 0, 255))
+            local customColor = Color(math.Clamp(r, 0, 255), math.Clamp(g, 0, 255), math.Clamp(b, 0, 255))
 
-        DynamicColors.TextColor = customColor
-        DynamicColors.PanelColor = customColor
-        DynamicColors.TextColorJhud = customColor
-
-        -- still use dynamic rank colors
-        if TIMER and TIMER.Ranks then
-            local rankColors = {}
-            local rLength = table.Count(TIMER.Ranks) - 1
-            local baseHue = math.random()
-            for k, _ in pairs(TIMER.Ranks) do
-                if k > 0 then
-                    local hueRank = (baseHue - baseHue * (k / rLength)) * 360
-                    rankColors[k] = HSVToColor(hueRank % 360, 1, 0.9) or color_white
-                end
-            end
-            DynamicColors.RankColors = rankColors
+            DynamicColors.TextColor = customColor
+            DynamicColors.PanelColor = customColor
+            DynamicColors.TextColorJhud = customColor
+            DynamicColors.RankColors = {}
+            return
         end
-        return
-    end
 
-    local hue = math.random(0, 359)
-    local neonSaturation = 1
-    local neonValue = 0.9
-    DynamicColors.TextColor = HSVToColor(hue, neonSaturation, neonValue)
-    DynamicColors.PanelColor = HSVToColor(hue, neonSaturation * 0.9, neonValue * 0.8)
+        local hue = math.Clamp(tonumber(math.random(0, 359)) or 0, 0, 359)
+        local neonSaturation = 1
+        local neonValue = 0.9
+        DynamicColors.TextColor = HSVToColor(hue, neonSaturation, neonValue)
+        DynamicColors.PanelColor = HSVToColor(hue, neonSaturation * 0.9, neonValue * 0.8)
 
-    local jhudHue = (hue >= 0 and hue <= 60) or (hue >= 300 and hue <= 359) and 120 or hue
-    DynamicColors.TextColorJhud = HSVToColor(jhudHue, neonSaturation, neonValue)
-
-    if TIMER and TIMER.Ranks then
-        local rankColors = {}
-        local rLength = table.Count(TIMER.Ranks) - 1
-        local baseHue = math.random()
-        for k, _ in pairs(TIMER.Ranks) do
-            if k > 0 then
-                local hueRank = (baseHue - baseHue * (k / rLength)) * 360
-                rankColors[k] = HSVToColor(hueRank % 360, neonSaturation, neonValue) or color_white
-            end
-        end
-        DynamicColors.RankColors = rankColors
+        local jhudHue = (hue >= 0 and hue <= 60) or (hue >= 300 and hue <= 359) and 120 or hue
+        DynamicColors.TextColorJhud = HSVToColor(jhudHue, neonSaturation, neonValue)
+        DynamicColors.RankColors = {}
     end
 end
 
-hook.Add("Initialize", "AssignPlayerColors", function(ply)
-    GeneratePlayerColors(ply)
+hook.Add("Initialize", "AssignPlayerColors", function()
+    timer.Simple(0, function()
+        GeneratePlayerColors(LocalPlayer())
+    end)
 end)
 
 -- Math --

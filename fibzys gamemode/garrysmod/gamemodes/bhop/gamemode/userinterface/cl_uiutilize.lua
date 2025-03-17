@@ -263,6 +263,81 @@ function UI:CreateCustomDropdownPreset(parent, y, themeID, labelText, themeOptio
     return pnl, dropdownButton, dropdownMenu
 end
 
+function UI:CreateCustomDropdownSB(parent, y, cvarName, labelText, options)
+    local pnl = vgui.Create("DPanel", parent)
+    pnl:SetSize(parent:GetWide(), 200)
+    pnl:SetPos(0, y)
+
+    pnl.Paint = function(self, w, h)
+        draw.RoundedBox(0, 10, 5, w - 20, 70, Color(42, 42, 42, 250))
+        draw.SimpleText(labelText, "ToggleButtonFontTitle", 20, 15, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+    end
+
+    local dropdownButton = vgui.Create("DButton", pnl)
+    dropdownButton:SetPos(20, 40)
+    dropdownButton:SetSize(200, 25)
+    dropdownButton:SetText("")
+
+    local selectedTheme = GetConVar(cvarName):GetString()
+    local selectedText = options[selectedTheme] or "Select an option"
+    local dropdownOpen = false
+
+    dropdownButton.Paint = function(self, w, h)
+        local bgColor = self:IsHovered() and Color(50, 50, 50, 255) or Color(35, 35, 35, 255)
+        draw.RoundedBox(0, 0, 0, w, h, bgColor)
+        draw.SimpleText(selectedText, "hud.subtitle", 10, h / 2, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+
+        surface.SetDrawColor(200, 200, 200, 255)
+        draw.NoTexture()
+        surface.DrawPoly({
+            { x = w - 20, y = h / 2 - 4 },
+            { x = w - 10, y = h / 2 - 4 },
+            { x = w - 15, y = h / 2 + 4 }
+        })
+    end
+
+    local dropdownMenu = vgui.Create("DPanel", pnl)
+    dropdownMenu:SetSize(200, 25 * table.Count(options))
+    dropdownMenu:SetPos(20, 70)
+    dropdownMenu:SetVisible(false)
+
+    dropdownMenu.Paint = function(self, w, h)
+        draw.RoundedBox(0, 0, 0, w, h, Color(25, 25, 25, 255))
+    end
+
+    local yOffset = 0
+    for id, name in pairs(options) do
+        local option = vgui.Create("DButton", dropdownMenu)
+        option:SetSize(200, 25)
+        option:SetPos(0, yOffset)
+        option:SetText("")
+
+        option.Paint = function(self, w, h)
+            local bgColor = self:IsHovered() and Color(60, 60, 60, 255) or Color(35, 35, 35, 255)
+            draw.RoundedBox(0, 0, 0, w, h, bgColor)
+            draw.SimpleText(name, "hud.subtitle", 10, h / 2, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+        end
+
+        option.DoClick = function()
+            selectedText = name
+            selectedTheme = id
+            RunConsoleCommand(cvarName, id)
+            dropdownOpen = false
+            dropdownMenu:SetVisible(false)
+            parent:InvalidateLayout(true)
+        end
+
+        yOffset = yOffset + 25
+    end
+
+    dropdownButton.DoClick = function()
+        dropdownOpen = not dropdownOpen
+        dropdownMenu:SetVisible(dropdownOpen)
+    end
+
+    return pnl, dropdownButton, dropdownMenu
+end
+
 function UI:CreateThemeToggle(parent, y, themeID, labelText)
     local pnl = vgui.Create("DPanel", parent)
     pnl:SetSize(parent:GetWide(), 80)

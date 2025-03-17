@@ -54,7 +54,8 @@ if not FONT_CACHE then
     MakeFont("HUDcssBottom", { size = 21.5, weight = 800, antialias = true, bold = true, font = "Verdana" })
     MakeFont("HUDcss4", { size = 21, weight = 800, antialias = true, bold = true, font = "Verdana" })
     MakeFont("HUDcss2", { size = 21, weight = 700, bold = true, antialias = true, font = "Verdana" })
-    MakeFont("CounterStrike", { size = 45, antialias = true, font = "Counter-Strike" })
+    MakeFont("CounterStrike", { size = 62, antialias = true, font = "Counter-Strike" })
+    MakeFont("CounterStrikeSM", { font = "Counter-Strike", size = 34 })
     MakeFont("HUDSpecHud", { size = 21, weight = 800, antialias = true, bold = true, font = "Verdana" })
 
     -- Jump Hud
@@ -76,6 +77,9 @@ if not FONT_CACHE then
     MakeFont("HUDSideText", { size = 14, weight = 500, font = "Arial" })
     MakeFont("TitleStellar", { font = "Trebuchet MS", size = 18, weight = 500, antialias = true, extended = false })
     MakeFont("RNGFixText", { font = "Trebuchet MS", size = 40, weight = 500, antialias = true, extended = false })
+
+    -- Trainer
+    MakeFont("StrafeTrainerCSS", { font = "Trebuchet MS", size = 24, weight = 500, antialias = true, extended = false })
 
     -- UI
     MakeFont("hud.numberedui.css1", {font = "Roboto", size = 19, weight = 500, antialias = true})
@@ -107,26 +111,31 @@ if not FONT_CACHE then
     MakeFont("ui.mainmenu.title", {font = "Roboto", size = 20, weight = 500, antialias = true})
     MakeFont("ui.mainmenu.title2", {font = "Roboto", size = 20, weight = 500, antialias = true})
 
+    -- Flow
+    MakeFont("ScoreboardPlayer", { font = "coolvetica", size = 24, weight = 500, antialias = true, italic = false })
+    MakeFont("FlowText", { font = "Tahoma", size = 16, weight = 1000, antialias = true, italic = false })
+    MakeFont("FlowRadial", { font = "coolvetica", size = math.ceil(ScrW() / 34), weight = 500, antialias = true, italic = false })
+
     -- Chat box
     MakeFont("chatbox.font", { size = 19, weight = 2000, font = "Coolvetica", antialias = true })
 
     -- Older
-    MakeFont( "CustomHeaderBig", { size = 44, font = "Coolvetica" } )
-    MakeFont( "CustomHeader", { size = 30, font = "Coolvetica" } )
-    MakeFont( "CustomTitle", { size = 24, font = "Coolvetica" } )
-    MakeFont( "CustomTitleSmall", { size = 20, font = "Coolvetica" } ) 
+    MakeFont("CustomHeaderBig", { size = 44, font = "Coolvetica" })
+    MakeFont("CustomHeader", { size = 30, font = "Coolvetica" })
+    MakeFont("CustomTitle", { size = 24, font = "Coolvetica" })
+    MakeFont("CustomTitleSmall", { size = 20, font = "Coolvetica" }) 
 
-    MakeFont( "CustomFont", { size = 22, weight = 800, font = "Tahoma" } )
-    MakeFont( "CustomFontSmall", { size = 14, weight = 800, font = "Tahoma" } )
-    MakeFont( "CustomLabelSmall", { size = 12, weight = 800, font = "Tahoma" } )
-    MakeFont( "CustomLabelMed", { size = 15, weight = 550, font = "Verdana" } )
-    MakeFont( "CustomLabel", { size = 17, weight = 550, font = "Verdana" } )
+    MakeFont("CustomFont", { size = 22, weight = 800, font = "Tahoma" })
+    MakeFont("CustomFontSmall", { size = 14, weight = 800, font = "Tahoma" })
+    MakeFont("CustomLabelSmall", { size = 12, weight = 800, font = "Tahoma" })
+    MakeFont("CustomLabelMed", { size = 15, weight = 550, font = "Verdana" })
+    MakeFont("CustomLabel", { size = 17, weight = 550, font = "Verdana" })
 
-    MakeFont( "CustomSpecial", { size = 17, weight = 550, font = "Verdana", italic = true } )
-    MakeFont( "CustomSpeed", { size = 16, weight = 800, font = "Tahoma" } )
-    MakeFont( "CustomTimer", { size = 17, weight = 800, font = "Trebuchet24" } )
-    MakeFont( "CustomMessage", { size = 30, weight = 800, font = "Verdana" } )
-    MakeFont( "CustomCounter", { size = 144, weight = 800, font = "Coolvetica" } )
+    MakeFont("CustomSpecial", { size = 17, weight = 550, font = "Verdana", italic = true })
+    MakeFont("CustomSpeed", { size = 16, weight = 800, font = "Tahoma" })
+    MakeFont("CustomTimer", { size = 17, weight = 800, font = "Trebuchet24" })
+    MakeFont("CustomMessage", { size = 30, weight = 800, font = "Verdana" })
+    MakeFont("CustomCounter", { size = 144, weight = 800, font = "Coolvetica" })
 
     -- New
     MakeFont("Bhop.Time", {font = "Default", size = 15, weight = 100})

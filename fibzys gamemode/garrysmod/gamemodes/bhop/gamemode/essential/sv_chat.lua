@@ -106,7 +106,7 @@ Lang = {
 
     -- Spectate
     SpectateRestart = {"You have to be alive in order to reset yourself to the start.", UTIL.Colour["Timer"], "1;", UTIL.Colour["White"]},
-    SpectateTargetInvalid = {"You are unable to spectate this player right now.", UTIL.Colour["Timer"], "1;", UTIL.Colour["White"]},
+    SpectateTargetInvalid = {"You are unable to spectate this player right now."},
     SpectateWeapon = {"You can't obtain a weapon in Spectator.", UTIL.Colour["Timer"], "1;", UTIL.Colour["White"]},
 
     -- Admin

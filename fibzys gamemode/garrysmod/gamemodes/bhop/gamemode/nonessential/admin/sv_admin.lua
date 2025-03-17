@@ -531,7 +531,7 @@ function Admin:HandleRequest( ply, args )
 		end
 
 		local mapName = MySQL:Escape(game.GetMap())
-		local nOld = Timer.Multiplier or 1
+		local nOld = Timer.Multiplier or 0
 		Timer.Multiplier = nMultiplier
 
 		MySQL:Start("SELECT map FROM timer_map WHERE map = " .. mapName, function(result)
@@ -814,7 +814,7 @@ function Admin:HandleRequest( ply, args )
 		end
 
 		local mapName = MySQL:Escape(game.GetMap())
-		local nOld = Timer.BonusMultiplier or 1
+		local nOld = Timer.BonusMultiplier or 0
 		Timer.BonusMultiplier = nMultiplier
 
 		MySQL:Start("SELECT map FROM timer_map WHERE map = " .. mapName, function(result)
@@ -932,7 +932,7 @@ net.Receive("AdminChangeMapMultiplier", function(len, ply)
     end
 
     local mapName = MySQL:Escape(game.GetMap())
-    local nOld = Timer.Multiplier or 1
+    local nOld = Timer.Multiplier or 0
     Timer.Multiplier = nMultiplier
 
     MySQL:Start("SELECT map FROM timer_map WHERE map = " .. mapName, function(result)
@@ -964,7 +964,7 @@ util.AddNetworkString("ReceiveMapMultiplier")
 
 net.Receive("RequestMapMultiplier", function(len, ply)
     if not ply:IsAdmin() then return end
-    local currentMultiplier = Timer.Multiplier or 1.0
+    local currentMultiplier = Timer.Multiplier or 0
     net.Start("ReceiveMapMultiplier")
     net.WriteFloat(currentMultiplier)
     net.Send(ply)

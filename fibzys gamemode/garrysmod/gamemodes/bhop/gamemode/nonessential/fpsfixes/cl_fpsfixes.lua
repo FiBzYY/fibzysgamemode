@@ -49,28 +49,11 @@ hook_Add("Initialize", "RemoveUsedHooks", function()
     end
 end)
 
--- Fix skybox issuses
-hook_Add("InitPostEntity", "RemoveSkyBoxOnSpecificMaps", function()
-    local mapName = game.GetMap()
-
-    local disableSkyboxMaps = {
-        ["bhop_zyper"] = true,
-        ["bhop_z"] = true
-    }
-
-    if disableSkyboxMaps[mapName] then
-        RunConsoleCommand("r_skybox", "0")
-    else
-        RunConsoleCommand("r_skybox", "1")
-    end
-end)
-
 CreateClientConVar("bhop_enablefpsboost", "1", true, false, "Enable FPS boost settings on load")
 
 -- Load client commands on player load
 hook_Add("InitPostEntity", "Fpsfixes", function()
     if GetConVar("bhop_enablefpsboost"):GetBool() then
-        RunConsoleCommand("r_drawsprites", "0")
         RunConsoleCommand("cl_interp", "0.05")
         RunConsoleCommand("cl_smoothtime", "0.05")
 
@@ -97,9 +80,7 @@ hook_Add("InitPostEntity", "Fpsfixes", function()
         RunConsoleCommand("r_fastzreject", "-1")
         RunConsoleCommand("r_shadowrendertotexture", "0")
         RunConsoleCommand("r_drawmodeldecals", "0")
-        RunConsoleCommand("r_rimlight", "0")
         RunConsoleCommand("r_eyes", "0")
-        RunConsoleCommand("r_updaterefracttexture", "0")
         RunConsoleCommand("cl_phys_props_enable", "0")
         RunConsoleCommand("r_waterdrawrefraction", "0")
         RunConsoleCommand("r_WaterDrawReflection", "0")
@@ -111,7 +92,6 @@ hook_Add("InitPostEntity", "Fpsfixes", function()
         RunConsoleCommand("cl_threaded_bone_setup", "1")
         RunConsoleCommand("mat_disable_fancy_blending", "1")
         RunConsoleCommand("mat_disable_lightwarp", "1")
-        RunConsoleCommand("func_break_max_pieces", "0")
         RunConsoleCommand("props_break_max_pieces", "0")
         RunConsoleCommand("mat_parallaxmap", "0")
         RunConsoleCommand("mat_max_worldmesh_vertices", "0")
@@ -122,10 +102,8 @@ hook_Add("InitPostEntity", "Fpsfixes", function()
         RunConsoleCommand("cl_forcepreload", "1")
         RunConsoleCommand("r_flashlightculldepth", "0")
         RunConsoleCommand("studio_queue_mode", "1")
-        RunConsoleCommand("mat_diffuse", "1")
         RunConsoleCommand("snd_mix_async", "1")
         RunConsoleCommand("snd_async_fullyasync", "1")
-        RunConsoleCommand("r_dynamiclighting", "0")
         RunConsoleCommand("r_waterforceexpensive", "0")
         RunConsoleCommand("sv_playerforcedupdate", "0")
         RunConsoleCommand("cl_pitchspeed", "0")

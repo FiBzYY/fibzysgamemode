@@ -459,7 +459,7 @@ local function isNonEssentialGlobal(key)
         ["ACT_DOD_PRIMARYATTACK_GREN_FRAG"] = true,
         ["ACT_MP_GESTURE_VC_HANDMOUTH_PDA"] = true,
         ["ACT_DIE_BACKSIDE"] = true,
-        ["KEY_LSHIFT"] = true,
+        ["KEY_LSHIFT"] = false,
         ["ACT_FLINCH_RIGHTLEG"] = true,
         ["ACT_VM_RECOIL3"] = true,
         ["ACT_MP_ATTACK_STAND_SECONDARYFIRE"] = true,

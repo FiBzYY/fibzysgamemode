@@ -171,6 +171,7 @@ end
 hook.Add("InitPostEntity", "AutoEnableShowTriggersOnSpawn", function()
     if GetConVar("bhop_alwaysshowtriggers"):GetBool() then
         RunConsoleCommand("showtriggers_enabled", "1")
+        RunConsoleCommand("showclips", "1")
     end
 end)
 
@@ -179,6 +180,7 @@ hook.Add("OnEntityCreated", "ForceTriggersWhenSpawning", function(ent)
         timer.Simple(0, function()
             if GetConVar("bhop_alwaysshowtriggers"):GetBool() then
                 RunConsoleCommand("showtriggers_enabled", "1")
+			    RunConsoleCommand("showclips", "1")
             end
         end)
     end

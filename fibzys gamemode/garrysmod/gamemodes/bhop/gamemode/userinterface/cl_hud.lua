@@ -212,7 +212,6 @@ local function GetCurrentPlacement(nCurrent, s)
     local timetbl = RECORDS[s]
 
     if not timetbl or next(timetbl) == nil then
-        print("Warning: RECORDS[s] is empty or nil for style:", s)
         return 1
     end
 
@@ -807,25 +806,33 @@ HUD.Themes = {
     end,
 
     ["hud.shavit"] = function(pl, data)
-        if lp():GetActiveWeapon().Primary then
-            if ammo_clip ~= -1 then
-                surface.SetFont("CSS_FONT")
-            
-                local csstext = Color(255, 176, 0, 120)
-                DrawBoxRound(8, screenWidth - 352, screenHeight - 76, 318, 56, Color(0, 0, 0, 90))
-                DrawText(16, "CSS_FONT", screenWidth - 270, screenHeight - 90 + 9, color_white, TEXT_ALIGN_CENTER)
-                DrawText("M", "CSS_ICONS", screenWidth - 75, screenHeight - 75, color_white, TEXT_ALIGN_CENTER) 
-                DrawText(420, "CSS_FONT", screenWidth - 120, screenHeight - 90 + 9, color_white, TEXT_ALIGN_RIGHT)
-                DrawBoxRound(0, screenWidth - 230, screenHeight - 70, 3, 42, color_white)
-            end
+    if lp():GetActiveWeapon() and lp():GetActiveWeapon().Primary then
+        local wep = lp():GetActiveWeapon()
+        if wep and wep:Clip1() ~= -1 then
+            surface.SetFont("CounterStrike")
+    
+            local ammo_clip = wep:Clip1()
+            local ammo_reserve = lp():GetAmmoCount(wep:GetPrimaryAmmoType())
+    
+            local csstext = Color(255, 176, 0, 120)
+            DrawBoxRound(8, screenWidth - 352, screenHeight - 76, 318, 56, Color(0, 0, 0, 90))
+
+            local offset = 4
+
+            DrawText(ammo_clip, "CounterStrike", screenWidth - 270 - offset, screenHeight - 90 + 5, DynamicColors.PanelColor, TEXT_ALIGN_CENTER)
+            DrawText("R", "CSS_ICONS", screenWidth - 75 - offset, screenHeight - 75, DynamicColors.PanelColor, TEXT_ALIGN_CENTER)
+            DrawText(ammo_reserve, "CounterStrike", screenWidth - 120 - offset, screenHeight - 90 + 5, DynamicColors.PanelColor, TEXT_ALIGN_RIGHT)
+            DrawBoxRound(0, screenWidth - 230 - offset, screenHeight - 70, 4, 44, DynamicColors.PanelColor)
         end
+    end
 
     if lp():Team() == TEAM_SPECTATOR then
         local backgroundspec = Color(0, 0, 0, 190)
         surface.SetDrawColor(backgroundspec)
         surface.DrawRect(0, screenHeight - 116.70, screenWidth, screenHeight)
 
-        DrawText(pl:Name() .. " (100)", "HUDTimer", screenWidth / 2, screenHeight - 60, Color(239, 74, 74), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+        local health = pl:Health()
+        DrawText(pl:Name() .. " (" .. health .. ")", "HUDTimer", screenWidth / 2, screenHeight - 60, DynamicColors.PanelColor, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 
         surface.SetDrawColor(backgroundspec)
         surface.DrawRect(0, 0, screenWidth, 100)
@@ -833,11 +840,11 @@ HUD.Themes = {
         DrawText("Counter-Terrorists :   0", "HUDSpecHud", screenWidth - 484, (screenHeight / 35) - 1, Color(241, 176, 13), text, TEXT_ALIGN_RIGHT)
         DrawText("Map: " .. game.GetMap(), "HUDSpecHud", screenWidth - 220, (screenHeight / 35) - 1, Color(241, 176, 13), text, TEXT_ALIGN_RIGHT)
         DrawText("Terrorists :   0", "HUDSpecHud", screenWidth - 400, (screenHeight / 18) - 1, Color(241, 176, 13), text, TEXT_ALIGN_RIGHT)
-        DrawText("e", "CounterStrike", screenWidth - 220, (screenHeight / 21) - 1, Color(241, 176, 13), text, TEXT_ALIGN_RIGHT)
+        DrawText("e", "CounterStrikeSM", screenWidth - 220, (screenHeight / 21) - 1, Color(241, 176, 13), text, TEXT_ALIGN_RIGHT)
         DrawText("00:00", "HUDSpecHud", screenWidth - 184, (screenHeight / 17) - 1, Color(241, 176, 13), text, TEXT_ALIGN_RIGHT)
     end
 
-     local velocity = math.floor(GetClientVelocity(pl))
+     local velocity = math.floor(data.velocity) or math.floor(pl:GetVelocity():Length2D())
      local time = "Time: "
      local pb = "Best: "
      local style = pl:GetNWInt("Style", 1)
@@ -945,7 +952,7 @@ HUD.Themes = {
      elseif activity == 4 then
          DrawBoxRound(CSRound2, xPos, yPos + box_y_css, width, height, base)
          DrawText(stylename, "HUDcss", screenWidth / 2, text_y_css2 + yPos + 42, text, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-         DrawText("Time: " .. currentf, "HUDcss", screenWidth / 2, text_y_css2 + yPos + 62, text, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+         DrawText("Time: " .. cTimeWR(current), "HUDcss", screenWidth / 2, text_y_css2 + yPos + 62, text, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
          DrawText("Speed: " .. velocity, "HUDcss", screenWidth / 2, text_y_css2 + yPos + 82, text, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
       end
     end,
@@ -1283,16 +1290,33 @@ local size, halfSize, textSpacing = 4, 2, 6
 local maxTrainValue = 200
 local sideHeight = 68
 
+CreateClientConVar("bhop_trainer_verygood", "220 255 0", true, false)
+CreateClientConVar("bhop_trainer_good", "0 255 0", true, false)
+CreateClientConVar("bhop_trainer_ok", "0 200 0", true, false)
+CreateClientConVar("bhop_trainer_meh", "20 150 0", true, false)
+CreateClientConVar("bhop_trainer_bad", "200 0 0", true, false)
+
+local function GetTrainerColor(convar)
+    local colStr = GetConVar(convar):GetString()
+    local r, g, b = string.match(colStr, "(%d+)%s+(%d+)%s+(%d+)")
+    return Color(tonumber(r) or 255, tonumber(g) or 255, tonumber(b) or 255)
+end
+
 local function GetColour(percent, velocity)
     local offset = math.abs(1 - percent)
     local whiteningRate = 0.2
     local redValue = math.min(255, 255 + (velocity * whiteningRate))
 
-    if offset < 0.05 then return Color(0, 255, 255)
-        elseif offset < 0.1 then return Color(0, 200, 0)
-        elseif offset < 0.25 then return Color(220, 255, 0)
-        elseif offset < 0.5 then return Color(200, 150, 0)
-        else return Color(redValue, 255, 255)
+    if offset < 0.05 then
+        return GetTrainerColor("bhop_trainer_verygood")
+    elseif offset < 0.1 then
+        return GetTrainerColor("bhop_trainer_good")
+    elseif offset < 0.25 then
+        return GetTrainerColor("bhop_trainer_ok")
+    elseif offset < 0.5 then
+        return GetTrainerColor("bhop_trainer_meh")
+    else
+        return GetTrainerColor("bhop_trainer_bad")
     end
 end
 

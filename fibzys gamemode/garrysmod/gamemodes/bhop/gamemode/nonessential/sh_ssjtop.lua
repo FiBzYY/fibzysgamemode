@@ -46,6 +46,8 @@ end
 
 -- Crouch Status Before Jump
 hook_Add("StartCommand", "TrackDuckDuringJumps", function(ply)
+    if not IsValid(ply) then return end
+
     if ply:IsOnGround() then
         playerDuckStatus[ply:SteamID()] = ply:Crouching()
     end

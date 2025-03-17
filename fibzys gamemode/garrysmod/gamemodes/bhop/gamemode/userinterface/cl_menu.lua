@@ -70,7 +70,7 @@ local clickableWords = {
         color = Color(255, 50, 50),
         url = "https://steamcommunity.com/id/fibzy_"
     },
-    ["Obvixus"] = {
+    ["obvixus"] = {
         color = Color(50, 150, 255),
         url = "https://steamcommunity.com/id/obvixus"
     }
@@ -90,23 +90,34 @@ function UI:CreatePanel(parent, textLines)
 
         for i, line in ipairs(textLines) do
             local font = i == 1 and "TopNavFont" or "SmallTextFont"
-            local x = 10
+            local hasClickable = false
 
             for word in string.gmatch(line, "%S+") do
-                local spacing = " "
                 local wordClean = word:gsub("[,%s]", "")
-
                 if clickableWords[wordClean] then
-                    local info = clickableWords[wordClean]
+                    hasClickable = true
+                    break
+                end
+            end
+
+            local x = 10
+            if hasClickable then
+                for word in string.gmatch(line, "%S+") do
+                    local spacing = " "
+                    local wordClean = word:gsub("[,%s]", "")
                     local wordW, wordH = surface.GetTextSize(word .. spacing)
-                    draw.SimpleText(word .. spacing, font, x, y, info.color, TEXT_ALIGN_LEFT)
-                    table.insert(self.clickables, {x = x, y = y, w = wordW, h = wordH, url = info.url})
-                    x = x + wordW
-                else
-                    local wordW, wordH = surface.GetTextSize(word .. spacing)
-                    draw.SimpleText(word .. spacing, font, x, y, colors.text, TEXT_ALIGN_LEFT)
+
+                    if clickableWords[wordClean] then
+                        local info = clickableWords[wordClean]
+                        draw.SimpleText(word .. spacing, font, x, y, info.color, TEXT_ALIGN_LEFT)
+                        table.insert(self.clickables, {x = x, y = y, w = wordW, h = wordH, url = info.url})
+                    else
+                        draw.SimpleText(word .. spacing, font, x, y, colors.text, TEXT_ALIGN_LEFT)
+                    end
                     x = x + wordW
                 end
+            else
+                draw.SimpleText(line, font, 10, y, colors.text, TEXT_ALIGN_LEFT)
             end
 
             y = y + 25
@@ -272,8 +283,8 @@ function UI:CreateMenu()
             text = "Overview", 
             panelContent = {
                 "Information Overview", 
-                "Gamemode by FiBzY", 
-                "Play Testers: FiBzY, Obvixus"
+                "Gamemode: FiBzY", 
+                "Play Testers: FiBzY, obvixus"
             }, 
             isActive = true 
         },
@@ -494,11 +505,15 @@ function UI:CreateMenu()
         y = y + 60
         self:CreateInputBox(container, y, "bhop_thickness", 1, "Zones Thickness", "How thick you want the zones to be.")
         y = y + 60
+        self:CreateToggle(container, y, "bhop_flatzones", "Display Flat Zones", "Change to flat zones zones.")
+        y = y + 60
         self:CreateToggle(container, y, "bhop_wireframe", "Zones Wireframe", "Shows zones in wireframe.")
         y = y + 60
         self:CreateToggle(container, y, "bhop_anticheats", "Show AC Zones", "Show or hide the anti-cheat timer zones.")
         y = y + 60
         self:CreateToggle(container, y, "bhop_showplayers", "Show Players", "Show or hide the players.")
+        y = y + 60
+        self:CreateToggle(container, y, "bhop_showplayerslabel", "Show Players Labels", "Show or hide the player labels.")
         y = y + 60
         self:CreateToggle(container, y, "r_WaterDrawReflection", "Toggle Reflection", "This may improve performance by toggling off reflection.", { default = 1, off = 0 })
         y = y + 60
@@ -614,6 +629,8 @@ function UI:CreateMenu()
             self:CreateToggle(parent, y, "bhop_viewinterp", "View Interpolation", "Enables or disables interpolation view.")
             y = y + 60
             self:CreateToggle(parent, y, "bhop_viewpunch", "View Punch", "Enables or disables view punch.")
+            y = y + 60
+            self:CreateToggle(parent, y, "bhop_sourcesensitivity", "CS:S Sensitivity", "Enables or disables CS:S Sensitivity. (3.125% Slower)")
         end },
 
         --[[{ text = "FOV", panelContent = function(parent)
@@ -676,7 +693,14 @@ function UI:CreateMenu()
                 ["nui.css"] = "CS:S"
             })
 
-            y = y + 75
+            y = y + 120
+
+           self:CreateCustomDropdownSB(parent, y, "bhop_scoreboard", "Set Scoreboard theme", {
+                ["default"] = "Default",
+                ["kawaii"] = "Kawaii",
+                ["flow"] = "Flow"
+            })
+
            --[[self:CreateCustomDropdownPreset(parent, y, "nui.kawaii", "Set HUD preset", {
             ["nui.kawaii"] = "Kawaii",
             ["nui.css"] = "CS:S"

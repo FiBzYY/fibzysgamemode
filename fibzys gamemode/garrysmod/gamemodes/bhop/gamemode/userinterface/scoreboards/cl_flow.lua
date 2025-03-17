@@ -39,8 +39,7 @@ local function cTime(ns)
     end
 end
 
-
-local rank_str = { "Donateur", "Mod", "Zoner", "Dev", "Founder" }
+local rank_str = {"Donator", "Mod", "Zoner", "Dev", "Founder"}
 local icon = {}
 
 icon.muted = Material( "icon32/muted.png" )
@@ -103,26 +102,25 @@ hook.Add("HUDPaint", "LoadScoreboardIcons", function()
 	hook.Remove("HUDPaint", "LoadScoreboardIcons")
 end)
 
-
-local function _AA( szAction, szSID )
+local function _AA(szAction, szSID)
 	if not IsValid( LocalPlayer() ) then return end
 	if Admin:IsAvailable() or LocalPlayer():GetNWInt( "AccessIcon", 0 ) > 2 then
 		RunConsoleCommand( "say", "!admin " .. szAction .. " " .. szSID )
 	else
-		Link:Print( "Admin", "Please open the admin panel before trying to access scoreboard functionality." )
+		--Link:Print( "Admin", "Please open the admin panel before trying to access scoreboard functionality." )
 	end
 end
 
-local function PutPlayerItem( self, pList, ply, mw )
+local function PutPlayerItem(self, pList, ply, mw)
 	local btn = vgui.Create( "DButton" )
 	btn.player = ply
 	btn.ctime = CurTime()
-	btn:SetTall( 32 )
-	btn:SetText( "" )
+	btn:SetTall(32)
+	btn:SetText("")
 	
-	function btn:Paint( w, h )
-		surface.SetDrawColor( 0, 0, 0, 0 )
-		surface.DrawRect( 0, 0, w, h )
+	function btn:Paint(w, h)
+		surface.SetDrawColor(0, 0, 0, 0)
+		surface.DrawRect(0, 0, w, h)
 
 		if ply:IsBot() then
 			surface.SetDrawColor(DynamicColors.PanelColor)
@@ -132,7 +130,7 @@ local function PutPlayerItem( self, pList, ply, mw )
 
 		surface.DrawOutlinedRect(0, 0, w, h)
 
-		if IsValid( ply ) and ply:IsPlayer() then
+		if IsValid(ply) and ply:IsPlayer() then
 			local s = 0
 
 			local rankID = ply:GetNWInt("Rank", -1)
@@ -147,28 +145,6 @@ local function PutPlayerItem( self, pList, ply, mw )
 			end
 			
 			s = s + mw + 56
-			
-			local nAccess = ply:GetNWInt( "AccessIcon", 0 )
-			if nAccess > 0 then
-				surface.SetMaterial( icon.access[ nAccess ] )
-				surface.SetDrawColor( Color( 255, 255, 255 ) )
-				surface.DrawTexturedRect( s + 4, h / 2 - 8, 16, 16 )
-				s = s + 20
-			end
-
-			if ply:IsMuted() or ply:GetNWBool( "AdminGag", false ) then
-				surface.SetMaterial( icon.muted )
-				surface.SetDrawColor( Color( 255, 255, 255 ) )
-				surface.DrawTexturedRect( s + 4, h / 2 - 16, 32, 32 )
-				s = s + 32
-			end
-
-			if rankID > 1 then
-				surface.SetMaterial( icon.rank[ ply:GetNWInt( "Rank", 1 ) ] )
-				surface.SetDrawColor( Color( 255, 255, 255 ) )
-				surface.DrawTexturedRect( s + 4, h / 2 - 14, 32, 32 )
-				s = s + 32
-			end
 
 			local PlayerName = ply:Name()
 
@@ -198,11 +174,11 @@ local function PutPlayerItem( self, pList, ply, mw )
 				PlayerName = szName
 			end
 
-			draw.DrawText( PlayerName, "ScoreboardPlayer", s + 11, 9, Color( 0, 0, 0 ), TEXT_ALIGN_LEFT )
-			draw.DrawText( PlayerName, "ScoreboardPlayer", s + 10, 8, Color( 200, 200, 200 ), TEXT_ALIGN_LEFT )
+			draw.DrawText(PlayerName, "ScoreboardPlayer", s + 11, 9, Color(0, 0, 0), TEXT_ALIGN_LEFT)
+			draw.DrawText(PlayerName, "ScoreboardPlayer", s + 10, 8, Color(200, 200, 200), TEXT_ALIGN_LEFT)
 			
-			surface.SetFont( "ScoreboardPlayer" )
-			local wt, ht = surface.GetTextSize( "TimerText" )
+			surface.SetFont("ScoreboardPlayer")
+			local wt, ht = surface.GetTextSize("TimerText")
 			local wx = 105 - wt
 			local o = w - wt - (wx * 2) - menu.RecordOffset
 				
@@ -221,13 +197,6 @@ local function PutPlayerItem( self, pList, ply, mw )
 			draw.DrawText(styles .. " - " .. con(ply:GetNWFloat("Record", 0)), "ScoreboardPlayer", o + 1, 9, Color(0, 0, 0), TEXT_ALIGN_RIGHT)
 			draw.DrawText(styles .. " - " .. con(ply:GetNWFloat("Record", 0)), "ScoreboardPlayer", o, 8, Color(255, 255, 255), TEXT_ALIGN_RIGHT)
 
-			local nSpecial = ply:GetNWInt( "SpecialRank", 0 )
-			if nSpecial > 0 then
-				surface.SetMaterial( icon.special[nSpecial] )
-				surface.SetDrawColor( Color( 255, 255, 255 ) )
-				surface.DrawTexturedRect( o + 4, h / 2 - 16, 32, 32 )
-			end
-			
 			-- Display player's ping
 			draw.DrawText(tostring(ply:Ping()), "ScoreboardPlayer", w - 9, 9, Color(0, 0, 0), TEXT_ALIGN_RIGHT)
 			draw.DrawText(tostring(ply:Ping()), "ScoreboardPlayer", w - 10, 8, Color(255, 255, 255), TEXT_ALIGN_RIGHT)
@@ -235,45 +204,45 @@ local function PutPlayerItem( self, pList, ply, mw )
 	end
 
 	function btn:DoClick()
-		GAMEMODE:DoScoreboardActionPopup( ply )
+		GAMEMODE:DoScoreboardActionPopup(ply)
 	end
 	
-	pList:AddItem( btn )
+	pList:AddItem(btn)
 end
 
-local function ListPlayers( self, pList, mw )
+local function ListPlayers(self, pList, mw)
 	local players = player.GetAll()
-	table.sort( players, function( a, b )
+	table.sort( players, function(a, b)
 		if not a or not b then return false end
-		local ra, rb = a:GetNWInt( "Rank", 1 ), b:GetNWInt( "Rank", 1 )
+		local ra, rb = a:GetNWInt( "Rank", 1 ), b:GetNWInt("Rank", 1)
 		if ra == rb then
-			return a:GetNWInt( "SpecialRank", 0 ) > b:GetNWInt( "SpecialRank", 0 )
+			return a:GetNWInt("SpecialRankMap", 0) > b:GetNWInt("SpecialRankMap", 0)
 		else
 			return ra > rb
 		end
 	end )
 
-	for k,v in pairs( pList:GetCanvas():GetChildren() ) do
+	for k,v in pairs(pList:GetCanvas():GetChildren()) do
 		if IsValid( v ) then
 			v:Remove()
 		end
 	end
 
-	for k,ply in pairs( players ) do
-		PutPlayerItem( self, pList, ply, mw )
+	for k,ply in pairs(players) do
+		PutPlayerItem(self, pList, ply, mw)
 	end
 		
 	pList:GetCanvas():InvalidateLayout()
 end
 
-local function CreateTeamList( parent, mw )
+local function CreateTeamList(parent, mw)
 	local pList
 	
 	local pnl = vgui.Create("DPanel", parent)
 	pnl:DockPadding(8, 8, 8, 8)
 	
 	function pnl:Paint(w, h) 
-		surface.SetDrawColor(GUIColor.LightGray)
+		surface.SetDrawColor(Color(42, 42, 42))
 		surface.DrawRect(2, 2, w - 4, h - 4)
 	end
 
@@ -289,14 +258,14 @@ local function CreateTeamList( parent, mw )
 	local rank = vgui.Create("DLabel", headp)
 	rank:SetText("Rank")
 	rank:SetFont("ScoreboardPlayer")
-	rank:SetTextColor(GUIColor.Header)
+	rank:SetTextColor(Color(150, 150, 150))
 	rank:SetWidth(50)
 	rank:Dock(LEFT)
 	
 	local player = vgui.Create("DLabel", headp)
 	player:SetText("User")
 	player:SetFont("ScoreboardPlayer")
-	player:SetTextColor(GUIColor.Header)
+	player:SetTextColor(Color(150, 150, 150))
 	player:SetWidth(70)
 	player:DockMargin(mw + 14, 0, 0, 0)
 	player:Dock(LEFT)
@@ -304,7 +273,7 @@ local function CreateTeamList( parent, mw )
 	local ping = vgui.Create("DLabel", headp)
 	ping:SetText("Ping")
 	ping:SetFont("ScoreboardPlayer")
-	ping:SetTextColor(GUIColor.Header)
+	ping:SetTextColor(Color(150, 150, 150))
 	ping:SetWidth(50)
 	ping:DockMargin(0, 0, 0, 0)
 	ping:Dock(RIGHT)
@@ -312,7 +281,7 @@ local function CreateTeamList( parent, mw )
 	local timer = vgui.Create("DLabel", headp)
 	timer:SetText("Record")
 	timer:SetFont("ScoreboardPlayer")
-	timer:SetTextColor(GUIColor.Header)
+	timer:SetTextColor(Color(150, 150, 150))
 	timer:SetWidth(80)
 	timer:DockMargin(0, 0, 80 + menu.RecordOffset, 0)
 	timer:Dock(RIGHT)
@@ -329,7 +298,7 @@ local function CreateTeamList( parent, mw )
 	return pnl
 end
 
-function GM:ScoreboardShow()
+function CreateScoreboardFlow()
 	if IsValid( menu ) then
 		menu:SetVisible(true)
 		
@@ -338,7 +307,7 @@ function GM:ScoreboardShow()
 		end
 	else
 		menu = vgui.Create("DFrame")
-		menu:SetSize(ScrW() * 0.5, ScrH() * 0.8)
+		menu:SetSize(ScrW() * 0.5 - 20, ScrH() * 0.8 - 20)
 		menu:Center()
 		menu:SetKeyboardInputEnabled(false)
 		menu:SetDeleteOnClose(false)
@@ -353,7 +322,7 @@ function GM:ScoreboardShow()
 		end
 
 		function menu:Paint()
-			surface.SetDrawColor(GUIColor.DarkGray)
+			surface.SetDrawColor(Color(32, 32, 32))
 			surface.DrawRect(0, 0, menu:GetWide(), menu:GetTall())
 		end
 
@@ -367,7 +336,7 @@ function GM:ScoreboardShow()
 		local name = Label( (BHOP.ServerName):format("bhop"), menu.Credits )
 		name:Dock(LEFT)
 		name:SetFont("MersRadial")
-		name:SetTextColor(GUIColor.Header)
+		name:SetTextColor(Color(255, 255, 255))
 		
 		function name:PerformLayout()
 			surface.SetFont(self:GetFont())
@@ -380,7 +349,7 @@ function GM:ScoreboardShow()
 		cred:SetFont("MersText1")
 		cred:SetText("Version " .. BHOP.Version.GM .. "\nGamemode by FiBzY")
 		cred.PerformLayout = name.PerformLayout
-		cred:SetTextColor(GUIColor.White)
+		cred:SetTextColor(Color(255, 255, 255))
 		cred:SetDrawBackground( false )
 		cred:SetDrawBorder( false )
 		cred.DoClick = function()
@@ -405,7 +374,7 @@ function GM:ScoreboardShow()
 		players:Dock(LEFT)
 		players:SetFont("ScoreboardPlayer")
 		players.NumSlots = game.MaxPlayers() - 2
-		players:SetTextColor(GUIColor.White)
+		players:SetTextColor(Color(255, 255, 255))
 		players.PerformLayout = name.PerformLayout
 
 		function players:Think()
@@ -418,7 +387,7 @@ function GM:ScoreboardShow()
 
 		local timeleft = vgui.Create("DLabel", menu.ServerInfos)
 		timeleft:SetFont("ScoreboardPlayer")
-		timeleft:SetTextColor(GUIColor.White)
+		timeleft:SetTextColor(Color(255, 255, 255))
 
 		function timeleft:Think()
 			local left = 500 - CurTime()
@@ -441,7 +410,7 @@ function GM:ScoreboardShow()
 		local map = vgui.Create("DButton", menu.ServerInfos)
 		map:Dock(RIGHT)
 		map:SetFont("ScoreboardPlayer")
-		map:SetTextColor(GUIColor.White)
+		map:SetTextColor(Color(255, 255, 255))
 		map:SetDrawBackground(false)
 		map:SetDrawBorder(false)
 		map.PerformLayout = name.PerformLayout
@@ -616,6 +585,7 @@ function GM:ScoreboardHide()
 		menu:Close() 
 		menu.IsClickable = false
 		gui.EnableScreenClicker(false)
+		CreateScoreboardFlow(true)
 	end 
 end
 function GM:HUDDrawScoreBoard() end
@@ -673,7 +643,7 @@ local DarkMenu = {
 	end,
 
 	Paint = function(self, w, h)
-		surface.SetDrawColor(GUIColor.DarkGray) 
+		surface.SetDrawColor(Color(32, 32, 32)) 
 		surface.DrawRect(0, 0, w, h)
 
 		local outline = 1

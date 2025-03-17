@@ -28,6 +28,7 @@ timer_sounds = {}
 require "reqwest"
 local reqwest = reqwest
 local WEBHOOK = file.Read("bhop-wr-webhook.txt", "DATA")
+local WEBHOOKOFF = file.Read("bhop_wr-webhook-offstyles.txt", "DATA")
 
 -- Config
 function Timer:RefreshMultipliers()
@@ -709,24 +710,32 @@ function TIMER:AddRecord(ply, time, old)
 end
 
 function TIMER:PostDiscordWR(ply, time, styleID, currentWR)
-    if not WEBHOOK or WEBHOOK == "" then return end
     if not reqwest then return end
-    if not (styleID == TIMER:GetStyleID("Normal") or styleID == TIMER:GetStyleID("Bonus")) then return end
+
+    -- Decide which webhook to use based on style
+    local webhookURL
+    if styleID == TIMER:GetStyleID("Normal") or styleID == TIMER:GetStyleID("Bonus") then
+        if not WEBHOOK then return end
+        webhookURL = WEBHOOK
+    else
+        if not WEBHOOKOFF then return end
+        webhookURL = WEBHOOKOFF
+    end
 
     local playerName = ply:Nick()
     local playerSteam64 = ply:SteamID64()
     local formattedTime = TIMER:WRConvert2(time)
-    local sync = (ply.LastSync or 0) .. "%"  
-    local jumps = TIMER:GetJumps(ply) or 0  
-    local strafes = ply.TotalStrafes or 0  
-    local topSpeed = math.floor((ply.LastSpeedData and ply.LastSpeedData[1]) or 0)  
-    local avgSpeed = math.floor((ply.LastSpeedData and ply.LastSpeedData[2]) or 0)  
+    local sync = (ply.LastSync or 0) .. "%"
+    local jumps = TIMER:GetJumps(ply) or 0
+    local strafes = ply.TotalStrafes or 0
+    local topSpeed = math.floor((ply.LastSpeedData and ply.LastSpeedData[1]) or 0)
+    local avgSpeed = math.floor((ply.LastSpeedData and ply.LastSpeedData[2]) or 0)
 
-    local points = Timer.Multiplier  
-    local serverIP = game.GetIPAddress()  
-    local mapName = game.GetMap()  
-    local serverName = GetHostName()  
-    local timestamp = os.date("!%Y-%m-%d %H:%M:%S")  
+    local points = Timer.Multiplier
+    local serverIP = game.GetIPAddress()
+    local mapName = game.GetMap()
+    local serverName = GetHostName()
+    local timestamp = os.date("!%Y-%m-%d %H:%M:%S")
     local joinLink = "https://steamcommunity.com/linkfilter/?url=steam://connect/" .. serverIP
 
     local WRDifference
@@ -766,10 +775,10 @@ function TIMER:PostDiscordWR(ply, time, styleID, currentWR)
     }
 
     local compiled = {
-        username = "Server Record",  
+        username = "Server Record",
         embeds = {{
-            title = string.format("🏆 **Server Record | %s**", mapName),
-            color = 16755200,  
+            title = string.format("🏆 **%s Record | %s**", styleID == TIMER:GetStyleID("Normal") or styleID == TIMER:GetStyleID("Bonus") and "Main" or "Offstyle", mapName),
+            color = 16755200,
             fields = fields,
             timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ"),
             footer = { text = "Top time on server" }
@@ -787,7 +796,7 @@ function TIMER:PostDiscordWR(ply, time, styleID, currentWR)
 
     reqwest({
         method = "POST",
-        url = WEBHOOK,
+        url = webhookURL,
         body = util.TableToJSON(compiled, false),
         headers = {
             ["Content-Type"] = "application/json",

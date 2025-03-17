@@ -46,9 +46,9 @@ if not CONFIG_LOADED then
     -- Gamemode version
     BHOP.Version = {
         Engine = "9594",
-        GM = "12.98",
-        ReleaseDate = "03/16/25",
-        LastUpdated = "03/16/25"
+        GM = "13",
+        ReleaseDate = "03/17/25",
+        LastUpdated = "03/17/25"
     }
 
     -- Main movement settings
@@ -57,13 +57,13 @@ if not CONFIG_LOADED then
         GModGainsMovement = true,
 
         -- Cvar settings
-        MaxVel = 320,
+        MaxVel = 250,
         Gravity = 800,
-        AirAccel = 1000,
+        AirAccel = 100,
         StepSize = 18,
 
         -- Speed gain
-        SpeedGain = 32.8,
+        SpeedGain = 32.4,
         SpeedGainUnreal = 49.2,
         SpeedCap = 4000,
 

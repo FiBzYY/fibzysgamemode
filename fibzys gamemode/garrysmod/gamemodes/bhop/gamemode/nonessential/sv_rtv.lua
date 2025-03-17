@@ -327,6 +327,8 @@ function RTV:CheckVotes()
             ply.Rocked = false
             RTV.MapVotes = RTV.MapVotes - 1
             RTV.Required = math.max(math.ceil((#player.GetHumans() - Spectator:GetAFK()) * (2 / 3)), 1)
+
+            NETWORK:StartNetworkMessageTimer(ply, "Print", { "RTV", "You are AFK, your RTV vote has been removed." })
         end
     end
 

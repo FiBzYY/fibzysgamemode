@@ -967,12 +967,14 @@ UI:AddListener("rtv", function(_, data, isRevote)
         UI.rtv:SetCustomDelay(3)
     elseif id == "VoteList" then
         if not UI.rtv or not UI.rtv.title then return end
-        for k, v in pairs(info) do
+    for k, v in pairs(info) do
+        if UI.rtv.options and UI.rtv.options[k] then
             local name = UI.rtv.options[k].name
             name = "[" .. v .. "] " .. (v <= 10 and name:Right(#name - 4) or name:Right(#name - 5))
             surface.PlaySound("garrysmod/ui_click.wav")
             UI.rtv:UpdateOption(k, name, false, false)
         end
+    end
     elseif id == "InstantVote" then
         UI.rtv:SelectOption(info)
     elseif id == "Revote" then 
@@ -1392,4 +1394,125 @@ concommand.Add("bhop_jhudmenu", OpenBhopJHUDMenu)
 
 net.Receive("JHUD_SendData", function()
     RunConsoleCommand("bhop_jhudmenu")
+end)
+
+-- Strafe Trainer menu
+function OpenBhopTrainerMenu()
+    local wide, tall = ScrW() * 0.4, ScrH() * 0.45
+    local frameColor = Color(42, 42, 42, 255)
+    local headerColor = Color(30, 30, 30, 255)
+
+    local frame = vgui.Create("DFrame")
+    frame:SetSize(wide, tall)
+    frame:Center()
+    frame:SetTitle("")
+    frame:ShowCloseButton(false)
+    frame:SetDraggable(false)
+    frame:MakePopup()
+    frame.Paint = function(self, w, h)
+        surface.SetDrawColor(frameColor)
+        surface.DrawRect(0, 0, w, h)
+
+        surface.SetDrawColor(headerColor)
+        surface.DrawRect(0, 0, w, 40)
+
+        draw.SimpleText("Strafe Trainer Menu", "TopNavFont", w / 2, 20, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+    end
+
+    local closeButton = vgui.Create("DButton", frame)
+    closeButton:SetSize(24, 24)
+    closeButton:SetPos(wide - 34, 8)
+    closeButton:SetText("")
+    closeButton.Paint = function(self, w, h)
+        if self:IsHovered() then
+            surface.SetDrawColor(255, 0, 0, 200)
+        else
+            surface.SetDrawColor(255, 255, 255, 200)
+        end
+        surface.DrawLine(6, 6, w - 6, h - 6)
+        surface.DrawLine(w - 6, 6, 6, h - 6)
+    end
+    closeButton.DoClick = function()
+        frame:Close()
+    end
+
+    local scrollPanel = vgui.Create("DScrollPanel", frame)
+    scrollPanel:Dock(FILL)
+    scrollPanel:DockMargin(8, 25, 8, 8)
+
+    local vBar = scrollPanel:GetVBar()
+    vBar:SetWide(6)
+    vBar.Paint = function(self, w, h) surface.SetDrawColor(40, 40, 40) surface.DrawRect(0, 0, w, h) end
+    vBar.btnUp.Paint = function(self, w, h) surface.SetDrawColor(60, 60, 60) surface.DrawRect(0, 0, w, h) end
+    vBar.btnDown.Paint = function(self, w, h) surface.SetDrawColor(60, 60, 60) surface.DrawRect(0, 0, w, h) end
+    vBar.btnGrip.Paint = function(self, w, h) surface.SetDrawColor(255, 255, 255) surface.DrawRect(0, 0, w, h) end
+
+    local header = vgui.Create("DPanel", scrollPanel)
+    header:SetTall(40)
+    header:Dock(TOP)
+    header.Paint = function(self, w, h)
+        draw.SimpleText("Settings", "TopNavFont", 5, 5, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+        surface.SetDrawColor(255, 255, 255, 100)
+        surface.DrawLine(0, h - 5, w, h - 5)
+    end
+
+    local container = vgui.Create("DPanel", scrollPanel)
+    container:Dock(TOP)
+    container:SetTall(400)
+    container.Paint = function(self, w, h)
+        surface.SetDrawColor(frameColor)
+        surface.DrawRect(0, 0, w, h)
+    end
+
+    local y = 10
+    local function AddToggle(cmd, label, desc)
+        local pnl, lbl, info = UI:CreateToggle(container, y, cmd, label, desc, { default = 1, off = 0 })
+        timer.Simple(0.01, function()
+            if IsValid(pnl) then
+                pnl:SetWide(container:GetWide())
+            end
+        end)
+        y = y + 60
+    end
+
+    AddToggle("bhop_strafetrainer", "Enable Kawaii Strafe Trainer", "Enable or disable the kawaii strafe trainer display.")
+    AddToggle("bhop_strafetrainercss", "Enable CS:S Strafe Trainer", "Enable or disable the CS:S strafe trainer display.")
+
+    container:SetTall(y + 30)
+
+    local colorHeader = vgui.Create("DPanel", scrollPanel)
+    colorHeader:SetTall(40)
+    colorHeader:Dock(TOP)
+    colorHeader.Paint = function(self, w, h)
+        draw.SimpleText("Colors", "TopNavFont", 5, 5, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+        surface.SetDrawColor(255, 255, 255, 100)
+        surface.DrawLine(0, h - 5, w, h - 5)
+    end
+
+    local colorContainer = vgui.Create("DPanel", scrollPanel)
+    colorContainer:Dock(TOP)
+    colorContainer:SetTall((60 * 5) + 30)
+    colorContainer.Paint = function() end
+
+    local y = 10
+    local function AddToggleColor(cmd, label, desc)
+        local pnl, lbl, info = UI:ColorBox(colorContainer, y, cmd, label, desc)
+        timer.Simple(0.01, function()
+            if IsValid(pnl) then
+                pnl:SetWide(colorContainer:GetWide())
+            end
+        end)
+        y = y + 60
+    end
+
+    AddToggleColor("bhop_trainer_verygood", "Change Really Good Color", "Changes color for REALLY good offests.")
+    AddToggleColor("bhop_trainer_good", "Change Good Color", "Changes color for good offests.")
+    AddToggleColor("bhop_trainer_ok", "Change Ok Color", "Changes color for Ok offests.")
+    AddToggleColor("bhop_trainer_meh", "Change Meh Color", "Changes color for Meh offests.")
+    AddToggleColor("bhop_trainer_bad", "Change Bad Color", "Changes color for Bad offests.")
+end
+concommand.Add("bhop_strafetrainermenu", OpenBhopTrainerMenu)
+
+net.Receive("TRAINER_SendData", function()
+    RunConsoleCommand("bhop_strafetrainermenu")
 end)

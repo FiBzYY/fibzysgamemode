@@ -843,15 +843,6 @@ function ScoreboardRefresh()
     end
 end
 
--- Load
-function GM:ScoreboardShow()
-    CreateScoreboard()
-end
-
-function GM:ScoreboardHide()
-    CreateScoreboard(true)
-end
-
 function GM:HUDDrawScoreBoard() end
 
 -- Clickers
@@ -866,3 +857,996 @@ hook_Add("CreateMove", "ClickableScoreBoard", function(cmd)
     cmd:RemoveKey(IN_ATTACK)
     cmd:RemoveKey(IN_ATTACK2)
 end)
+
+-- Kawaii Scoreboard
+local SCORE_HEIGHT = ScrH() - 118
+local SCORE_WIDTH = (ScrW() / 2) + 150
+
+local SCORE_TITLE = BHOP.ServerName
+local SCORE_PLAYERS = "%s/%s Players connected"
+local SCORE_CREDITS = "Gamemode by FiBzY"
+local SCORE_SPONSORED = "Server sponsored by Crousty Cloud"
+
+local abs = math.abs
+local sin = math.sin
+local con = function(ns) return SecondsToClock(ns) end
+
+function TIMER:Convert(startTick, endTick)
+    if not startTick or not endTick then
+        return 0
+    end
+
+    local tickRate = engine.TickInterval()
+    return (endTick - startTick) * tickRate
+end
+
+function SecondsToClock(seconds)
+    seconds = tonumber(seconds) or 0
+    local wholeSeconds = math.floor(seconds)
+    local milliseconds = math.floor((seconds - wholeSeconds) * 1000)
+    local hours = math.floor(wholeSeconds / 3600)
+    local minutes = math.floor((wholeSeconds % 3600) / 60)
+    local secs = wholeSeconds % 60
+
+    if hours > 0 then
+        return string.format("%d:%02d:%02d.%03d", hours, minutes, secs, milliseconds)
+     else
+        return string.format("%02d:%02d.%03d", minutes, secs, milliseconds)
+    end
+end
+
+local function cTime(ns)
+    if ns > 3600 then
+        return string.format("%d:%.2d:%.2d", math.floor(ns / 3600), math.floor(ns / 60 % 60), math.floor(ns % 60))
+    elseif ns > 60 then 
+        return string.format("%.1d:%.2d", math.floor(ns / 60 % 60), math.floor(ns % 60))
+    else
+        return string.format("%.1d", math.floor(ns % 60))
+    end
+end
+
+local ranks = {"VIP", "VIP+", "Moderator", "Admin", "Zone Admin", "Super Admin", "Developer", "Manager", "Founder", "Owner"}
+
+local function CreateScoreboardKawaii()
+	if (scoreboard) then
+		if (scoreboard_playerrow) then
+			scoreboard_playerrow:Remove()
+			scoreboard_playerrow = nil
+		end
+		scoreboard:Remove()
+		scoreboard = nil
+		gui.EnableScreenClicker(false)
+
+		return
+	end
+
+	gui.EnableScreenClicker(false)
+
+	scoreboard = vgui.Create("EditablePanel")
+		scoreboard:SetSize(SCORE_WIDTH, SCORE_HEIGHT)
+		scoreboard:Center()
+
+		scoreboard.Paint = function(self, width, height)
+			SCORE_ONE = Color(32, 32, 32, 255)
+			SCORE_TWO = Color(42, 42, 42, 255)
+			SCORE_THREE = Color(34, 34, 38, 170)
+			SCORE_ACCENT = DynamicColors.PanelColor -- Color(80, 30, 40, 170)
+			outlines = Color(32, 32, 32)
+
+			text_colour = color_white
+			text_colour2 = color_white
+
+			surface.SetDrawColor(SCORE_ONE)
+			surface.DrawRect(0, 0, width, height)
+			surface.SetDrawColor(outlines)
+
+			if outlines then
+				surface.DrawOutlinedRect(0, 0, width, height)
+			end
+
+			draw.SimpleText(SCORE_TITLE, "hud.title", width / 2, 12, text_colour, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+
+			draw.SimpleText(game.GetMap(), "hud.title", 14, 12, text_colour, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+
+			local text = string.format(SCORE_PLAYERS, #player.GetHumans(), game.MaxPlayers()-2)
+			draw.SimpleText(text, "hud.title", width - 14, 12, text_colour, TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
+
+			draw.SimpleText(SCORE_CREDITS, "hud.credits", 14, height - 20, text_colour, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+
+			draw.SimpleText(SCORE_SPONSORED, "hud.credits", width / 2, height - 20, text_colour, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+			draw.SimpleText("Click on a player's name for more options!", "hud.credits", width - 14, height - 20, text_colour, TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
+		end
+
+	scoreboard.base = scoreboard:Add("DPanel")
+		scoreboard.base:SetSize(SCORE_WIDTH - 28, SCORE_HEIGHT - 150)
+		scoreboard.base:SetPos(14, 40)
+
+		scoreboard.base.Paint = function(self, width, height)
+			surface.SetDrawColor(SCORE_TWO)
+			surface.DrawRect(0, 0, width, 22)
+			surface.SetDrawColor(outlines)
+
+			if outlines then
+				surface.DrawOutlinedRect(0, 0, width, 21)
+			end
+
+			local distance = (width / 10)
+			draw.SimpleText("Rank", "hud.subinfo", 12, 10, text_colour, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			draw.SimpleText("Player", "hud.subinfo", distance * 1.5, 10, text_colour, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			draw.SimpleText("Style", "hud.subinfo", distance * 4.5, 10, text_colour, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			draw.SimpleText("Status", "hud.subinfo", distance * 5.7, 10, text_colour, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			draw.SimpleText("Personal Best", "hud.subinfo", distance * 8.5, 10, text_colour, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			draw.SimpleText("Ping", "hud.subinfo", width - 12, 10, text_colour, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+		end
+
+	local width, height = scoreboard.base:GetSize()
+
+	local function CreatePlayerRow(pl, isBot)
+		local row = vgui.Create("DButton", isBot and scoreboard.bots or scoreboard.players)
+
+		row:SetSize(width, 40)
+		row:SetText("")
+
+		row.Paint = function(self, width, height)
+			if (not IsValid(pl)) then
+				scoreboard.players.AddPlayers()
+				return
+			end
+
+			surface.SetDrawColor(isBot and SCORE_ACCENT or SCORE_THREE)
+			surface.DrawRect(0, 0, width, height)
+			surface.SetDrawColor(outlines)
+
+			if outlines then
+				surface.DrawOutlinedRect(0, 0, width, height)
+			end
+
+			local distance = (width / 10)
+
+			local rankID = pl:GetNWInt("Rank", -1)
+			local rankInfo = TIMER.Ranks[rankID] or {"User", color_white}
+
+			draw.SimpleText(isBot and "WR Replay" or rankInfo[1], "hud.subtitle", 12, 20, isBot and text_colour or rankInfo[2], TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+
+			local name = isBot and pl:GetNWString("BotName", "Loading...") or pl:Nick()
+			if isBot and (name ~= "Loading..." and name <= "No Replay Available") then
+				local position = pl:GetNWInt("WRPos", 0)
+				name = ( ("#" .. position .. " run ") or "Run ") .. "by " .. name
+			end
+
+			surface.SetFont("hud.subtitle")
+			local namewidth, nameheight = surface.GetTextSize(name)
+
+			local playerRankID = pl:GetNWInt("AccessIcon", 0)
+			local playerRank = playerRankID == 0 and "User" or (ranks[playerRankID] or "Unknown")
+
+			if playerRank ~= "User" then
+				draw.SimpleText(string.upper(playerRank), "hud.subinfo2", (distance * 1.5) + namewidth + 2, 19 + nameheight / 2, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM)
+			end
+
+			local nameColor = text_colour
+
+			if pl:SteamID() == "STEAM_0:0:87749794" then -- obvixus
+				nameColor = Color(0, 220 * abs(sin(CurTime())), 255)
+			elseif pl:SteamID() == "STEAM_0:1:48688711" then -- FiBzY
+				nameColor = HSVToColor(RealTime() * 40 % 360, 1, 1)
+			elseif pl:GetObserverMode() ~= OBS_MODE_NONE then
+				nameColor = Color(150, 150, 150, 255)
+			end
+
+			draw.SimpleText(name, "hud.subtitle", distance * 1.5, 20, nameColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+
+            local currentstyle = pl:GetNWInt("Style", TIMER:GetStyleID("Normal"))
+            local style = TIMER:StyleName(currentstyle)
+			draw.SimpleText(style, "hud.subtitle", distance * 4.5, 20, text_colour, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+
+			local status = "Start Zone"
+			local curr = style == "B" and (pl.bonustime or 0) or (pl.time or 0)
+			local inPlay = style == "B" and (pl.bonustime ~= nil) or (pl.time ~= nil)
+			local finished = style == "B" and (pl.bonusfinished) or (pl.finished)
+
+			if (pl:IsBot()) then
+				status = "View to see Record"
+			elseif (pl:GetObserverMode() ~= OBS_MODE_NONE) then
+				local tgt = pl:GetObserverTarget()
+
+				if tgt and IsValid(tgt) and (tgt:IsPlayer() or tgt:IsBot()) then
+					local nm = (tgt:IsBot() and (tgt:GetNWString("BotName", "Loading...") .. "'s Replay") or tgt:Nick())
+
+					if (string.len(nm) > 20) then
+						nm = nm:Left(20) .. "..."
+					end
+
+					status = "Spectating: " .. nm
+				else
+					status = "Spectating"
+				end
+
+			elseif pl:GetNWInt('inPractice', false) then
+				status = "Practicing"
+			elseif curr > 0 and finished ~= nil then
+                status = "Finished: " .. SecondsToClock(TIMER:Convert(curr, finished))
+			elseif curr > 0 then
+               local runningTime = TIMER:Convert(curr, engine.TickCount())
+               status = "Running: " .. SecondsToClock(runningTime)
+			end
+
+			draw.SimpleText(status, "hud.subtitle", distance * 5.7, 20, text_colour, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+
+			local pb = con(pl:GetNWFloat("Record", 0))
+
+			if not pl:IsBot() then
+				surface.SetFont "hud.subtitle"
+				local place = pl:GetNWInt("SpecialRank", 0)
+                local wrcount = pl:GetNWInt("SpecialRankMap", 0)
+
+				if (place == 0) then
+					draw.SimpleText(pb, "hud.subtitle", distance * 8.5, 20, text_colour, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+				else
+
+					local w, h = surface.GetTextSize(place)
+
+					draw.SimpleText(pb, "hud.subtitle", distance * 8.5 + 6 + w, 20, text_colour, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+                    drawStar(0.04, distance * 7.9, 20, Color(255, 215, 0, 255), 50, 200, 1.5)
+					draw.SimpleText(place, "hud.subinfo", distance * 8, 20, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+					draw.SimpleText("#" .. wrcount, "hud.subinfo", distance * 8.5, 20, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+				end
+			else
+				draw.SimpleText(pb, "hud.subtitle", distance * 8.5, 20, text_colour, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			end
+
+	 	   local colour246 = color_white
+	   		 if pl:Ping() > 0 then
+	    			if pl:Ping() >= 100 then
+		 			   	colour246 = Color(255, 0, 0)
+	       			 else
+	    				if pl:Ping() >= 60 then
+		  	  			colour246 = Color(255, 255, 0)
+	      	  		else 
+		 	  		 	colour246 = Color(0, 255, 0)
+			  		end 
+	   			end
+			end
+			if not pl:IsBot() then
+			local latency = pl:Ping()
+				draw.SimpleText(latency, "hud.subtitle", width - 12, 20, colour246, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+			end
+		end
+
+		row.OnMousePressed = function(self)
+			if (not scoreboard.moved) then
+				local x, y = scoreboard:GetPos()
+				scoreboard.moved = true
+				scoreboard:MoveTo(x - 150, y, 0.5, 0, -1, function()
+					scoreboard_playerrow = vgui.Create("EditablePanel")
+					scoreboard_playerrow:SetPos(x + SCORE_WIDTH - 290 / 2, y)
+					scoreboard_playerrow:SetSize(300, pl:IsBot() and 265 - 93 or 265)
+					scoreboard_playerrow.pl = pl
+					scoreboard_playerrow.Paint = function(self, width, height)
+						surface.SetDrawColor(SCORE_ONE)
+						surface.DrawRect(0, 0, width, height)
+						surface.SetDrawColor(outlines)
+
+						if outlines then
+							surface.DrawOutlinedRect(0, 0, width, height)
+						end
+
+						surface.SetFont "hud.title"
+
+						draw.SimpleText(scoreboard_playerrow.pl:IsBot() and scoreboard_playerrow.pl:GetNWString("BotName", "Loading...") or scoreboard_playerrow.pl:Nick(), "hud.title", 84, 26, text_colour, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+
+						local rank = scoreboard_playerrow.pl:GetNWInt("AccessIcon", 0)
+						rank = rank == 0 and "User" or ranks[rank]
+						draw.SimpleText(scoreboard_playerrow.pl:IsBot() and "Replay" or rank, "hud.title", 84, 44, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+
+						draw.SimpleText("", "hud.title", 84, 56, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+
+						surface.DrawLine(0, 84, width, 84)
+
+						if (not scoreboard_playerrow.pl:IsBot()) then
+							if outlines then
+								surface.DrawOutlinedRect(width - 110, 94, 100, 20)
+							end
+
+							local pRank = TIMER.Ranks[scoreboard_playerrow.pl:GetNWInt("Rank", -1)]
+							draw.SimpleText("Rank: " .. pRank[1], "hud.subtitle", 10, 104, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+							draw.SimpleText("Points: " .. LocalPlayer().nSum or 0, "hud.subtitle", 10, 122, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+							draw.SimpleText("Place: #" .. pl:GetNWInt("SpecialRankMap", 0) , "hud.subtitle", 10, 140, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+							draw.SimpleText("WRs : " .. pl:GetNWInt("SpecialRank", 0), "hud.subtitle", 10, 158, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+						end
+
+						surface.DrawLine(0, 177, width, 177)
+					end
+
+					local width, height = 300, 200
+
+					scoreboard_playerrow.Avatar = scoreboard_playerrow:Add("AvatarImage")
+					scoreboard_playerrow.Avatar:SetPos(10, 10)
+					scoreboard_playerrow.Avatar:SetSize(64, 64)
+
+					if (scoreboard_playerrow.pl:IsBot()) then
+						scoreboard_playerrow.Avatar:SetSteamID(scoreboard_playerrow.pl:GetNWString("ProfileURI", "None"), 256)
+					else
+						scoreboard_playerrow.Avatar:SetPlayer(scoreboard_playerrow.pl, 256)
+					end
+
+					scoreboard_playerrow.Combo = scoreboard_playerrow:Add("DComboBox")
+					scoreboard_playerrow.Combo:SetPos(width - 110, 94)
+					scoreboard_playerrow.Combo:SetSize(100, 20)
+					scoreboard_playerrow.Styles = {}
+
+					if (scoreboard_playerrow.pl:IsBot()) then
+						scoreboard_playerrow.Combo:SetVisible(false)
+					end
+
+					scoreboard_playerrow.Combo:AddChoice("Disactive", 1)
+					scoreboard_playerrow.Combo:ChooseOptionID(1)
+					scoreboard_playerrow.Combo.Paint = function(self, width, height)
+					end
+					scoreboard_playerrow.Combo:SetTextColor(color_white)
+
+					local amount = 1
+					scoreboard_playerrow.butts = {}
+					local function NewButton(name, y, func)
+						local b = vgui.Create("DButton", scoreboard_playerrow)
+
+						b.oy = y
+						b:SetPos(amount % 2 == 0 and 150 or 10, scoreboard_playerrow.pl:IsBot() and y - 93 or y)
+						b:SetSize(138, 20)
+						b:SetText("")
+						b.Paint = function(self, width, height)
+							surface.SetDrawColor(SCORE_TWO)
+							surface.DrawRect(0, 0, width, height)
+							surface.SetDrawColor(outlines)
+
+							if outlines then
+								surface.DrawOutlinedRect(0, 0, width, height)
+							end
+
+							draw.SimpleText(name, "hud.subtitle", width / 2, height / 2, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+						end
+						b.OnMousePressed = function()
+							func()
+						end
+
+						amount = amount + 1
+						table.insert(scoreboard_playerrow.butts, b)
+					end
+
+					NewButton("Spectate", 187, function()
+						RunConsoleCommand("spectate", scoreboard_playerrow.pl:SteamID(), scoreboard_playerrow.pl:Name())
+					end)
+
+					NewButton("TP", 187, function()
+						RunConsoleCommand( "say", "!tp " .. scoreboard_playerrow.pl:Name())
+					end)
+
+					NewButton("Profile", 211, function()
+						gui.OpenURL("http://www.steamcommunity.com/profiles/" .. (scoreboard_playerrow.pl:IsBot() and scoreboard_playerrow.pl:GetNWString("ProfileURI", "None") or scoreboard_playerrow.pl:SteamID64()))
+					end)
+
+					NewButton("Copy SteamID", 211, function()
+						if (scoreboard_playerrow.pl:IsBot()) then
+							SetClipboardText(util.SteamIDFrom64(scoreboard_playerrow.pl:GetNWString("ProfileURI", "None")))
+						else
+							SetClipboardText(scoreboard_playerrow.pl:SteamID())
+						end
+
+						UTIL:AddMessage("Server", "Player " .. (scoreboard_playerrow.pl:IsBot() and scoreboard_playerrow.pl:GetNWString("BotName", "Loading...") or scoreboard_playerrow.pl:Nick()) .. "'s SteamID has been copied to your clipboard.")
+					end)
+
+					NewButton("Voice mute", 235, function()
+						local pl = scoreboard_playerrow.pl
+
+						if (pl == LocalPlayer()) then
+							UTIL:AddMessage("Server", "You can't mute yourself.")
+							return
+						end
+
+						if (pl:IsBot()) then
+							UTIL:AddMessage("Server", "You cannot send a private message to a replay.")
+							return
+						end
+
+						UTIL:AddMessage("Server",  "Player " .. pl:Nick() .. " has been " .. (not pl:IsMuted() and "voice muted." or "un-muted."))
+						pl:SetMuted(not pl:IsMuted())
+					end)
+
+					NewButton("Mute Player", 235, function()
+						local pl = scoreboard_playerrow.pl
+
+						if (pl == LocalPlayer()) then
+							UTIL:AddMessage("Server", "You can't mute yourself.")
+							return
+						end
+
+						if (pl:IsBot()) then
+							UTIL:AddMessage("Server","You cannot send a private message to a replay.")
+							return
+						end
+
+						pl.ChatMuted = not pl.ChatMuted
+						UTIL:AddMessage("Server", "Player " .. pl:Name() .. " has been" .. (pl.ChatMuted and " chat muted." or " un-muted."))
+					end)
+				end)
+			elseif (scoreboard.moved) and (scoreboard_playerrow) then
+				scoreboard_playerrow.pl = pl
+				scoreboard_playerrow.Avatar:SetPlayer(pl, 256)
+
+				if (pl:IsBot()) then
+					scoreboard_playerrow.Combo:SetVisible(false)
+					scoreboard_playerrow:SetTall(265-93)
+					scoreboard_playerrow.Avatar:SetSteamID(pl:GetNWString("ProfileURI", "None"), 256)
+
+					for k, v in pairs(scoreboard_playerrow.butts) do
+						local x, y = v:GetPos()
+						v:SetPos(x, v.oy - 93)
+					end
+				else
+					scoreboard_playerrow.Combo:SetVisible(true)
+					scoreboard_playerrow:SetTall(265)
+
+					for k, v in pairs(scoreboard_playerrow.butts) do
+						local x, y = v:GetPos()
+						v:SetPos(x, v.oy)
+					end
+				end
+			end
+		end
+
+		return row
+	end
+
+	scoreboard.players = scoreboard.base:Add("DScrollPanel")
+		scoreboard.players:SetSize(width, height - 30)
+		scoreboard.players:SetPos(0, 20)
+		scoreboard.players.list = {}
+		scoreboard.players.VBar:SetSize(0,0)
+
+		scoreboard.players.AddPlayers = function()
+			for k, v in pairs(scoreboard.players.list) do
+				v:Remove()
+				scoreboard.players.list[k] = nil
+			end
+
+			local players = player.GetHumans()
+			table.sort(players, function(a, b)
+				if not a or not b then return false end
+				local ra, rb = a:GetNWInt("Rank", 1), b:GetNWInt("Rank", 1)
+				if ra == rb then
+					return a:GetNWInt("SpecialRank", 0) > b:GetNWInt("SpecialRank", 0)
+				else
+					return ra > rb
+				end
+			end)
+
+			for k, v in pairs(players) do
+				local row = CreatePlayerRow(v)
+				row:SetPos(0, #scoreboard.players.list == 0 and 0 or #scoreboard.players.list * 39)
+
+				table.insert(scoreboard.players.list, row)
+			end
+
+			local height = 182 + (#player.GetHumans() * 39)
+
+			if (height > SCORE_HEIGHT) then
+				height = SCORE_HEIGHT
+			end
+
+			scoreboard:SetTall(height)
+			scoreboard:Center()
+
+			if (scoreboard.bots) then
+				scoreboard.bots:SetPos(14, scoreboard:GetTall() - 125)
+			end
+		end
+
+		scoreboard.players.AddPlayers()
+
+		scoreboard.players.PaintOver = function(self, width, height)
+			surface.SetDrawColor(color_black)
+
+			local th = (#scoreboard.players.list * 40)-20
+
+			if (th > height) then
+				if outlines then
+					surface.DrawOutlinedRect(0, 0, width, height)
+				end
+			end
+		end
+
+	scoreboard.bots = scoreboard:Add("DPanel")
+		scoreboard.bots:SetSize(width, 79)
+		scoreboard.bots:SetPos(14, scoreboard:GetTall() - 105)
+		scoreboard.bots.Paint = function(s,width,height)
+		end
+		scoreboard.bots.list = {}
+
+		for k, v in pairs(player.GetBots()) do
+			local Replay = CreatePlayerRow(v, true)
+			Replay:SetPos(0, #scoreboard.bots.list == 0 and 0 or #scoreboard.bots.list * 39)
+			table.insert(scoreboard.bots.list, Replay)
+		end
+end
+
+hook.Add("CreateMove", "ClickableScoreBoard", function(cmd)
+	if not ( IsValid(scoreboard) and scoreboard:IsVisible() ) then return end
+	if not ( cmd:KeyDown(IN_ATTACK) or cmd:KeyDown(IN_ATTACK2) ) then return end
+	if not scoreboard.IsClickable then 
+		scoreboard.IsClickable = true
+		gui.EnableScreenClicker(true)
+	end
+
+	cmd:RemoveKey(IN_ATTACK)
+	cmd:RemoveKey(IN_ATTACK2)
+end)
+
+-- Flow
+local menu = nil
+local con = function(ns) return SecondsToClock(ns) end
+
+function TIMER:Convert(startTick, endTick)
+    if not startTick or not endTick then
+        return 0
+    end
+
+    local tickRate = engine.TickInterval()
+    return (endTick - startTick) * tickRate
+end
+
+function SecondsToClock(seconds)
+    seconds = tonumber(seconds) or 0
+    local wholeSeconds = math.floor(seconds)
+    local milliseconds = math.floor((seconds - wholeSeconds) * 1000)
+    local hours = math.floor(wholeSeconds / 3600)
+    local minutes = math.floor((wholeSeconds % 3600) / 60)
+    local secs = wholeSeconds % 60
+
+    if hours > 0 then
+        return string.format("%d:%02d:%02d.%03d", hours, minutes, secs, milliseconds)
+     else
+        return string.format("%02d:%02d.%03d", minutes, secs, milliseconds)
+    end
+end
+
+local function cTime(ns)
+    if ns > 3600 then
+        return string.format("%d:%.2d:%.2d", math.floor(ns / 3600), math.floor(ns / 60 % 60), math.floor(ns % 60))
+    elseif ns > 60 then 
+        return string.format("%.1d:%.2d", math.floor(ns / 60 % 60), math.floor(ns % 60))
+    else
+        return string.format("%.1d", math.floor(ns % 60))
+    end
+end
+
+local rank_str = {"Donator", "Mod", "Zoner", "Dev", "Founder"}
+local icon = {}
+
+icon.muted = Material( "icon32/muted.png" )
+
+icon.access = {
+	Material("icon16/heart.png"),
+	Material("icon16/heart_add.png"),
+	Material("icon16/report_user.png"),
+	Material("icon16/shield.png"),
+	"bhop/hammer.png",
+	"bhop/hammer.png",
+	"bhop/baguette.png"
+}
+
+icon.rank = {}
+
+for i = 1, 10 do 
+	icon.rank[i] = "bhop/icon_rank" .. tostring(i == 10 and 0 or i) .. ".png" 
+end
+
+icon.special = {}
+
+for i = 1, 3 do 
+	icon.special[i] = "bhop/icon_special" .. tostring(i) .. ".png" 
+end
+
+local function downloadMaterial(path, callback)
+	local url = "https://fastdl.dotshark.dev/materials/" .. path
+	http.Fetch(url, function(body, l, headers)
+		if not file.Exists("bhop", "DATA") then file.CreateDir("bhop") end
+		file.Write(path, body)
+		callback( Material("../data/" .. path) )
+		file.Delete(path)
+	end)
+end
+
+hook.Add("HUDPaint", "LoadScoreboardIcons", function()
+	for iconType, value in pairs(icon) do
+		if isstring(value) then
+			local path = value
+			icon[iconType] = Material(path)
+			downloadMaterial(path, function(loadedMaterial) 
+				icon[iconType] = loadedMaterial 
+			end)
+		end
+
+		if istable(value) then
+			local iconsList = value
+			for i, value in ipairs(iconsList) do
+				if not isstring(value) then continue end
+				local path = value
+				icon[iconType][i] = Material(path) 
+				downloadMaterial(path, function(loadedMaterial) 
+					icon[iconType][i] = loadedMaterial 
+				end)
+			end
+		end
+	end
+
+	hook.Remove("HUDPaint", "LoadScoreboardIcons")
+end)
+
+local function _AA(szAction, szSID)
+	if not IsValid( LocalPlayer() ) then return end
+	if Admin:IsAvailable() or LocalPlayer():GetNWInt( "AccessIcon", 0 ) > 2 then
+		RunConsoleCommand( "say", "!admin " .. szAction .. " " .. szSID )
+	else
+		--TIMER:Print("Admin", "Please open the admin panel before trying to access scoreboard functionality.")
+	end
+end
+
+local function PutPlayerItem(self, pList, ply, mw)
+	local btn = vgui.Create( "DButton" )
+	btn.player = ply
+	btn.ctime = CurTime()
+	btn:SetTall(32)
+	btn:SetText("")
+	
+	function btn:Paint(w, h)
+		surface.SetDrawColor(0, 0, 0, 0)
+		surface.DrawRect(0, 0, w, h)
+
+		if ply:IsBot() then
+			surface.SetDrawColor(DynamicColors.PanelColor)
+		else
+			surface.SetDrawColor(Color(150, 150, 150))
+		end
+
+		surface.DrawOutlinedRect(0, 0, w, h)
+
+		if IsValid(ply) and ply:IsPlayer() then
+			local s = 0
+
+			local rankID = ply:GetNWInt("Rank", -1)
+			local rankInfo = TIMER.Ranks[rankID]
+
+			if rankInfo then
+				draw.DrawText(rankInfo[1], "ScoreboardPlayer", s + 11, 9, Color(0, 0, 0), TEXT_ALIGN_LEFT)
+				draw.DrawText(rankInfo[1], "ScoreboardPlayer", s + 10, 8, rankInfo[2], TEXT_ALIGN_LEFT)
+			else
+				draw.DrawText("Replay", "ScoreboardPlayer", s + 11, 9, Color(0, 0, 0), TEXT_ALIGN_LEFT)
+				draw.DrawText("Replay", "ScoreboardPlayer", s + 10, 8, Color(255, 255, 255), TEXT_ALIGN_LEFT)
+			end
+			
+			s = s + mw + 56
+
+			local PlayerName = ply:Name()
+
+			if ply:IsBot() then
+				local szName = ply:GetNWString("BotName", "No Time Recorded")
+    
+				if szName == "Awaiting playback..." then 
+					szName = "Waiting for replay..."
+				elseif szName == "Loading..." then
+					szName = "Changement..."
+				elseif szName == "No Time Recorded" then
+					szName = "No Time Recorded"
+				else
+					szName = "by " .. szName
+					local pos = ply:GetNWInt("WRPos", 0)
+					if pos > 0 then
+						szName = "#" .. pos .. " Run " .. szName
+					else
+						szName = "Run " .. szName
+					end
+				end
+
+				if not self.BoxColor then 
+					self.BoxColor = Color(255, 0, 0) 
+				end
+
+				PlayerName = szName
+			end
+
+			draw.DrawText(PlayerName, "ScoreboardPlayer", s + 11, 9, Color(0, 0, 0), TEXT_ALIGN_LEFT)
+			draw.DrawText(PlayerName, "ScoreboardPlayer", s + 10, 8, Color(200, 200, 200), TEXT_ALIGN_LEFT)
+			
+			surface.SetFont("ScoreboardPlayer")
+			local wt, ht = surface.GetTextSize("TimerText")
+			local wx = 105 - wt
+			local o = w - wt - (wx * 2) - menu.RecordOffset
+				
+			local currentstyle = ply:GetNWInt("style", TIMER:GetStyleID("Normal"))
+			local styles = TIMER:StyleName(currentstyle)
+
+			if ply:IsBot() then
+				styles = "R"
+			else
+				if styles == "Normal" then styles = "N" end
+				if styles == "Bonus" then styles = "B" end
+				if styles == "Segment" then styles = "S" end
+				if styles == "Auto-Strafe" then styles = "AS" end
+			end
+
+			draw.DrawText(styles .. " - " .. con(ply:GetNWFloat("Record", 0)), "ScoreboardPlayer", o + 1, 9, Color(0, 0, 0), TEXT_ALIGN_RIGHT)
+			draw.DrawText(styles .. " - " .. con(ply:GetNWFloat("Record", 0)), "ScoreboardPlayer", o, 8, Color(255, 255, 255), TEXT_ALIGN_RIGHT)
+
+			-- Display player's ping
+			draw.DrawText(tostring(ply:Ping()), "ScoreboardPlayer", w - 9, 9, Color(0, 0, 0), TEXT_ALIGN_RIGHT)
+			draw.DrawText(tostring(ply:Ping()), "ScoreboardPlayer", w - 10, 8, Color(255, 255, 255), TEXT_ALIGN_RIGHT)
+		end
+	end
+
+	function btn:DoClick()
+		GAMEMODE:DoScoreboardActionPopup(ply)
+	end
+	
+	pList:AddItem(btn)
+end
+
+local function ListPlayers(self, pList, mw)
+	local players = player.GetAll()
+	table.sort( players, function(a, b)
+		if not a or not b then return false end
+		local ra, rb = a:GetNWInt( "Rank", 1 ), b:GetNWInt("Rank", 1)
+		if ra == rb then
+			return a:GetNWInt("SpecialRankMap", 0) > b:GetNWInt("SpecialRankMap", 0)
+		else
+			return ra > rb
+		end
+	end )
+
+	for k,v in pairs(pList:GetCanvas():GetChildren()) do
+		if IsValid( v ) then
+			v:Remove()
+		end
+	end
+
+	for k,ply in pairs(players) do
+		PutPlayerItem(self, pList, ply, mw)
+	end
+		
+	pList:GetCanvas():InvalidateLayout()
+end
+
+local function CreateTeamList(parent, mw)
+	local pList
+	
+	local pnl = vgui.Create("DPanel", parent)
+	pnl:DockPadding(8, 8, 8, 8)
+	
+	function pnl:Paint(w, h) 
+		surface.SetDrawColor(Color(42, 42, 42))
+		surface.DrawRect(2, 2, w - 4, h - 4)
+	end
+
+	pnl.RefreshPlayers = function()
+		ListPlayers(self, pList, mw)
+	end
+
+	local headp = vgui.Create("DPanel", pnl)
+	headp:DockMargin(0, 0, 0, 4)
+	headp:Dock(TOP)
+	function headp:Paint() end
+
+	local rank = vgui.Create("DLabel", headp)
+	rank:SetText("Rank")
+	rank:SetFont("ScoreboardPlayer")
+	rank:SetTextColor(Color(150, 150, 150))
+	rank:SetWidth(50)
+	rank:Dock(LEFT)
+	
+	local player = vgui.Create("DLabel", headp)
+	player:SetText("User")
+	player:SetFont("ScoreboardPlayer")
+	player:SetTextColor(Color(150, 150, 150))
+	player:SetWidth(70)
+	player:DockMargin(mw + 14, 0, 0, 0)
+	player:Dock(LEFT)
+	
+	local ping = vgui.Create("DLabel", headp)
+	ping:SetText("Ping")
+	ping:SetFont("ScoreboardPlayer")
+	ping:SetTextColor(Color(150, 150, 150))
+	ping:SetWidth(50)
+	ping:DockMargin(0, 0, 0, 0)
+	ping:Dock(RIGHT)
+
+	local timer = vgui.Create("DLabel", headp)
+	timer:SetText("Record")
+	timer:SetFont("ScoreboardPlayer")
+	timer:SetTextColor(Color(150, 150, 150))
+	timer:SetWidth(80)
+	timer:DockMargin(0, 0, 80 + menu.RecordOffset, 0)
+	timer:Dock(RIGHT)
+	
+	pList = vgui.Create("DScrollPanel", pnl)
+	pList:Dock(FILL)
+
+	local canvas = pList:GetCanvas()
+	function canvas:OnChildAdded(child)
+		child:Dock(TOP)
+		child:DockMargin(0, 0, 0, 4)
+	end
+
+	return pnl
+end
+
+function CreateScoreboardFlow(close)
+	if close then
+		if IsValid(menu) then
+			menu:SetVisible(false)
+			menu.IsClickable = false
+			gui.EnableScreenClicker(false)
+		end
+		return
+	else
+		menu = vgui.Create("DFrame")
+		menu:SetSize(ScrW() * 0.5 - 20, ScrH() * 0.8 - 20)
+		menu:Center()
+		menu:SetKeyboardInputEnabled(false)
+		menu:SetDeleteOnClose(false)
+		menu:SetDraggable(false)
+		menu:ShowCloseButton(false)
+		menu:SetTitle("")
+		menu:DockPadding(4, 4, 4, 4)
+		menu.RecordOffset = ((ScrW() - 1280) / 64) * 8
+		
+		function menu:PerformLayout()
+			menu.Players:SetWidth(self:GetWide())
+		end
+
+		function menu:Paint()
+			surface.SetDrawColor(Color(32, 32, 32))
+			surface.DrawRect(0, 0, menu:GetWide(), menu:GetTall())
+		end
+
+		menu.Credits = vgui.Create("DPanel", menu)
+		menu.Credits:Dock(TOP)
+		menu.Credits:DockPadding(8, 6, 8, 0)
+		
+		function menu.Credits:Paint()
+		end
+
+		local name = Label( (BHOP.ServerName):format("bhop"), menu.Credits )
+		name:Dock(LEFT)
+		name:SetFont("FlowRadial")
+		name:SetTextColor(Color(255, 255, 255))
+		
+		function name:PerformLayout()
+			surface.SetFont(self:GetFont())
+			local w, h = surface.GetTextSize(self:GetText())
+			self:SetSize(w, h)
+		end
+
+		local cred = vgui.Create( "DButton", menu.Credits )
+		cred:Dock(RIGHT)
+		cred:SetFont("FlowText")
+		cred:SetText("Version " .. BHOP.Version.GM .. "\nGamemode by FiBzY")
+		cred.PerformLayout = name.PerformLayout
+		cred:SetTextColor(Color(255, 255, 255))
+		cred:SetDrawBackground( false )
+		cred:SetDrawBorder( false )
+		cred.DoClick = function()
+			gui.OpenURL( "http://steamcommunity.com/id/fibzy_/" )
+		end
+
+		function menu.Credits:PerformLayout()
+			surface.SetFont(name:GetFont())
+			local w,h = surface.GetTextSize(name:GetText())
+			self:SetTall(h)
+		end
+
+		menu.ServerInfos = vgui.Create("DPanel", menu)
+		menu.ServerInfos:Dock(BOTTOM)
+		menu.ServerInfos:SetTall(30)
+		menu.ServerInfos:DockPadding(8, 3, 8, 0)
+		
+		function menu.ServerInfos:Paint()
+		end
+
+		local players = vgui.Create("DLabel", menu.ServerInfos)
+		players:Dock(LEFT)
+		players:SetFont("ScoreboardPlayer")
+		players.NumSlots = game.MaxPlayers() - 2
+		players:SetTextColor(Color(255, 255, 255))
+		players.PerformLayout = name.PerformLayout
+
+		function players:Think()
+			if menu.IsClickable then
+				self:SetText( player.GetCount() - 2 .. "/" .. self.NumSlots .. " players (2 replays)" )
+			else
+				self:SetText("")
+			end
+		end
+
+		local timeleft = vgui.Create("DLabel", menu.ServerInfos)
+		timeleft:SetFont("ScoreboardPlayer")
+		timeleft:SetTextColor(Color(255, 255, 255))
+
+		function timeleft:Think()
+			local left = 500 - CurTime()
+			if not menu.IsClickable then
+				self:SetText("Click to interact with the scoreboard")
+			elseif left > 0 then
+				self:SetText("Vote starts in " .. string.ToMinutesSeconds(left) .. "s" )
+			else
+				self:SetText("Voting in progress")
+			end
+		end
+
+		function timeleft:PerformLayout()
+			surface.SetFont( self:GetFont() )
+			local w, h = surface.GetTextSize( self:GetText() )
+			self:SetPos(ScrW() * 0.24 - w * 0.5, 3)
+			self:SetSize(w, h)
+		end
+
+		local map = vgui.Create("DButton", menu.ServerInfos)
+		map:Dock(RIGHT)
+		map:SetFont("ScoreboardPlayer")
+		map:SetTextColor(Color(255, 255, 255))
+		map:SetDrawBackground(false)
+		map:SetDrawBorder(false)
+		map.PerformLayout = name.PerformLayout
+
+		function map:Think()
+			if menu.IsClickable then
+				self:SetText( game.GetMap() )
+			else
+				self:SetText("")
+			end
+		end
+
+		function map:DoClick()
+			SetClipboardText( game.GetMap() )
+		end
+
+		surface.SetFont("ScoreboardPlayer")
+		local mw,mh = surface.GetTextSize("Retrieving...")
+		
+		menu.Players = CreateTeamList(menu, mw)
+		menu.Players:Dock(FILL)
+		
+		if menu.Players then
+			menu.Players:RefreshPlayers()
+		end
+	end
+end
+
+function GM:DoScoreboardActionPopup(ply)
+    -- DO TO:
+end
+
+local scoreboardpicker = CreateClientConVar("bhop_scoreboard", "default", true, false, "Choose scoreboard style: default, kawaii or flow")
+
+-- Load both kawaii and default, flow
+function GM:ScoreboardShow()
+    local scoreboardType = scoreboardpicker:GetString():lower()
+    
+    if scoreboardType == "default" then
+        CreateScoreboard()
+    elseif scoreboardType == "kawaii" then
+        CreateScoreboardKawaii()
+    elseif scoreboardType == "flow" then
+        CreateScoreboardFlow(false)
+    end
+end
+
+function GM:ScoreboardHide()
+    local scoreboardType = scoreboardpicker:GetString():lower()
+    
+    if scoreboardType == "default" then
+        CreateScoreboard(true)
+    elseif scoreboardType == "kawaii" then
+        CreateScoreboardKawaii(true)
+    elseif scoreboardType == "flow" then
+        CreateScoreboardFlow(true)
+    end
+end
