@@ -124,6 +124,7 @@ function SWEP:PrimaryAttack()
     self.Owner:FireBullets(bullet)
     self:EmitSound(self.SilencerState == 0 and self.Primary.Sound or self.Secondary.Sound)
 
+    self:SetClip1(self:GetMaxClip1())
 
     self:ShootEffects()
     self:TakePrimaryAmmo(self.Primary.TakeAmmo)

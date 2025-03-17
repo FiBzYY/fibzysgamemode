@@ -1,8 +1,13 @@
 if CLIENT then
+    CreateClientConVar("bhop_unlimited_ammo", "1", true, false, "Enable or disable unlimited ammo ")
+end
+
+if CLIENT then
 	SWEP.DrawAmmo = true
 	SWEP.DrawCrosshair = false
 	SWEP.ViewModelFOV = 82
 	SWEP.ViewModelFlip = true
+	SWEP.CSMuzzleFlashes = true
 end
 
 SWEP.Author = "Counter-Strike"

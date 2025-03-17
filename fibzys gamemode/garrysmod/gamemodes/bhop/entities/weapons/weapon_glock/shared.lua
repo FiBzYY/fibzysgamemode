@@ -1,4 +1,4 @@
-if CLIENT then
+﻿if CLIENT then
 	SWEP.DrawAmmo = true
 	SWEP.DrawCrosshair = false
 	SWEP.ViewModelFOV = 82
@@ -110,10 +110,12 @@ function SWEP:GlockShoot(showanim)
 	if self:GetDTInt(0) == 1 then self.ShootNext = false end
 	if not self:CanPrimaryAttack() then return end
 
-	self.Weapon:EmitSound( self.Primary.Sound )
+	self.Weapon:EmitSound(self.Primary.Sound)
 
 	self:CSSGlockShoot(self.Primary.Damage, self.Primary.Recoil, self.Primary.NumShots, self.Primary.Cone, showanim)
 	self:TakePrimaryAmmo(1)
+
+	self:SetClip1(self:GetMaxClip1())
 
 	if self.Owner:IsNPC() then return end
 

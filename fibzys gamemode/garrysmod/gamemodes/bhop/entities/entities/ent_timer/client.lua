@@ -1,7 +1,8 @@
-﻿local bhop_wireframe = CreateClientConVar("bhop_wireframe", 1, true, false, "Toggle wireframe or solid zones")
+﻿local bhop_showzones = CreateClientConVar("bhop_showzones", 1, true, false, "Toggle visibility of bhop zones")
+local bhop_wireframe = CreateClientConVar("bhop_wireframe", 1, true, false, "Toggle wireframe or solid zones")
 local bhop_thickness = CreateClientConVar("bhop_thickness", 2, true, false, "Change zone thickness")
-
-CreateClientConVar("bhop_showzones", "1", true, false, "Toggle visibility of bhop zones")
+local bhop_flatzones = CreateClientConVar("bhop_flatzones", 0, true, false, "Change to flat zones")
+local bhop_rainbowzones = CreateClientConVar("bhop_rainbowzones", 0, true, false, "Change to rainbow zones")
 
 local Col = HSVToColor(RealTime() * 40 % 360, 1, 1)
 local Iv = IsValid
@@ -67,7 +68,7 @@ local DrawArea = {
 }
 
 function ENT:Draw()
-    if not GetConVar("bhop_showzones"):GetBool() then return end
+    if not bhop_showzones:GetBool() then return end
 
     self:UpdateZoneData()
 
@@ -90,6 +91,6 @@ function ENT:Draw()
             return
         end
     else
-        UTIL:DrawZoneTypes(min, max, Col, not isWireframe, self.ZoneData.pos, bhop_thickness:GetInt()) 
+        UTIL:DrawZoneTypes(min, max, Col, not isWireframe, self.ZoneData.pos, bhop_thickness:GetInt(), bhop_flatzones:GetBool())
     end
 end
