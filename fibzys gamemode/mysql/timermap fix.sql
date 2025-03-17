@@ -1,25 +1,3 @@
--- --------------------------------------------------------
--- Host:                         77.93.141.26
--- Server version:               10.11.11-MariaDB-0+deb12u1 - Debian 12
--- Server OS:                    debian-linux-gnu
--- HeidiSQL Version:             12.8.0.6908
--- --------------------------------------------------------
-
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET NAMES utf8 */;
-/*!50503 SET NAMES utf8mb4 */;
-/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
-/*!40103 SET TIME_ZONE='+00:00' */;
-/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
-/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
-/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
-
-
--- Dumping database structure for s3_FiBzY-BHOP
-CREATE DATABASE IF NOT EXISTS `s3_FiBzY-BHOP` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci */;
-USE `s3_FiBzY-BHOP`;
-
--- Dumping structure for table s3_FiBzY-BHOP.timer_map
 CREATE TABLE IF NOT EXISTS `timer_map` (
   `map` text NOT NULL,
   `multiplier` int(11) DEFAULT NULL,
@@ -29,7 +7,6 @@ CREATE TABLE IF NOT EXISTS `timer_map` (
   UNIQUE KEY `map` (`map`) USING HASH
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table s3_FiBzY-BHOP.timer_map: ~453 rows (approximately)
 INSERT INTO `timer_map` (`map`, `multiplier`, `bonusmultiplier`, `plays`, `options`) VALUES
 	('bhop_atom', 15, NULL, 85, 0),
 	('bhop_anyyy', 10, NULL, 37, 0),
@@ -486,9 +463,6 @@ INSERT INTO `timer_map` (`map`, `multiplier`, `bonusmultiplier`, `plays`, `optio
 	('bhop_bfur', 5, 0, 344, NULL),
 	('bhop_fibzy_v2', 15, NULL, 4, NULL),
 	('bhop_fuckcreepy', 100, 120, 4, NULL);
-
-/*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
-/*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
 /*!40014 SET FOREIGN_KEY_CHECKS=IFNULL(@OLD_FOREIGN_KEY_CHECKS, 1) */;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40111 SET SQL_NOTES=IFNULL(@OLD_SQL_NOTES, 1) */;
