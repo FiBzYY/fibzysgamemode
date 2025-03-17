@@ -91,6 +91,7 @@ local setting_hints = CreateClientConVar("bhop_hints", "180", true, false)
 local customFOV = CreateClientConVar("bhop_set_fov", "90", true, true, "Set custom FOV", 1, 180)
 local sounds_enabled = CreateClientConVar("bhop_wrsfx", "1", true, true, "WR sounds enabled state", 0, 1)
 local sounds_volume = CreateClientConVar("bhop_wrsfx_volume", "0.4", true, false, "WR sounds volume", 0, 1)
+local sounds_enabledbad = CreateClientConVar("bhop_wrsfx_bad", "1", true, false, "Bad improvement sounds", 0, 1)
 local chat_sounds = CreateClientConVar("bhop_chatsounds", "0", true, false, "Play chat sounds", 0, 1)
 local zone_sounds = CreateClientConVar("bhop_zonesounds", "1", true, false, "Play sound on zone left", 0, 1)
 local bhop_showplayers = CreateConVar("bhop_showplayerslabel", "1", FCVAR_ARCHIVE, "Show or hide player names when looking at them")
@@ -646,6 +647,12 @@ net.Receive("WRSounds", function(len)
     local soundPath = "wrsfx/" .. net.ReadString()
 
     lp():EmitSound(soundPath, 75, 100, sounds_volume:GetFloat())
+end)
+
+-- Bad improvement
+net.Receive("BadImprovement", function(len)
+    if not sounds_enabledbad:GetBool() then return end
+    lp():EmitSound("wrsfx/baka.wav", 75, 100)
 end)
 
 --[[ -- Replay Trail
