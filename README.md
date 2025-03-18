@@ -96,3 +96,5 @@ Huge shoutout to these amazing contributors and inspirations:
 
 ## Thank You for Choosing Bunny Hop by FiBzY!
 Every player matters greatly to me. Hope you enjoy the smooth and refined Bhop experience—happy hopping!
+
+Note: if you fork this keep the About: the same its disrespectful to change my README or About:
