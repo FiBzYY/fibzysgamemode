@@ -1,0 +1,17 @@
++sv_lagcompensation_teleport_dist 100 // Teleport fix?
+-threads 8 // 8 Cores
+-high // High
+-heapsize 62914560 
+-sv_unlag 1 
+-refresh 280 // 280 HZ
+-nod3d9ex 
+-nojoy 
+-nohltv 
+-novid 
+-softparticlesdefaultoff 
+-useforcedmparms 
+-noforcemaccel 
+-noforcemspd 
+-insecure
+
++sv_lagcompensation_teleport_dist 100 -threads 8 -high -heapsize 62914560 -sv_unlag 1 -refresh 280 -nod3d9ex -nojoy -nohltv -novid -softparticlesdefaultoff -useforcedmparms -noforcemaccel -noforcemspd -insecure
