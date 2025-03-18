@@ -582,8 +582,9 @@ function Admin:HandleRequest( ply, args )
 			return BHDATA:Send(ply, "Print", { "Admin", Lang:Get("AdminInvalidFormat", { Value, "Number" }) })
 		end
 
-		local OldPos1 = util.TypeToString(ply.ZoneData[2])
-		local OldPos2 = util.TypeToString(ply.ZoneData[3])
+		local OldPos1 = "'" .. util.TypeToString(ply.ZoneData[2]) .. "'"
+		local OldPos2 = "'" .. util.TypeToString(ply.ZoneData[3]) .. "'"
+
     
 		local nMin = ply.ZoneData[2].z
 		ply.ZoneData[3].z = nMin + nValue
@@ -592,7 +593,7 @@ function Admin:HandleRequest( ply, args )
 		local newPos1 = MySQL:Escape(util.TypeToString(ply.ZoneData[2]))
 		local newPos2 = MySQL:Escape(util.TypeToString(ply.ZoneData[3]))
 
-		MySQL:Start("UPDATE timer_zones SET pos1 = '" .. newPos1 .. "', pos2 = '" .. newPos2 .. "' WHERE map = '" .. mapName .. "' AND type = " .. ply.ZoneData[1] .. " AND pos1 = '" .. OldPos1 .. "' AND pos2 = '" .. OldPos2 .. "'", function(result)
+		MySQL:Start("UPDATE timer_zones SET pos1 = " .. newPos1 .. ", pos2 = " .. newPos2 .. " WHERE map = " .. mapName .. " AND type = " .. ply.ZoneData[1] .. " AND pos1 = " .. OldPos1 .. " AND pos2 = " .. OldPos2 .. "", function(result)
 			if result then
 				UTIL:Notify(Color(0, 255, 0), "Database", "Zone updated successfully.")
 			else
@@ -600,7 +601,7 @@ function Admin:HandleRequest( ply, args )
 			end
 		end)
 
-		Zones:Reload()
+		ReloadZonesOnMapLoad()
 		BHDATA:Send(ply, "Print", { "Admin", Lang:Get("AdminOperationComplete") })
 		elseif ID == 10 then
 			local nIndex, bFind, nType = tonumber(Value), false, nil

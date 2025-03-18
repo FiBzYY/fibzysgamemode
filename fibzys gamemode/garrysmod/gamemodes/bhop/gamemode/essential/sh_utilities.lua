@@ -250,14 +250,17 @@ function GeneratePlayerColors(ply)
         DynamicColors.TextColor = HSVToColor(hue, neonSaturation, neonValue)
         DynamicColors.PanelColor = HSVToColor(hue, neonSaturation * 0.9, neonValue * 0.8)
 
-        local jhudHue = (hue >= 0 and hue <= 60) or (hue >= 300 and hue <= 359) and 120 or hue
+        local jhudHue = hue
+        if (hue >= 0 and hue <= 60) or (hue >= 300 and hue <= 359) then
+            jhudHue = 120
+        end
         DynamicColors.TextColorJhud = HSVToColor(jhudHue, neonSaturation, neonValue)
         DynamicColors.RankColors = {}
     end
 end
 
 hook.Add("Initialize", "AssignPlayerColors", function()
-    timer.Simple(0, function()
+    timer.Simple(0.2, function()
         GeneratePlayerColors(ply)
     end)
 end)

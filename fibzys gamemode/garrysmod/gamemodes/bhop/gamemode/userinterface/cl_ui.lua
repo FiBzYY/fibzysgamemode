@@ -326,8 +326,8 @@ function UI:NumberedUIPanel(title, ...)
                     self:OnPrevious()
                 end
             elseif (key == 9) and (self.hasPages) then
-                local max = math.ceil(#self.options / 7)
-                self.page = self.page == max and self.page or self.page + 1
+                -- local max = math.ceil(#self.options / 7)
+                -- self.page = self.page == max and self.page or self.page + 1
                 self:OnNext(self.page == max)
                 self:UpdateLongestOption()
             else
@@ -836,10 +836,7 @@ end)
 
 -- Nominate MENU UI
 UI:AddListener("nominate", function(_, data)
-    local page = tonumber(data[1]) or 1
     local sortMode = data[2] or 1
-    local showPoints = data[3] ~= false
-    local mapsPerPage = 50000
 
     if #Cache.M_Data == 0 then
         UI.nominate = UI:NumberedUIPanel("Nominate", {["name"] = "No maps available", ["function"] = function() end})
@@ -859,26 +856,16 @@ UI:AddListener("nominate", function(_, data)
     end)
 
     local currentMap = game.GetMap()
-    local totalPages = math.ceil(#Cache.M_Data / mapsPerPage)
-    local startIndex, endIndex = (page - 1) * mapsPerPage + 1, math.min(page * mapsPerPage, #Cache.M_Data)
     local options = {}
 
-    for i = startIndex, endIndex do
-        local mapItem = Cache.M_Data[i]
+    for _, mapItem in ipairs(Cache.M_Data) do
         if mapItem and mapItem.name then
             options[#options + 1] = {
                 ["name"] = mapItem.name .. " (" .. (mapItem.points or 0) .. " points)",
                 ["col"] = (mapItem.name == currentMap) and Color(0, 150, 255) or Color(255, 255, 255),
-                ["function"] = Nominate_Callback(mapItem.name) 
+                ["function"] = Nominate_Callback(mapItem.name)
             }
         end
-    end
-
-    if page > 1 then 
-        options[#options + 1] = {["name"] = "8. Previous Page", ["function"] = Nominate_Callback("prev")} 
-    end
-    if page < totalPages then 
-        options[#options + 1] = {["name"] = "9. Next Page", ["function"] = Nominate_Callback("next")} 
     end
 
     if UI.nominate and UI.nominate.title then

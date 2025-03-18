@@ -88,7 +88,7 @@ Lang = {
 
     -- Nominate
     Nomination = {UTIL.Colour["Timer"], "1;", UTIL.Colour["White"], " has nominated ", UTIL.Colour["White"], UTIL.Colour["Timer"], "2;", UTIL.Colour["White"], " to be played next."},
-    NominationChange = {UTIL.Colour["Timer"], "1; ", UTIL.Colour["White"], " has changed his nomination from ", UTIL.Colour["Timer"], "2;", UTIL.Colour["White"], " to ", UTIL.Colour["Timer"], "3;"},
+    NominationChange = {UTIL.Colour["Timer"], "1; ", UTIL.Colour["White"], "has changed their nomination from ", UTIL.Colour["Timer"], "2;", UTIL.Colour["White"], " to ", UTIL.Colour["Timer"], "3;"},
     NominationAlready = {"You have already nominated this map!", UTIL.Colour["White"]},
     NominateOnMap = {"You are currently playing this map so you can't nominate it.", UTIL.Colour["White"]},
 
@@ -107,7 +107,7 @@ Lang = {
     -- Spectate
     SpectateRestart = {"You have to be alive in order to reset yourself to the start.", UTIL.Colour["Timer"], "1;", UTIL.Colour["White"]},
     SpectateTargetInvalid = {"You are unable to spectate this player right now."},
-    SpectateWeapon = {"You can't obtain a weapon in Spectator.", UTIL.Colour["Timer"], "1;", UTIL.Colour["White"]},
+    SpectateWeapon = {"You can't obtain a weapon in Spectator."},
 
     -- Admin
     AdminInvalidFormat = {"The supplied value ", UTIL.Colour["Timer"], "1;", UTIL.Colour["White"], " is not of the requested type ", UTIL.Colour["Timer"], "2;", UTIL.Colour["White"]},

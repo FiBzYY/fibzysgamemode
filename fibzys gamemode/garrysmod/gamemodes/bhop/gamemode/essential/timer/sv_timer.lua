@@ -585,6 +585,10 @@ function TIMER:Finish(ply, time)
                 local playerRank = Rank and Rank[1] and tonumber(Rank[1]["nRank"]) or 0
                 local id = playerRank + 1
 
+                if nRec == 1 and time >= record then
+                    id = 1
+                end
+
                 if id > (nRec + 1) then
                     id = nRec + 1
                 elseif id < 1 then
@@ -745,6 +749,7 @@ function TIMER:PostDiscordWR(ply, time, styleID, currentWR)
     local serverName = GetHostName()
     local timestamp = os.date("!%Y-%m-%d %H:%M:%S")
     local joinLink = "https://steamcommunity.com/linkfilter/?url=steam://connect/" .. serverIP
+    local styleName = TIMER:StyleName(styleID) or "Unknown"
 
     local WRDifference
     if currentWR == 0 then
@@ -785,7 +790,7 @@ function TIMER:PostDiscordWR(ply, time, styleID, currentWR)
     local compiled = {
         username = "Server Record",
         embeds = {{
-            title = string.format("**%s Record | %s**", styleID == TIMER:GetStyleID("Normal") or styleID == TIMER:GetStyleID("Bonus") and "Main" or "Offstyle", mapName),
+            title = string.format("Server Record | %s Record | %s", styleName, mapName),
             color = 16755200,
             fields = fields,
             timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ"),
@@ -795,7 +800,7 @@ function TIMER:PostDiscordWR(ply, time, styleID, currentWR)
             type = 1,
             components = {{
                 type = 2,
-                label = "🔗 Join Server",
+                label = "Join Server",
                 style = 5,
                 url = joinLink
             }}
@@ -862,21 +867,15 @@ function TIMER:HandleRecordCompletion(ply, time, old, styleData)
 end
 
 function TIMER:LoadSounds()
-    -- Bad Improvment sounds
-    local exclude = {
-        ["wrsfx/baka.wav"] = true,
-        ["wrsfx/no_improvement.mp3"] = true
-    }
-
     timer_sounds = {}
 
     local foundSounds = file.Find("sound/wrsfx/*", "GAME")
     for _, snd in ipairs(foundSounds) do
         local fullPath = "wrsfx/" .. snd
 
-        if not exclude[fullPath] then
+        if not table.HasValue(BHOP.ExcludeWRSounds, fullPath) then
             table.insert(timer_sounds, snd)
-            resource.AddFile("sound/wrsfx/" .. snd)
+            resource.AddFile("sound/" .. fullPath)
             util.PrecacheSound(fullPath)
         end
     end

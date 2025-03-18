@@ -46,9 +46,9 @@ if not CONFIG_LOADED then
     -- Gamemode version
     BHOP.Version = {
         Engine = "9594",
-        GM = "13",
-        ReleaseDate = "03/17/25",
-        LastUpdated = "03/17/25"
+        GM = "13.1",
+        ReleaseDate = "03/18/25",
+        LastUpdated = "03/18/25"
     }
 
     -- Main movement settings
@@ -132,6 +132,12 @@ if not CONFIG_LOADED then
             ["STEAM_0:1:48688711"] = true
         },
         AFKKickTime = 300
+    }
+
+    -- WR Sounds Exclude List for Bad Improvements (Put full path relative to sound/)
+    BHOP.ExcludeWRSounds = {
+        "wrsfx/baka.wav",
+        "wrsfx/no_improvement.mp3"
     }
 
     -- MISC

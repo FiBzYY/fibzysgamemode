@@ -168,22 +168,18 @@ local function ToggleTriggers(cv, old, new)
 end
 
 -- AUTO ENABLE SHOWTRIGGERS ON SPAWN IF bhop_alwaysshowtriggers IS 1
-hook.Add("InitPostEntity", "AutoEnableShowTriggersOnSpawn", function()
-    if GetConVar("bhop_alwaysshowtriggers"):GetBool() then
-        RunConsoleCommand("showtriggers_enabled", "1")
-        RunConsoleCommand("showclips", "1")
-    end
-end)
+hook.Add("InitPostEntity", "AutoRestoreShowHiddenConfig", function()
+    timer.Simple(0, function()
+		if GetConVar("bhop_alwaysshowtriggers"):GetBool() then
+        local cfg = util.JSONToTable(file.Read("showhidden_last.json", "DATA") or "") or {}
 
-hook.Add("OnEntityCreated", "ForceTriggersWhenSpawning", function(ent)
-    if ent:IsPlayer() and ent == LocalPlayer() then
-        timer.Simple(0, function()
-            if GetConVar("bhop_alwaysshowtriggers"):GetBool() then
-                RunConsoleCommand("showtriggers_enabled", "1")
-			    RunConsoleCommand("showclips", "1")
-            end
-        end)
-    end
+        -- Auto restore user preferences
+        if cfg.triggers ~= nil then RunConsoleCommand("showtriggers_enabled", tostring(cfg.triggers.enabled and 1 or 0)) end
+        if cfg.triggerTypes then RunConsoleCommand("showtriggers_types", tostring(cfg.triggerTypes)) end
+        if cfg.clips then RunConsoleCommand("showclips", tostring(cfg.clips)) end
+        if cfg.props ~= nil then RunConsoleCommand("showprops", tostring(cfg.props and 1 or 0)) end
+		end
+    end)
 end)
 
 -- Update material and color of trigger type
@@ -916,6 +912,15 @@ local function OpenConfigMenu()
 		g_configMenu = nil
 		UpdateVisibleTriggers()
 		ShowHidden.SaveConfig()
+
+		file.Write("showhidden_last.json", util.TableToJSON({
+			triggers = {
+				enabled = cv_triggers:GetBool(),
+			},
+			triggerTypes = cv_triggerTypes:GetInt(),
+			clips = cv_enabled:GetInt(),
+			props = cv_props:GetBool(),
+		}, false))
 	end
 
 	clipsPan:InvalidateLayout(true)
