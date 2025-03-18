@@ -34,3 +34,5 @@ If you’re using or sharing this project, please give a shout-out to the origin
 The whole idea here is to keep things open, creative, and respectful. Feel free to build on this work, share it, improve it — just don’t forget to give credit where it’s due!
 
 Thanks for keeping the dev community awesome!
+
+Note: if you fork this keep the About: the same its disrespectful to change my README or About:
