@@ -650,9 +650,13 @@ net.Receive("WRSounds", function(len)
 end)
 
 -- Bad improvement
-net.Receive("BadImprovement", function(len)
+net.Receive("BadImprovement", function()
     if not sounds_enabledbad:GetBool() then return end
-    lp():EmitSound("wrsfx/baka.wav", 75, 100)
+
+    if BHOP.ExcludeWRSounds and #BHOP.ExcludeWRSounds > 0 then
+        local soundPath = BHOP.ExcludeWRSounds[math.random(1, #BHOP.ExcludeWRSounds)]
+        lp():EmitSound(soundPath, 75, 100)
+    end
 end)
 
 --[[ -- Replay Trail
@@ -707,6 +711,7 @@ local function DrawTargetIDs()
     local lpc = lp()
     if not Iv(lpc) then return end
 
+    -- Refresh Players table every 2 seconds
     if not Players or ct() - LastCheck > 2 then
         Players = player.GetAll()
         LastCheck = ct()
@@ -714,9 +719,15 @@ local function DrawTargetIDs()
 
     local pos = lpc:GetPos()
 
-    for i = 1, #Players do
+    for i = #Players, 1, -1 do -- loop backwards to safely remove invalid players
         local ply = Players[i]
-        if ply == lpc or not ply:Alive() then continue end
+
+        if not Iv(ply) or not ply:Alive() then
+            table.remove(Players, i)
+            continue
+        end
+
+        if ply == lpc then continue end
 
         local ppos = ply:GetPos()
         local diff = (ppos - pos):Length()
