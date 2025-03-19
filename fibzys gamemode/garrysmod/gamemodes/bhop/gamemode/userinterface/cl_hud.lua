@@ -13,6 +13,7 @@ local simpleBoxEnabled = CreateConVar("bhop_simplebox", "0", {FCVAR_ARCHIVE}, "E
 local sidetimer = CreateClientConVar("bhop_sidetimer", 0, true, false, "Display SideTimer Stats")
 local disablespec = CreateClientConVar("bhop_disablespec", 0, true, false, "Disable Spectator Hud")
 local jhudold = CreateClientConVar("bhop_jhudold", 0, true, false, "Display the old JHUD from 2020")
+local rainbowtext = CreateClientConVar("bhop_rainbowtext", 0, true, false, "Display the some rainbow colors")
 
 CreateClientConVar("bhop_default_crosshair", "1", true, false, "Enable default crosshair")
 
@@ -389,14 +390,13 @@ HUD.Themes = {
             surface.DrawOutlinedRect(ScrW() - xPosStrafe + 5 - width / 2, screenHeight - yPos - (heightStrafe - 65), (width / 2) - 5, 27)
             surface.DrawOutlinedRect(ScrW() - xPosStrafe + 5 - width, screenHeight - yPos - (heightStrafe - 97), (width / 2) - 5, 27)
             surface.DrawOutlinedRect(ScrW() - xPosStrafe + 5 - width / 2, screenHeight - yPos - (heightStrafe - 97), (width / 2) - 5, 27)
-
         end
 
 		if lp():Team() == TEAM_SPECTATOR then
 			local ob = pl
 			if Iv(ob) and ob:IsPlayer() then
-                local nStyle = ob:GetNWInt("Style", TIMER:GetStyleID("Normal"))
-                local stylename = TIMER:StyleName(nStyle)
+                local style = ob:GetNWInt("Style", TIMER:GetStyleID("Normal"))
+                local stylename = TIMER:StyleName(style)
 				
 				local header, pla
 				if ob:IsBot() then
@@ -407,10 +407,11 @@ HUD.Themes = {
 					pla = ob:Name() .. " (" .. stylename .. ")"
 				end
 
-				DrawText( header, "HUDHeaderBig", screenWidth / 2, screenHeight - 33 - 10, Color(25, 25, 25, 255), TEXT_ALIGN_CENTER )
-				DrawText( header, "HUDHeaderBig", screenWidth / 2, screenHeight - 35 - 10, Color(214, 59, 43, 255), TEXT_ALIGN_CENTER )
-				DrawText( pla, "HUDHeader", screenWidth / 2, screenHeight - 18 - 40 - 10, Color(25, 25, 25, 255), TEXT_ALIGN_CENTER )
-				DrawText( pla, "HUDHeader", screenWidth / 2, screenHeight - 20 - 40 - 10, Color(255, 255, 255, 255), TEXT_ALIGN_CENTER )
+				DrawText(header, "HUDHeaderBig", screenWidth / 2, screenHeight - 33 - 10, Color(25, 25, 25, 255), TEXT_ALIGN_CENTER)
+				DrawText(header, "HUDHeaderBig", screenWidth / 2, screenHeight - 35 - 10, Color(214, 59, 43, 255), TEXT_ALIGN_CENTER)
+
+				DrawText(pla, "HUDHeader", screenWidth / 2, screenHeight - 18 - 40 - 10, Color(25, 25, 25, 255), TEXT_ALIGN_CENTER)
+				DrawText(pla, "HUDHeader", screenWidth / 2, screenHeight - 20 - 40 - 10, Color(255, 255, 255, 255), TEXT_ALIGN_CENTER)
 			end
 		end
 
@@ -434,16 +435,15 @@ HUD.Themes = {
             timeLabel = "Timer Disabled"
             pbLabel = "Leave the zone to start timer"
         else
-        if pl.TimerFinished then
-            currentFormatted = ConvertTimeWR(pl.tickTimeDiffEnd)
-        elseif pl:IsBot() then
-            currentFormatted = ConvertTimeWR(current)
-        elseif pl:Team() == TEAM_SPECTATOR and not pl:IsBot() then
-            currentFormatted = ConvertTimeWR(current)
-        else
-            currentFormatted = ConvertTime(current) .. ConvertTimeMS(current)
-        end
-
+            if pl.TimerFinished then
+                currentFormatted = ConvertTimeWR(pl.tickTimeDiffEnd)
+            elseif pl:IsBot() then
+                currentFormatted = ConvertTimeWR(current)
+            elseif pl:Team() == TEAM_SPECTATOR and not pl:IsBot() then
+                currentFormatted = ConvertTimeWR(current)
+            else
+                currentFormatted = ConvertTime(current) .. ConvertTimeMS(current)
+            end
         end
 
         surface.SetDrawColor(BASE)
@@ -454,7 +454,21 @@ HUD.Themes = {
 	    surface.DrawRect(xPos + 5, screenHeight - yPos - 30, width - 10, 25)
 
         local cp = mc(velocity, 0, 3500) / 3500
-        surface.SetDrawColor(DarkenColor(DynamicColors.PanelColor, cp))
+        local RNGFixColor = RNGFixHudDetect
+
+        local cp = mc(velocity, 0, 3500) / 3500
+        local curTime = ct()
+
+        if not pl.rngFixTimer and RNGFixColor then
+            pl.rngFixTimer = curTime + 0.1
+        elseif pl.rngFixTimer and curTime < pl.rngFixTimer then
+            pl.barColor = Color(255, 255, 255, 255)
+        else
+            pl.rngFixTimer = nil
+            pl.barColor = DarkenColor(DynamicColors.PanelColor, cp)
+        end
+
+        surface.SetDrawColor(pl.barColor)
         surface.DrawRect(xPos + 5, screenHeight - yPos - 30, cp * 220, 25)
 
         DrawText(timeLabel, "HUDTimer", (currentFormatted ~= "" and xPos + 12 or xPos + width / 2), screenHeight - yPos - 75, TEXT, (currentFormatted ~= "" and TEXT_ALIGN_LEFT or TEXT_ALIGN_CENTER), TEXT_ALIGN_CENTER)
@@ -622,8 +636,6 @@ HUD.Themes = {
             DrawText("Progress: " .. progress .. "%", "HUDTimer", screenWidth / 2, yPos - 14, textColor, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
         end
 
-        DrawText("Map: " .. game.GetMap(), "HUDTimer", 10, 8, textColor, TEXT_ALIGN_LEFT)
-
         local styletype = pl:GetNWInt("Style", TIMER:GetStyleID("Normal"))
         local stylename = TIMER:StyleName(styletype)
 
@@ -651,12 +663,60 @@ HUD.Themes = {
         end
 
         local pbText = data.pb == 0 and "No time recorded" or ConvertTimeWR(data.pb) .. " (You)"
-        DrawText("World Record: " .. wr .. " " .. wrn, "HUDTimer", 9, 28, textColor)
-        DrawText("Personal Best: " .. pbText, "HUDTimer", 10, 48, textColor)
+
+        local rainbowColors = {
+            Color(255, 0, 0), Color(255, 165, 0),
+            Color(255, 255, 0), Color(0, 255, 0),
+            Color(0, 0, 255), Color(75, 0, 130),
+            Color(148, 0, 211)
+        }
+
+        local function DrawRainbowTextStatic(text, posX, posY, colors, font)
+            local offset = 0
+            surface.SetFont(font)
+            for i = 1, #text do
+                local char = text:sub(i, i)
+                local charWidth = surface.GetTextSize(char)
+                surface.SetTextColor(colors[(i - 1) % #colors + 1]:Unpack())
+                surface.SetTextPos(posX + offset, posY)
+                surface.DrawText(char)
+                offset = offset + charWidth
+            end
+            return offset
+        end
+
+        DrawText("Map: " .. game.GetMap(), "HUDTimer", 10, 8, textColor, TEXT_ALIGN_LEFT)
+
+        local baseX, baseY = 9, 28
+        local prefix = "World Record"
+        local colon = ": "
+
+        if rainbowtext:GetBool() then
+            local offsetX = DrawRainbowTextStatic(prefix, baseX, baseY, rainbowColors, "HUDTimer")
+
+            surface.SetFont("HUDTimer")
+            surface.SetTextColor(textColor:Unpack())
+            surface.SetTextPos(baseX + offsetX, baseY)
+            surface.DrawText(colon .. wr .. " " .. wrn)
+        else
+            surface.SetFont("HUDTimer")
+            surface.SetTextColor(textColor:Unpack())
+            surface.SetTextPos(baseX, baseY)
+            surface.DrawText(prefix .. colon .. wr .. " " .. wrn)
+        end
+
+        if rainbowtext:GetBool() then
+            local offset = DrawRainbowTextStatic("Personal Best", 10, 48, rainbowColors, "HUDTimer")
+            surface.SetFont("HUDTimer")
+            surface.SetTextColor(textColor:Unpack())
+            surface.SetTextPos(10 + offset, 48)
+            surface.DrawText(": " .. pbText)
+        else
+            DrawText("Personal Best: " .. pbText, "HUDTimer", 10, 48, textColor)
+        end
 
         if TIMER.globalWR and type(TIMER.globalWR) == "string" and TIMER.globalWR ~= "N/A" then
             local playerName, time = string.match(TIMER.globalWR, "(.+)%s%-%s(.+)")
-
             if playerName and time then
                 local formattedText = "Global: " .. time .. " (" .. playerName .. ")"
                 DrawText(formattedText, "HUDTimer", screenWidth - 10, 8, textColor, TEXT_ALIGN_RIGHT)

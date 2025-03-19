@@ -366,15 +366,14 @@ local function SSJ_PrintStats(ply, lastSpeed, jumpTimeDiff)
     local avgDiff = g_fAvgDiffFromPerf[ply] or 0
     local avgAbsJSS = g_fAvgAbsoluteJss[ply] or 0
     local yawTick = g_iYawwingTick[ply] or 0
-    local strafeTicks = g_iStrafeTick[ply] or 1 -- fallback to 1 to avoid division by 0
+    local strafeTicks = g_iStrafeTick[ply] or 1
 
     local jss = avgDiff / strafeTicks
     local absjss = avgAbsJSS / strafeTicks
     local yawwing = (yawTick / strafeTicks) * 100
 
-
     -- Colors
-    local ColorSSJ = Color(255, 255, 0)
+    local ColorSSJ = ply.DynamicColor or Color(255, 255, 255)
     local colorgain = GainColors(coeffsum)
     local colorsync = GetSyncColor(sync)
 

@@ -405,9 +405,7 @@ local function DoPreTickChecks(ply, mv, cmd)
     vel = StartGravity(ply, vel)
 
     -- Fix sliding
-    if not mv:KeyDown(IN_JUMP) then
-        vel = CheckJumpButton(ply, vel)
-    end
+    vel = CheckJumpButton(ply, vel)
 
     -- Base velocity is not stored in MoveData
     local base = ply:GetBaseVelocity() or Vector(0, 0, 0)

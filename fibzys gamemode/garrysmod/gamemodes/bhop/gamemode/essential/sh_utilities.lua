@@ -265,6 +265,37 @@ hook.Add("Initialize", "AssignPlayerColors", function()
     end)
 end)
 
+if SERVER then
+    util.AddNetworkString("SendDynamicColor")
+
+    hook.Add("PlayerInitialSpawn", "SetupDynamicColor", function(ply)
+        ply.DynamicColor = Color(255, 255, 255) 
+    end)
+
+    net.Receive("SendDynamicColor", function(len, ply)
+        local r = net.ReadUInt(8)
+        local g = net.ReadUInt(8)
+        local b = net.ReadUInt(8)
+        ply.DynamicColor = Color(r, g, b)
+    end)
+end
+
+-- Color Sender
+if CLIENT then
+    hook.Add("Initialize", "SendColorToServer", function()
+        timer.Simple(1, function()
+            GeneratePlayerColors(LocalPlayer())
+
+            local col = DynamicColors.TextColor or Color(255, 255, 255)
+            net.Start("SendDynamicColor")
+            net.WriteUInt(col.r, 8)
+            net.WriteUInt(col.g, 8)
+            net.WriteUInt(col.b, 8)
+            net.SendToServer()
+        end)
+    end)
+end
+
 -- Math --
 FLT_EPSILON = 1.192092896e-07
 

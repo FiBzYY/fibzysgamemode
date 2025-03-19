@@ -125,6 +125,10 @@ Lang = {
     Connect = { UTIL.Colour["Server"], "1;", UTIL.Colour["White"], " (", UTIL.Colour["Server"], "2;", UTIL.Colour["White"], ") has connected from ", UTIL.Colour["Server"], "3;", UTIL.Colour["White"], "." },
     Disconnect = {"1; (2;) has disconnected from the server. (Reason: 3;)"},
 
+    -- Joining Details
+    GMLoaded = { UTIL.Colour["White"], "Gamemode loaded ", UTIL.Colour["White"], "(", UTIL.Colour["Timer"], "1;", UTIL.Colour["White"], ")." },
+    DetailsCount = { UTIL.Colour["Timer"], "1;", UTIL.Colour["White"], " has connected ", UTIL.Colour["Timer"], "2;", UTIL.Colour["White"], " times." },
+
     -- Other
     AdminChat = {"[", UTIL.Colour["Timer"], "1;", UTIL.Colour["White"], "] ", UTIL.Colour["Timer"], "2;", UTIL.Colour["White"], " says: ", UTIL.Colour["Timer"], "3;", UTIL.Colour["White"]},
     MissingArgument = {"You have to add ", UTIL.Colour["Timer"], "1;", UTIL.Colour["White"], " argument to the command."},

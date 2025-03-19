@@ -3,6 +3,13 @@ local lp, Iv, ct, hook_Add, DrawText = LocalPlayer, IsValid, CurTime, hook.Add, 
 local str_format = string.format
 local math_floor = math.floor
 
+PRIMARY = color_white
+SECONDARY = color_white
+TRI = color_white
+ACCENT = color_white
+TEXT = color_white 
+OUTLINE = color_white
+
 -- Ranks
 local ranks = {"VIP", "VIP+", "Moderator", "Admin", "Zone Admin", "Super Admin", "Developer", "Manager", "Founder", "Owner"}
 
@@ -52,6 +59,7 @@ local function cTime(ns)
         return str_format("%.1d", math_floor(ns % 60))
     end
 end
+
 local lp, Iv, ct, ceil, fl, fo, mc = LocalPlayer, IsValid, CurTime, math.ceil, math.floor, string.format, math.Clamp
 local function ConvertTimeWR(ticks, fractionalTicks)
     if not ticks or type(ticks) ~= "number" or ticks < 0 then
@@ -197,25 +205,17 @@ local function CreateScoreboard(shouldHide)
     local width = WIDTH - (x * 2)
     
     function scoreboard:Paint(w, h)
-
         -- Themes
-        local selectedScoreboard = Settings:GetValue('selected.scoreboard') or 'scoreboard.kawaii'
-        scoreboard.theme, scoreboard.themeId = Theme:GetPreference("Scoreboard", selectedScoreboard)
-    
-        local themeColors = scoreboard.theme["Colours"] or {}
-        local themeToggles = scoreboard.theme["Toggles"] or {}        
-    
-        PRIMARY = themeColors["Primary Colour"] or Color(255, 255, 255)
-        SECONDARY = themeColors["Secondary Colour"] or Color(255, 255, 255)
-        TRI = themeColors["Tri Colour"] or Color(255, 255, 255)
-        ACCENT = DynamicColors.PanelColor
-        TEXT = themeColors["Text Colour"] or Color(255, 255, 255)
-        OUTLINE = themeColors["Outlines Colour"] or Color(255, 255, 255)
-
-        local currentPreset = Settings:GetValue('preference.' .. selectedScoreboard)
-        if currentPreset == "Blur" then
-            ChessnutBlur(self, 3, 4, 255)
-        end
+		self.theme = Theme:GetPreference("Scoreboard")
+		self.themec = self.theme["Colours"]
+        self.themet = self.theme["Toggles"]
+        
+        PRIMARY = self.themec["Primary Colour"]
+        SECONDARY = self.themec["Secondary Colour"]
+        TRI = self.themec["Tri Colour"]
+        ACCENT = self.themec["Accent Colour"]
+        TEXT = self.themec["Text Colour"]
+        OUTLINE = self.themec["Outlines Colour"]
 
         surface.SetDrawColor(TRI)
         surface.DrawRect(0, 0, w, h)

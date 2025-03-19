@@ -72,463 +72,353 @@ net.Receive("ShowPopupNotification", function()
     ShowPopupNotification(title, text, duration)
 end)
 
-function UI:Scrollable(base, height, hoverCol, data, custom)
-    if (not base.contents) then 
-        base.contents = {}
-    end
+local theme = theme.getTheme(THEME_UI).settings.scheme 
 
-    local ui = base:Add("DButton")
-    ui:SetPos(0, height * #base.contents)
-    ui:SetSize(base:GetWide(), height)
-    ui:SetText("")
-    ui.data = data
-    ui.custom = custom 
-    ui.hoverCol = hoverCol
-    ui.height = height
-    ui.hoverFade = 0 
-    ui.fcol = false 
+UI_PRIMARY = theme["Primary"]
+UI_SECONDARY = theme["Secondary"]
+UI_TRI = theme["Tri"]
+UI_ACCENT = theme["Accent"]
+UI_TEXT1 = theme["Main Text"]
+UI_TEXT2 = theme["Secondary Text"]
+UI_HIGHLIGHT = theme["Highlight"]
 
-    local initialy = height / 2
+-- Allow changing of these variables 
+hook.Add("theme.update", "UpdateUIVariables", function(type, theme)
+	theme = theme.settings.scheme 
 
-    function ui:Paint(width, height)
-        local accent = UI_ACCENT
-        accent = Color(accent.r, accent.g, accent.b, self.hoverFade)
-
-        if ((hoverCol) and (self.isHovered)) or self.fcol then 
-            surface.SetDrawColor(self.fcol and self.fcol or accent)
-            surface.DrawRect(0, 0, width - (base.scrollbar and 16 or 0), height)
-        end 
-
-        local text = UI_TEXT1
-        for k, v in pairs(data) do
-            local x = (width / #data) * (k - 1)
-            if (custom) then 
-                x = (width / custom[1]) * custom[2][k]
-            end
-
-            local align = TEXT_ALIGN_LEFT
-            if k == #data and (#data ~= 1) then 
-                x = width - (base.scrollbar and 16 or 0) - 20
-                align = TEXT_ALIGN_RIGHT
-            end 
-
-            if type(v) == 'table' then 
-                if v[1] == 'name' then 
-                    DrawText(UTIL:GetPlayerName(v[2]), "ui.mainmenu.button", 10 + x, initialy, text, align, TEXT_ALIGN_CENTER)
-                else 
-                    DrawText(v[1], "ui.mainmenu.button", 10 + x, initialy, v[2], align, TEXT_ALIGN_CENTER)
-                end 
-            else
-                DrawText(v, "ui.mainmenu.button", 10 + x, initialy, text, align, TEXT_ALIGN_CENTER)
-            end
-        end
-
-        self:CPaint(width, height)
-    end
-
-    function ui:CPaint() end
-
-    function ui:SetColor(cust)
-        self.fcol = cust or Color(255, 255, 255, 75)
-    end 
-
-    function ui:RemoveColor()
-        self.fcol = false 
-    end 
-
-    function ui:Think()
-        if self.isHovered and not self:IsHovered() then 
-            self.hoverFade = 0 
-        elseif self.isHovered and self.hoverFade < 75 then 
-            self.hoverFade = self.hoverFade + 0.75
-        end 
-
-        self.isHovered = self:IsHovered()
-    end
-
-    table.insert(base.contents, ui)
-
-    if (#base.contents * height) > base:GetTall() then 
-        base.scrollbar = true
-    end
-
-    return ui
-end
-
-function UI:MapScrollable(base, data, custom, onClick)
-    local ui = self:Scrollable(base, 40, true, data, custom)
-    ui.onClick = onClick
-
-    function ui:OnMousePressed()
-        onClick(self, data)
-    end
-
-    function ui:SizeToAndAdjustOthers(w, h, t, d, revert)
-        local inith = self:GetTall()
-
-        self:SizeTo(w, h, t, 0)
-        self.inith = inith 
-        
-        if not revert then 
-            self.adjusted = true 
-        end
-
-        local foundSelf = false 
-        local movedReverted = false
-        for k, v in pairs(base.contents) do 
-            if v == self then 
-                foundSelf = true 
-                continue
-            elseif v.adjusted then 
-                if not foundSelf then 
-                    v:SizeTo(w, v.inith, t, d)
-                else end
-                v.adjusted = false
-            end
-
-            if foundSelf then
-                local x, y = v:GetPos() 
-                v:MoveTo(w, y + h - inith, t, 0)
-            end
-        end
-    end
-
-    return ui
-end
+	UI_PRIMARY = theme["Primary"]
+	UI_SECONDARY = theme["Secondary"]
+	UI_TRI = theme["Tri"]
+	UI_ACCENT = theme["Accent"]
+	UI_TEXT1 = theme["Main Text"]
+	UI_TEXT2 = theme["Secondary Text"]
+	UI_HIGHLIGHT = theme["Highlight"]
+end)
 
 function UI:NumberedUIPanel(title, ...)
-    local options = {...}
+	-- Options
+	local options = {...}
 
-    local pan = vgui.Create("DPanel")
+	-- Let's create our panel
+	local pan = vgui.Create("DPanel")
 
-    pan.hasPages = #options > 7 and true or false
-    pan.page = 1
+	-- Page options
+	pan.hasPages = #options > 7 and true or false
+	pan.page = 1
 
-    local width = 200
-    local height = 75 + ((pan.hasPages and 9 or #options) * 20)
-    pan.trueHeight = height
-    local xPos, yPos = 20, (ScrH() / 2) - (height / 2)
+	-- Positioning and Sizing
+	local width = 200
+	local height = 75 + ((pan.hasPages and 9 or #options) * 20)
+	pan.trueHeight = height
+	local xPos, yPos = 20, (ScrH() / 2) - (height / 2)
 
-    pan:SetSize(width, height)
-    pan:SetPos(xPos, yPos)
-    pan.title = title
-    pan.options = options
+	-- Set up
+	pan:SetSize(width, height)
+	pan:SetPos(xPos, yPos)
+	pan.title = title
+	pan.options = options
 
-    if (self.ActiveNumberedUIPanel) then
-        self.ActiveNumberedUIPanel:Exit()
-    end
+	-- Our theme
+	local theme, id = Theme:GetPreference("NumberedUI")
+	pan.themec = theme["Colours"]
+	pan.themet = theme["Toggles"]
+	pan.themeid = id
 
-    local largest = ""
-    for index, option in pairs(pan.options) do
-        if (option.bool ~= nil) then
-            local o1 = option.customBool and option.customBool[1] or "ON"
-            local o2 = option.customBool and option.customBool[2] or "OFF"
-            option.defname = option.name
-            option.name = option.name .. ": " .. (option.bool and o1 or o2) .. " "
-        end
-        largest = (#option.name > #largest) and option.name or largest
-    end
+	-- Remove other numbered panel if open
+	if (self.ActiveNumberedUIPanel) then
+		self.ActiveNumberedUIPanel:Exit()
+	end
 
-    surface.SetFont("hud.numberedui.css2")
-    local w, _ = surface.GetTextSize(largest)
+	-- Check if there's a toggleable boolean in the options, and if there is set a prefix.
+	-- Also lets get the largest option by name length here as well.
+	local largest = ""
+	for index, option in pairs(pan.options) do
+		if (option.bool ~= nil) then
+			local o1 = option.customBool and option.customBool[1] or "ON"
+			local o2 = option.customBool and option.customBool[2] or "OFF"
+			option.defname = option.name
+			option.name = option.name .. ": " .. (option.bool and o1 or o2) .. " "
+		end
 
-    if (w > 180) then
-        pan:SetWide(w + 40)
-    end
+		largest = (#option.name > #largest) and option.name or largest
+	end
 
-    local selectedNUI = Settings:GetValue('selected.nui') or 'nui.kawaii'
+	-- Get width of largest option
+	surface.SetFont(pan.themeid == "nui.css" and "hud.numberedui.css2" or "hud.numberedui.kawaii1")
+	local w, y = surface.GetTextSize(largest)
 
-    local nuiTheme, themeId = Theme:GetPreference("NumberedUI", selectedNUI)
+	-- Set the panels width larger than default if the text width goes beyond it.
+	if (w > 180) then
+		pan:SetWide(w + 40)
+	end
 
-    local themeColors = nuiTheme["Colours"]
-    local themeToggles = nuiTheme["Toggles"]
+	-- Paint the panel
+	-- Todo: Themes, the style should be changeable
+	pan.Paint = function(self, width, height)
+		-- Our theme
+		local theme, id = Theme:GetPreference("NumberedUI")
+		self.themec = theme["Colours"]
+		self.themet = theme["Toggles"]
+		self.themeid = id
 
-    pan.Paint = function(self, width, height)
-        local start = 1 + ((self.page - 1) * 7)
-        local finish = ((self.page - 1) * 7) + 7
+		-- Options we gotta print
+		local start = 1 + ((self.page - 1) * 7)
+		local finish = ((self.page - 1) * 7) + 7
 
-        if (themeId == "nui.css") then 
-            local base = themeColors["Primary Colour"]
-            local title = themeColors["Title Colour"]
-            local text = color_white
+		-- Counter Strike: Source 
+		if (self.themeid == "nui.css") then 
+			-- Colours
+			local base = self.themec["Primary Colour"]
+			local title = self.themec["Title Colour"]
+			local text = color_white
 
-            draw.RoundedBox(16, 0, 0, width, height, base)
-            DrawText(self.title, "hud.numberedui.css1", 10, 15, title, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			-- Print the box
+			draw.RoundedBox(16, 0, 0, width, height, base)
 
-            local i = 1
-            for index = start, finish do
-                if (not self.options[index]) then break end
-                local option = self.options[index]
-                DrawText(i .. ". " .. option.name, "hud.numberedui.css2", 10, 25 + (i * 20), option.col and option.col or text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-                i = i + 1
-            end
+			-- Title
+			draw.SimpleText(self.title, "hud.numberedui.css1", 10, 15, title, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
-            local index = self.hasPages and 7 or #self.options
-            DrawText("0. Exit", "hud.numberedui.css2", 10, 35 + ((index + (self.hasPages and 3 or 1)) * 20), title, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-            if (self.hasPages) then
-                DrawText("8. Previous", "hud.numberedui.css2", 10, 35 + ((index + 1) * 20), title, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-                DrawText("9. Next", "hud.numberedui.css2", 10, 35 + ((index + 2) * 20), title, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-            end
+			-- Options
+			local i = 1
+			for index = start, finish do
+				-- No option
+				if (not self.options[index]) then break end
 
-        elseif (themeId == "nui.kawaii") then
-            local base = themeColors["Primary Colour"]
-            local base2 = themeColors["Secondary Colour"]
-            local text = themeColors["Text Colour"]
-            local title = themeColors["Title Colour"]
+				local option = self.options[index]
+				draw.SimpleText(i .. ". " .. option.name, "hud.numberedui.css2", 10, 25 + (i * 20), option.col and option.col or text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+				i = i + 1
+			end
 
-            surface.SetDrawColor(base)
-            surface.DrawRect(0, 0, width, height)
+			-- Index
+			local index = self.hasPages and 7 or #self.options
 
-            surface.SetDrawColor(base2)
-            surface.DrawRect(0, 0, width, 30)
+			-- Exit
+			draw.SimpleText("0. Exit", "hud.numberedui.css2", 10, 35 + ((index + (self.hasPages and 3 or 1)) * 20), title, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
-            DrawText(self.title, "hud.title", 10, 15, title, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			-- Pages?
+			if (self.hasPages) then
+				draw.SimpleText("8. Previous", "hud.numberedui.css2", 10, 35 + ((index + 1) * 20), title, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+				draw.SimpleText("9. Next", "hud.numberedui.css2", 10, 35 + ((index + 2) * 20), title, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			end
+		elseif (self.themeid == "nui.kawaii") then
+			-- Colours
+			local base = self.themec["Primary Colour"]
+			local base2 = self.themec["Secondary Colour"]
+			local text = self.themec["Text Colour"]
+			local title = self.themec["Title Colour"]
 
-            local i = 1
-            for index = start, finish do
-                if (not self.options[index]) then break end
-                local option = self.options[index]
-                DrawText(i .. ". " .. option.name, "hud.numberedui.kawaii1", 10, 25 + (i * 20), option.col and option.col or text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-                i = i + 1
-            end
+			-- Box
+			surface.SetDrawColor(base)
+			surface.DrawRect(0, 0, width, height)
 
-            local index = self.hasPages and 7 or #self.options
-            DrawText("0. Exit", "hud.numberedui.kawaii1", 10, 35 + ((index + (self.hasPages and 3 or 1)) * 20), text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-            if (self.hasPages) then
-                DrawText("8. Previous", "hud.numberedui.kawaii1", 10, 35 + ((index + 1) * 20), text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-                DrawText("9. Next", "hud.numberedui.kawaii1", 10, 35 + ((index + 2) * 20), text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-            end
-        end
-    end
+			-- Boom boom boom boom
+			surface.SetDrawColor(base2)
+			surface.DrawRect(0, 0, width, 30)
 
+			-- Title
+			draw.SimpleText(self.title, "hud.title", 10, 15, title, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+
+			-- Print options
+			local i = 1
+			for index = start, finish do
+				-- No option
+				if (not self.options[index]) then break end
+
+				local option = self.options[index]
+				draw.SimpleText(i .. ". " .. option.name, "hud.numberedui.kawaii1", 10, 25 + (i * 20), option.col and option.col or text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+				i = i + 1
+			end
+
+			-- Index
+			local index = self.hasPages and 7 or #self.options
+
+			-- Exit
+			draw.SimpleText("0. Exit", "hud.numberedui.kawaii1", 10, 35 + ((index + (self.hasPages and 3 or 1)) * 20), text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+
+			-- Pages?
+			if (self.hasPages) then
+				draw.SimpleText("8. Previous", "hud.numberedui.kawaii1", 10, 35 + ((index + 1) * 20), text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+				draw.SimpleText("9. Next", "hud.numberedui.kawaii1", 10, 35 + ((index + 2) * 20), text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			end
+		end
+	end
  
-    pan.keylimit = false
-    pan.Think = function(self)
-        local key = -1
+	-- Think
+	pan.keylimit = false
+	pan.Think = function(self)
+		local key = -1
 
-        for id = 1, 10 do
-            if input.IsKeyDown(id) then
-                key = id - 1
-                break
-            end
-        end
+		-- Get current key down
+		for id = 1, 10 do
+			if input.IsKeyDown(id) then
+				key = id - 1
+				break
+			end
+		end
 
-        if (lp and Iv(lp()) and lp():IsTyping()) or gui.IsConsoleVisible() then
-            key = -1 
-        end
+		-- Check if player is typing
+		if (lp and IsValid(lp()) and lp():IsTyping()) or gui.IsConsoleVisible() then
+			key = -1 
+		end
 
-        if (key > 0) and (key <= 9) and (not self.keylimit) then
-            if (key == 8) and (self.hasPages) then
-                self:OnPrevious()
-            elseif (key == 9) and (self.hasPages) then
-                self:OnNext()
-            else
-                local pageAddition = (self.page - 1) * 7
-                if (not self.options[key + pageAddition]) or (not self.options[key + pageAddition]["function"]) then
-                    return
-                end
-                self.options[key + pageAddition]["function"]()
-            end
+		-- Call custom function set by the option
+		if (key > 0) and (key <= 9) and (not self.keylimit) then
+			if (key == 8) and (self.hasPages) then
+				if (self.page == 1) then 
+					self:OnPrevious(self.page == 1)
+				else
+					self.page = (self.page == 1 and 1 or self.page - 1)
+					self:OnPrevious()
+				end
+			elseif (key == 9) and (self.hasPages) then
+				local max = math.ceil(#self.options / 7)
+				self.page = self.page == max and self.page or self.page + 1
+				self:OnNext(self.page == max)
+				self:UpdateLongestOption()
+			else
+				local pageAddition = (self.page - 1) * 7
+				if (not self.options[key + pageAddition]) or (not self.options[key + pageAddition]["function"]) then
+					return end
 
-            self.keylimit = true
-            timer.Simple(self.keydelay or 0.25, function()
-                if not IsValid(self) or not UI.ActiveNumberedUIPanel or self ~= UI.ActiveNumberedUIPanel then return end
-                self.keylimit = false
-            end)
-        elseif (key == 0) then
-            self:OnExit()
-            self:Exit()
-        end
+				self.options[key + pageAddition]["function"]()
+			end
 
-        self:OnThink()
-    end
+			-- Reset delay
+			self.keylimit = true
+			timer.Simple(self.keydelay or 0.25, function()
+				-- Bug fix
+				if not IsValid(self) then return end
+				self.keylimit = false
+			end)
+		elseif (key == 0) then
+			self:OnExit()
+			self:Exit()
+		end
 
-    function pan:UpdateTitle(title)
-        self.title = title
-    end
+		-- Call an extra think function if one is set
+		self:OnThink()
+	end
 
-    function pan:UpdateOption(optionId, title, colour, f)
-        if not self.options[optionId] then return end
+	-- Update Title
+	function pan:UpdateTitle(title)
+		self.title = title
+	end
 
-        if title then
-            self.options[optionId]["name"] = title
-        end
+	-- Update option
+	function pan:UpdateOption(optionId, title, colour, f)
+		if (not self.options[optionId]) then
+			return end
 
-        if colour then
-            self.options[optionId]["col"] = colour
-        end
+		if (title) then
+			self.options[optionId]["name"] = title
+		end
 
-        if f then
-            self.options[optionId]["function"] = f
-        end
-    end
+		if (colour) then
+			self.options[optionId]["col"] = colour
+		end
 
-    function pan:UpdateOptionBool(optionId)
-        if not self.options[optionId] or self.options[optionId].bool == nil then return end
+		if (f) then
+			self.options[optionId]["function"] = f
+		end
+	end
 
-        self.options[optionId].bool = not self.options[optionId].bool
+	-- Update option bool
+	function pan:UpdateOptionBool(optionId)
+		if (not self.options[optionId]) or (self.options[optionId].bool == nil) then
+			return end
 
-        local o1 = self.options[optionId].customBool and self.options[optionId].customBool[1] or "ON"
-        local o2 = self.options[optionId].customBool and self.options[optionId].customBool[2] or "OFF"
-    
-        self.options[optionId].name = self.options[optionId].defname .. ": " .. (self.options[optionId].bool and o1 or o2)
-    end
+		self.options[optionId].bool = (not self.options[optionId].bool)
 
-    function UI:ScrollablePanel(parent, x, y, width, height, data)
-        local ui = parent:Add("DScrollPanel")
-    
-        local top = parent:Add("DPanel")
-        top:SetPos(x, y)
-        top:SetSize(width, 20)
-    
-        function top:Paint(width, height)
-            local col = UI_TRI
-            local text = UI_TEXT2
-            surface.SetDrawColor(Color(100, 100, 100))
-            surface.DrawRect(0, height - 2, width, 1)
-    
-            for k, v in pairs(data[1]) do 
-                local x = (width / data[2]) * data[3][k]
-    
-                local align = TEXT_ALIGN_LEFT
-                if k == #data[1] and (#data[1] ~= 1) then 
-                    align = TEXT_ALIGN_RIGHT
-                    x = width - (ui.scrollbar and 16 or 0) - 20
-                end 
-    
-                DrawText(v, "hud.smalltext",  10+x, 0, text, align, TEXT_ALIGN_TOP)
-            end
-        end
-    
-        local sortbutts = {}
-        local lastsorted = {1, 0}
-        for k, v in pairs(data[1]) do 
-            local x = (width / data[2]) * data[3][k]
-    
-            sortbutts[k] = top:Add("DButton")
-            sortbutts[k]:SetPos(x, 0)
-            sortbutts[k].Paint = function() end
-            sortbutts[k]:SetText("")
-            sortbutts[k].OnMousePressed = function()
-                if ui.nosort then return end
-                local copied = table.Copy(ui.contents)
-                for k, v in pairs(ui.contents) do 
-                    ui.contents[k]:Remove()
-                    ui.contents[k] = nil 
-                end
-    
-                if (lastsorted[1] == k) and (lastsorted[2] == 0) then 
-                    table.sort(copied, function(a, b)
-                        lastsorted = {k, 1}
-                        return (tonumber(a.data[k]) and tonumber(a.data[k]) or a.data[k]) > (tonumber(b.data[k]) and tonumber(b.data[k]) or b.data[k])
-                    end)
-                else 
-                    table.sort(copied, function(a, b)
-                        lastsorted = {k, 0}
-                        return (tonumber(a.data[k]) and tonumber(a.data[k]) or a.data[k]) < (tonumber(b.data[k]) and tonumber(b.data[k]) or b.data[k])
-                    end)
-                end
-    
-                for k, v in pairs(copied) do
-                    UI:MapScrollable(ui, v.data, v.custom, v.onClick)
-                end
-            end
-        end
-    
-        ui:SetSize(width, height - 21)
-        ui:SetPos(x, y + 21)
-    
-        local vbar = ui:GetVBar()
-        vbar:SetHideButtons(true)
-    
-        function vbar:Paint(width, height)
-        end
-    
-        function vbar.btnUp:Paint(width, height)
-        end
-    
-        function vbar.btnDown:Paint(width, height)
-        end
-    
-        function vbar.btnGrip:Paint(width, height)
-            local col = Color(100,100,100)
-            surface.SetDrawColor(col)
-            surface.DrawRect(1, 0, width - 1, height)
-        end
-    
-        local old = ui.SetVisible 
-        function ui:SetVisible(arg)
-            old(self, arg)
-            top:SetVisible(arg)
-        end 
-    
-        return ui, top
-    end
+		-- Name
+		local o1 = self.options[optionId].customBool and self.options[optionId].customBool[1] or "ON"
+		local o2 = self.options[optionId].customBool and self.options[optionId].customBool[2] or "OFF"
+		self.options[optionId].name = self.options[optionId].defname .. ": [" .. (self.options[optionId].bool and o1 or o2) .. "] "
+	end
 
-    function pan:OnThink()
-    end
+	-- On Think
+	-- This should just be overwritten if you need to use it.
+	function pan:OnThink()
+	end
 
-    function pan:Exit()
-        UI.ActiveNumberedUIPanel = false
-        self:Remove()
-        pan = nil
-    end
+	-- Exit
+	function pan:Exit()
+		UI.ActiveNumberedUIPanel = false
+		self:Remove()
+		pan = nil
+	end
 
-    function pan:OnExit()
-    end
+	-- On Exit
+	function pan:OnExit()
+	end
 
-    function pan:SelectOption(id)
-        self.options[id]["function"]()
-    end
+	-- Select option
+	function pan:SelectOption(id)
+		self.options[id]["function"]()
+	end
 
-    function pan:SetCustomDelay(delay)
-        self.keydelay = delay
-    end
+	-- Set custom delay
+	function pan:SetCustomDelay(delay)
+		self.keydelay = delay
+	end
 
-    function pan:ForceNextPrevious(bool)
-        self.hasPages = true
-        self:SetTall(75 + 180)
+	-- Force next/previous
+	function pan:ForceNextPrevious(bool)
+		self.hasPages = true
+		self:SetTall(75 + 180)
 
-        local posx, posy = self:GetPos()
-        self:SetPos(posx, ScrH() / 2 - ((75 + 180) / 2))
-    end
+		local posx, posy = self:GetPos()
+		self:SetPos(posx, ScrH() / 2 - ((75 + 180) / 2))
+	end
 
-    function pan:UpdateLongestOption()
-        local largest = ""
-        for index, option in pairs(self.options) do
-            largest = (#option.name > #largest) and option.name or largest
-        end
+	-- Revert 
+	function pan:RemoveNextPrevious()
+		self.hasPages = false 
+		self:SetTall(self.trueHeight)
+		local posx, posy = self:GetPos()
+		self:SetPos(posx, ScrH() / 2 - ((self.trueHeight) / 2))
+	end
 
-        surface.SetFont("HUDLabelMed")
-        local width_largest = select(1, surface.GetTextSize(largest)) + 20
+	-- Update longest option
+	function pan:UpdateLongestOption()
+		local largest = ""
 
-        if width_largest > 180 then
-            self:SetWide((width_largest * 1.1) + 44)
-        end
-    end
+		local start = 1 + ((self.page - 1) * 7)
+		local finish = ((self.page - 1) * 7) + 7
+		for index = start, finish do
+			if (not self.options[index]) then 
+				break 
+			end
 
-    function pan:OnNext()
-        local maxPages = math.ceil(#self.options / 7)
-        if self.page < maxPages then
-            self.page = self.page + 1
-        else
-            self.page = maxPages
-        end
-        self:UpdateLongestOption()
-    end
+			local option = self.options[index]
+			largest = (#option.name > #largest) and option.name or largest
+		end
 
-    function pan:OnPrevious()
-        if self.page > 1 then
-            self.page = self.page - 1
-        else
-            self.page = 1
-        end
-        self:UpdateLongestOption()
-    end
+		-- Get width of largest option
+		surface.SetFont(self.themeid == "nui.css" and "hud.numberedui.css2" or "hud.numberedui.kawaii1")
+		local width_largest = select(1, surface.GetTextSize(largest))
+		print(width_largest)
 
-    self.ActiveNumberedUIPanel = pan
+		-- Set the panels width larger than default if the text width goes beyond it.
+		if (width_largest > 160) then
+			self:SetWide(width_largest + 40)
+		end
+	end
 
-    return pan
+	-- On Next
+	-- This should be overwritten if you need to use it
+	function pan:OnNext()
+	end
+
+	function pan:OnPrevious()
+		self:UpdateLongestOption()
+	end
+
+	-- Set Active Numbered UI Panel
+	-- This is important, as if another numbered UI panel was opened, there would be overlap.
+	self.ActiveNumberedUIPanel = pan
+
+	-- Return
+	return pan
 end
 
 function UI:BasePanel(width, height, x, y, p, shouldntPopup, base)
@@ -578,7 +468,7 @@ function UI:DrawBanner(panel, title)
 	function panel:Paint(width, height)
 		_Paint(self, width, height)
 
-		surface.SetDrawColor(self.themec["Primary Colour"])
+		surface.SetDrawColor(self.themec["Secondary Colour"])
 		surface.DrawRect(0, 0, width, 30)
 
 		if (self.themet["Outlines"]) then 
@@ -586,8 +476,63 @@ function UI:DrawBanner(panel, title)
 			surface.DrawOutlinedRect(0, 0, width, 30)
 		end
 
-		DrawText(title, "hud.title", 10, 6, self.themec["Text Colour 2"], TEXT_ALIGN_LEFT)
+		draw.SimpleText(title, "hud.title", 10, 6, self.themec["Text Colour 2"], TEXT_ALIGN_LEFT)
 	end
+end
+
+function UI:AddCloseButton(panel)
+	local _Paint = panel.Paint 
+
+	function panel:Paint(width, height)
+		_Paint(self, width, height)
+
+		draw.SimpleText("x", "hud.title", width - 20, 5, self.themec["Text Colour 2"], TEXT_ALIGN_LEFT)
+	end
+
+	function panel:OnExit()
+		gui.EnableScreenClicker(false)
+	end
+
+	panel._close = panel:Add("DButton")
+	panel._close:SetSize(15, 15)
+	panel._close:SetPos(panel:GetWide() - 20, 8)
+	panel._close:SetText("")
+	panel._close.Paint = function() end
+	panel._close.OnMousePressed = function(self)
+		panel:OnExit()
+		panel:Remove()
+		panel = nil 
+	end
+end
+
+function UI:TextBox(parent, x, y, width, height, outlines, bg)
+	local textbox = parent:Add("DTextEntry")
+	textbox.col = UI_TEXT1
+	textbox:RequestFocus()
+	textbox:SetSize(width, height)
+
+	local xP, yP = parent:GetPos()
+	textbox:SetPos(x,y)
+	textbox:SetFont("ui.mainmenu.button")
+
+	function textbox:Paint(width, height)
+		if (bg) then 
+			surface.SetDrawColor(bg)
+			surface.DrawRect(0, 0, width, height)
+		end
+
+		if (outlines) then 
+			surface.SetDrawColor(UI_TEXT1)
+			surface.DrawOutlinedRect(0, 0, width, height)
+		end 
+
+		self:DrawTextEntryText(self.col, Color(30, 130, 255), Color(255, 255, 255))
+		self:CPaint(width, height)
+	end
+
+	function textbox:CPaint() end
+
+	return textbox
 end
 
 function UI:BuildSimpleButton(self, name, func, x, y, w, h)
@@ -625,9 +570,342 @@ function UI:BuildSimpleButton(self, name, func, x, y, w, h)
 	return butt
 end
 
+function UI:ScrollablePanel(parent, x, y, width, height, data)
+	local ui = parent:Add("DScrollPanel")
+
+	local top = parent:Add("DPanel")
+	top:SetPos(x, y)
+	top:SetSize(width, 20)
+
+	function top:Paint(width, height)
+		local col = UI_TRI
+		local text = UI_TEXT2
+		surface.SetDrawColor(Color(100,100,100))
+		surface.DrawRect(0, height - 2, width, 1)
+
+		for k, v in pairs(data[1]) do 
+			local x = (width / data[2]) * data[3][k]
+
+			local align = TEXT_ALIGN_LEFT
+			if k == #data[1] and (#data[1] ~= 1) then 
+				align = TEXT_ALIGN_RIGHT
+				x = width - (ui.scrollbar and 16 or 0) - 20
+			end 
+
+			draw.SimpleText(v, "hud.smalltext",  10+x, 0, text, align, TEXT_ALIGN_TOP)
+		end
+	end
+
+	local sortbutts = {}
+	local lastsorted = {1, 0}
+	for k, v in pairs(data[1]) do 
+		local x = (width / data[2]) * data[3][k]
+
+		sortbutts[k] = top:Add("DButton")
+		sortbutts[k]:SetPos(x, 0)
+		sortbutts[k]:SetWide(100)
+		sortbutts[k].Paint = function() end
+		sortbutts[k]:SetText("")
+		sortbutts[k].OnMousePressed = function()
+			if ui.nosort then return end
+			local copied = table.Copy(ui.contents)
+			for k, v in pairs(ui.contents) do 
+				ui.contents[k]:Remove()
+				ui.contents[k] = nil 
+			end
+
+			if (lastsorted[1] == k) and (lastsorted[2] == 0) then 
+				table.sort(copied, function(a, b)
+					lastsorted = {k, 1}
+					return (tonumber(a.data[k]) and tonumber(a.data[k]) or a.data[k]) > (tonumber(b.data[k]) and tonumber(b.data[k]) or b.data[k])
+				end)
+			else 
+				table.sort(copied, function(a, b)
+					lastsorted = {k, 0}
+					return (tonumber(a.data[k]) and tonumber(a.data[k]) or a.data[k]) < (tonumber(b.data[k]) and tonumber(b.data[k]) or b.data[k])
+				end)
+			end
+
+			for k, v in pairs(copied) do
+				UI:MapScrollable(ui, v.data, v.custom, v.onClick)
+			end
+		end
+	end
+
+	ui:SetSize(width, height - 21)
+	ui:SetPos(x, y + 21)
+
+	local vbar = ui:GetVBar()
+	vbar:SetHideButtons(true)
+
+	function vbar:Paint(width, height)
+	end
+
+	function vbar.btnUp:Paint(width, height)
+	end
+
+	function vbar.btnDown:Paint(width, height)
+	end
+
+	function vbar.btnGrip:Paint(width, height)
+		local col = Color(100,100,100)
+		surface.SetDrawColor(col)
+		surface.DrawRect(1, 0, width - 1, height)
+	end
+
+	local old = ui.SetVisible 
+	function ui:SetVisible(arg)
+		old(self, arg)
+		top:SetVisible(arg)
+	end 
+
+	return ui, top
+end
+
+function UI:Scrollable(base, height, hoverCol, data, custom)
+	if (not base.contents) then 
+		base.contents = {}
+	end
+
+	local ui = base:Add("DButton")
+	ui:SetPos(0, height * #base.contents)
+	ui:SetSize(base:GetWide(), height)
+	ui:SetText("")
+	ui.data = data
+	ui.custom = custom 
+	ui.hoverCol = hoverCol
+	ui.height = height
+	ui.hoverFade = 0 
+	ui.fcol = false 
+
+	local initialy = height / 2
+	
+	if not base:GetParent().themec then 
+		base:GetParent().themec = base:GetParent():GetParent().themec
+	end
+
+	function ui:Paint(width, height)
+		local accent = UI_ACCENT
+		accent = Color(accent.r, accent.g, accent.b, self.hoverFade)
+
+		if ((hoverCol) and (self.isHovered)) or self.fcol then 
+			surface.SetDrawColor(self.fcol and self.fcol or accent)
+			surface.DrawRect(0, 0, width - (base.scrollbar and 16 or 0), height)
+		end 
+
+		local text = UI_TEXT1
+		for k, v in pairs(data) do
+			local x = (width / #data) * (k - 1)
+			if (custom) then 
+				x = (width / custom[1]) * custom[2][k]
+			end
+
+			local align = TEXT_ALIGN_LEFT
+			if k == #data and (#data ~= 1) then 
+				x = width - (base.scrollbar and 16 or 0) - 20
+				align = TEXT_ALIGN_RIGHT
+			end 
+
+			if type(v) == 'table' then 
+				if v[1] == 'name' then 
+					draw.SimpleText(UTIL:GetPlayerName(v[2]), "ui.mainmenu.button", 10 + x, initialy, text, align, TEXT_ALIGN_CENTER)
+				else 
+					draw.SimpleText(v[1], "ui.mainmenu.button", 10 + x, initialy, v[2], align, TEXT_ALIGN_CENTER)
+				end 
+			else
+				draw.SimpleText(v, "ui.mainmenu.button", 10 + x, initialy, text, align, TEXT_ALIGN_CENTER)
+			end
+		end
+
+		self:CPaint(width, height)
+	end
+
+	function ui:CPaint()
+	end
+
+	function ui:SetColor(cust)
+		if cust then 
+			self.fcol = cust 
+		else 
+			self.fcol = Color(UI_ACCENT.r, UI_ACCENT.g, UI_ACCENT.b, 75)
+		end 
+	end 
+
+	function ui:RemoveColor()
+		self.fcol = false 
+	end 
+
+	function ui:Think()
+		if self.isHovered and not self:IsHovered() then 
+			self.hoverFade = 0 
+		elseif self.isHovered and self.hoverFade < 75 then 
+			self.hoverFade = self.hoverFade + 0.75
+		end 
+
+		self.isHovered = self:IsHovered()
+	end
+
+	table.insert(base.contents, ui)
+
+	if (#base.contents * height) > base:GetTall() then 
+		base.scrollbar = true
+	end
+
+	return ui
+end
+
+function UI:MapScrollable(base, data, custom, onClick)
+	local ui = self:Scrollable(base, 40, true, data, custom)
+	ui.onClick = onClick
+
+	function ui:OnMousePressed()
+		onClick(self, data)
+	end
+
+	function ui:SizeToAndAdjustOthers(w, h, t, d, revert)
+		local inith = self:GetTall()
+
+		self:SizeTo(w, h, t, 0)
+		self.inith = inith 
+		
+		if not revert then 
+			self.adjusted = true 
+		end
+
+		local foundSelf = false 
+		local movedReverted = false
+		for k, v in pairs(base.contents) do 
+			if v == self then 
+				foundSelf = true 
+				continue
+			elseif v.adjusted then 
+				if not foundSelf then 
+					v:SizeTo(w, v.inith, t, d)
+				else end
+				v.adjusted = false
+			end
+
+			if foundSelf then
+				local x, y = v:GetPos() 
+				v:MoveTo(w, y + h - inith, t, 0)
+			end
+		end
+	end
+
+	return ui
+end
+
+function UI:SearchBox(parent, x, y, width, height, outlines, bg, search)
+	local box = self:TextBox(parent, x, y, width, height, outlines, bg)
+	box:SetFont("hud.title2.1")
+
+	function box:CPaint(width, height)
+		if (not self.changed) then
+			local text = parent.themec["Text Colour"]
+			draw.SimpleText("Search...", "hud.title2.1", 3, height / 2, text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+		end
+	end
+
+	box:SetUpdateOnType(true)
+	function box:OnValueChange(value)
+		box.changed = true
+		search(value)
+	end
+
+	return box
+end
+
+function UI:ScrollableUIPanel(title, desc, search, data, should_search)
+	local width = 600
+	local height = 510
+	local base = self:BasePanel(width, height)
+
+	self:DrawBanner(base, title)
+
+	self:AddCloseButton(base)
+
+	function base:CPaint(width, height)
+		local text = base.themec["Text Colour"]
+
+		draw.SimpleText(desc, "hud.title2.1", 10, 50, text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+		draw.SimpleText("Hint: You can press the titles to sort by them.", "hud.smalltext", 10, height - 10, text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+	end
+
+	base.ScrollPanel = self:ScrollablePanel(base, 10, 70, width - 20, height - 90, data)
+
+	if (not should_search) then 
+		base.SearchBox = UI:SearchBox(base, width - 160, 37, 150, 26, true, false, search)
+	end
+
+	function base:Exit()
+		if base.OnExit then 
+			base:OnExit()
+		end
+		
+		base:Remove()
+		base = nil
+		gui.EnableScreenClicker(false)
+	end
+
+	return base
+end
+
+function UI:SimpleInputBox(title, callback, close)
+	local width = 300
+	local height = 115
+	local base = self:BasePanel(width, height)
+
+	self:DrawBanner(base, title)
+
+	if (close) then 
+		self:AddCloseButton(base)
+	end
+
+	local b = UI_PRIMARY
+	local col = Color(b.r + 5, b.g + 5, b.b + 5, 255)
+	local box = self:TextBox(base, 10, 40, width - 20, 30, false, col)
+	box:SetFont("hud.title2.1")
+
+	local b = base:Add("DButton")
+	b:SetPos(10, 75)
+	b:SetSize(width - 20, 30)
+	b:SetText("")
+	function b:Paint(w,h)
+		surface.SetDrawColor(base.themec["Tri Colour"])
+		surface.DrawRect(0, 0, w, h)
+		draw.SimpleText("Confirm", "hud.title2.1", w/2, h/2, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+	end
+	function b:OnMousePressed()
+		callback(box:GetText())
+		base:Remove()
+	end
+
+	function base:GetOutput()
+		return self.output or false 
+	end
+	
+	return base
+end
+
+function UI:BuildSimpleButton(self, name, func, x, y, w, h)
+	local butt = self:Add('DButton')
+	butt:SetPos(x, y)
+	butt:SetSize(w, h)
+	butt:SetText("")
+	butt.Paint = function(pan, width, height)
+		surface.SetDrawColor(pan:IsHovered() and self.themec["Tri Colour"] or self.themec["Secondary Colour"])
+		surface.DrawRect(0, 0, width, height)
+		draw.SimpleText(name, "ui.mainmenu.button", width / 2, height / 2, self.themec["Text Colour"], TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+	end
+	butt.OnMousePressed = function(pan)
+		func()
+	end
+
+	return butt
+end
+
 function UI:DialogBox(title, answers, yes, no)
 	answers = answers or {"Yes", "No"}
-
 	local width = 320 
 	local height = 60 
 	local base = self:BasePanel(width, height)
@@ -640,6 +918,131 @@ function UI:DialogBox(title, answers, yes, no)
 
 	return base
 end
+
+function UI:NumberInput(parent, x, y, width, height, default, min, max, title, allowDecimals, callback, disable) 
+	local entry = parent:Add('DNumberWang')
+    entry:SetPos(x, y)
+    entry:SetSize(width, height)
+    entry:SetFont("ui.mainmenu.button")
+	entry:SetTextColor(UI_TEXT1)
+	entry:HideWang()
+
+    function entry:Paint(width, height)
+        local b = UI_PRIMARY
+		local col = Color(b.r + 5, b.g + 5, b.b + 5, 255)
+        surface.SetDrawColor(col)
+        surface.DrawRect(0, 0, width, height, 2)
+
+        surface.SetFont("ui.mainmenu.button")
+        local w, h = surface.GetTextSize(self:GetText())
+
+        draw.SimpleText(title, "ui.mainmenu.button", w+6, height / 2, Color(200, 200, 200), UI_TEXT, TEXT_ALIGN_CENTER, TEXT_ALIGN_LEFT)
+		self:DrawTextEntryText(UI_TEXT1, Color(30, 130, 255), Color(255, 255, 255))
+    end
+
+	entry.min = min 
+	entry.max = max 
+    entry:SetMin(min)
+    entry:SetMax(max)
+
+    if allowDecimals then 
+        entry:SetDecimals(3)
+	else 
+		entry:SetDecimals(0)
+	end 
+
+	entry:SetValue(default)
+
+	if not disable then 
+		entry:SetUpdateOnType(true)
+	else 
+		entry:SetUpdateOnType(false)
+	end 
+
+    function entry:OnValueChange(newVal)
+		newVal = tonumber(newVal)
+
+		if not newVal then return end 
+		
+		if newVal > self.max then 
+			newVal = self.max 
+			entry:SetValue(self.max)
+			entry:SetText(self.max)
+		elseif newVal < self.min then 
+            newVal = self.min
+			entry:SetValue(self.min)
+			entry:SetText(self.min)
+        end 
+
+        callback(newVal)
+	end 
+	
+	return entry 
+end 
+
+function UI:TextEntry(parent, x, y, width, height, default, len, callback)
+	local b = UI_PRIMARY
+	local col = Color(b.r + 5, b.g + 5, b.b + 5, 255)
+	local entry = self:TextBox(parent, x, y, width, height, false, col)
+
+	entry:SetText(default)
+	entry:SetUpdateOnType(true)
+	function entry:OnValueChange(var)
+		if #var > len then 
+			var = var:Left(len)
+			entry:SetText(var)
+		end 
+
+		callback(var)
+	end 
+
+	return entry
+end 
+
+function UI:SteamID(parent, x, y, width, height, default, len, callback)
+	local entry = self:TextEntry(parent, x, y, width, height, default, len, callback)
+
+	function entry:OnValueChange(var)
+		if #var > len then 
+			var = var:Left(len)
+			entry:SetText(var)
+		end 
+
+		if Admin:ValidSteamID(var:upper()) then 
+			self.col = Color(0, 200, 0)
+		else 
+			self.col = Color(200, 0, 0)
+		end
+
+		callback(var)
+	end 
+	
+	return entry 
+end 
+
+function UI:CheckBox(parent, x, y, size, default, callback)
+	local pan = vgui.Create('DButton', parent)
+	pan:SetPos(x, y)
+	pan:SetSize(size, size)
+	pan:SetText("")
+	pan.checked = default 
+
+	function pan:OnMousePressed()
+		self.checked = (not self.checked)
+		callback(self.checked)
+	end 
+
+	local b = UI_PRIMARY
+	local col = Color(b.r + 25, b.g + 25, b.b + 25, 255)
+	function pan:Paint(width, height)
+		surface.SetDrawColor(col)
+		surface.DrawOutlinedRect(0, 0, width, height, 4)
+
+		if self.checked then 
+			surface.DrawRect(6, 6, width - 12, height - 12)
+		end 
+	end 
+end 
 
 local function CP_Callback(id)
     return function() UI:SendCallback("checkpoints", {id}) end

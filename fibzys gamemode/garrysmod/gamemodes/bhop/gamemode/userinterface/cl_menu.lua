@@ -675,6 +675,8 @@ function UI:CreateMenu()
             y = y + 60
             self:CreateToggle(parent, y, "bhop_simplebox", "Simple HUD Boxes", "Enables or disables simple HUD boxes.")
             y = y + 60
+            self:CreateToggle(parent, y, "bhop_rainbowtext", "Rainbow HUD", "Enables or disables rainbow HUD text.")
+            y = y + 60
             self:CreateToggle(parent, y, "bhop_chatbox", "Custom Chatbox", "Enables or disables the custom chat box.")
         end },
 
