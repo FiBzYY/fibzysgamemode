@@ -98,3 +98,6 @@ Huge shoutout to these amazing contributors and inspirations:
 Every player matters greatly to me. Hope you enjoy the smooth and refined Bhop experience—happy hopping!
 
 Note: if you fork this keep the About: the same its disrespectful to change my README or About:
+
+Ingore: Niflheimrx's fork there is no artificial intelligence splattered throughout **
+All code is mine and deved by me, artificial intelligence was only used for syntax bugs and insights and ideas.
