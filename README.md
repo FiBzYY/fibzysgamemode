@@ -58,7 +58,7 @@ This system is designed to be **fully modular**, allowing easy integration into 
 ## Need Help or Have Feedback?
 I'm here to support you! Feel free to reach out:
 
-- **Discord**: [Join Here](https://discord.gg/EhUFYJxZya)
+- **Discord**: [Join Here](https://discord.gg/mGh2KE9FzD)
 - **GitHub**: [FiBzYY](https://github.com/FiBzYY)
 - **Steam**: [FiBzY](https://steamcommunity.com/id/fibzy_/)
 - **Report Issues**: Please use GitHub to report any problems.
