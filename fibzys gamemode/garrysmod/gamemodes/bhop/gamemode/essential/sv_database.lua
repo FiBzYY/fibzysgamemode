@@ -70,10 +70,10 @@ function TIMER:Boot()
             if Zones and Zones.Setup then
                 Zones:Setup()
             else
-                print("[ERROR] Zones.Setup() function does NOT exist!")
+                UTIL:Notify(Color(255, 0, 0), "Database", "Zones:Setup function does NOT exist!")
             end
         else
-            print("[ERROR] LoadZones() failed - No zones found for this map.")
+            UTIL:Notify(Color(255, 0, 0), "Database", "LoadZones failed, No zones found for this map.")
         end
     end)
 
@@ -95,12 +95,12 @@ function ReloadZonesOnMapLoad()
         if success then
             if Zones and Zones.Setup then
                 Zones:Setup()
-                print("[DEBUG] ReloadZonesOnMapLoad: Zones successfully reloaded!")
+                UTIL:Notify(Color(255, 0, 0), "Database", "Zones successfully reloaded!")
             else
-                print("[ERROR] ReloadZonesOnMapLoad: Zones.Setup() function does NOT exist!")
+                UTIL:Notify(Color(255, 0, 0), "Database", "Zones:Setup function does NOT exist!")
             end
         else
-            print("[ERROR] ReloadZonesOnMapLoad: No zones found, cannot reload!")
+             UTIL:Notify(Color(255, 0, 0), "Database", "No zones found cannot reload!")
         end
     end)
 end

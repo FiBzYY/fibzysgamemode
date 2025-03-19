@@ -369,7 +369,7 @@ function TIMER:StopTimer(ply)
     local tickTimeDiff = TIMER:ConvertTick(ply, ply.time, ply.finished, true, nil)
 
     -- Send Stop Timer | InStartZone | ScoreBoard
-    NETWORK:StartNetworkMessage(ply, "TIMER/Finish",  ply, tickTimeDiff)
+    NETWORK:StartNetworkMessage(ply, "TIMER/Finish", ply, tickTimeDiff)
     NETWORK:StartNetworkMessageTimer(player.GetAll(), "Scoreboard", {"normal", ply, ply.finished})
 
 	if self:GetStyle(ply) == self:GetStyleID("Segment") then 
@@ -424,7 +424,8 @@ function TIMER:BonusStart(ply)
 
     NETWORK:StartNetworkMessage(ply, "UpdateSingleVar", ply, "InStartZone", ply.InStartZone)
     self:SetJumps(ply, 0)
-    NETWORK:StartNetworkMessage(ply, "TIMER/Start", 2)
+    NETWORK:StartNetworkMessage(ply, "TIMER/Start", ply, 2)
+
 
     if Replay and Replay.TrimRecording then
         Replay:TrimRecording(ply)
@@ -457,7 +458,7 @@ function TIMER:BonusStop(ply)
          Replay:StopRecording(ply, tickTimeDiff, ply.record)
     end
 
-    NETWORK:StartNetworkMessage(ply, "TIMER/Finish", tickTimeDiff)
+    NETWORK:StartNetworkMessage(ply, "TIMER/Finish", ply, tickTimeDiff)
     self:Finish(ply, tickTimeDiff)
 
     SendTimerUpdate(ply, ply.bonustime, ply.bonusfinished, ply.iFractionalTicksBonus)
@@ -479,7 +480,7 @@ function TIMER:BonusReset(ply)
     ply.iFractionalTicksBonus = 0
     ply.iFullTicksBonus = 0
 
-    NETWORK:StartNetworkMessage(ply, "TIMER/Reset")
+    NETWORK:StartNetworkMessage(ply, "TIMER/Reset", ply)
 
     if Replay and Replay.StartRecording then
          Replay:StartRecording(ply)
@@ -933,7 +934,7 @@ function TIMER:LoadMapData()
             Timer.Multiplier = tonumber(result[1]["multiplier"]) or 0
             Timer.BonusMultiplier = tonumber(result[1]["bonusmultiplier"]) or 0
             Timer.Options = tonumber(result[1]["options"]) or 0
-            UTIL:Notify(Color(255, 255, 0), "Timer", "Loaded map multipliers: Multiplier = " .. Timer.Multiplier .. ", BonusMultiplier = " .. Timer.BonusMultiplier .. ", Options = " .. Timer.Options)
+            UTIL:Notify(Color(255, 255, 0), "Timer", "Loaded map points: Main Points: " .. Timer.Multiplier .. ", Bonus Points: " .. Timer.BonusMultiplier .. ", Map Options: " .. Timer.Options)
         else
             UTIL:Notify(Color(255, 255, 0), "Timer", "No entry found for map " .. mapName .. ". Using default values.")
             Timer.Multiplier = 0

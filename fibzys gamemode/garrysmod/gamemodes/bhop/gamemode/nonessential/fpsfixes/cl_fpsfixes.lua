@@ -56,6 +56,7 @@ hook_Add("InitPostEntity", "Fpsfixes", function()
     if GetConVar("bhop_enablefpsboost"):GetBool() then
         RunConsoleCommand("cl_interp", "0.05")
         RunConsoleCommand("cl_smoothtime", "0.05")
+        RunConsoleCommand("r_decals", "500000")
 
         -- Others
         RunConsoleCommand("lua_networkvar_bytespertick", "0")

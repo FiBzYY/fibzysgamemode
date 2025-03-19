@@ -378,7 +378,7 @@ function RTV:LoadData()
         for _, data in ipairs(results) do
             table.insert(MapList, {
                 data["map"],
-                tonumber(data["multiplier"]) or 1,
+                tonumber(data["multiplier"]) or 0,
                 tonumber(data["plays"]) or 0
             })
         end

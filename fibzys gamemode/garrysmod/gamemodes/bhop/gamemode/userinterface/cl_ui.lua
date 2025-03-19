@@ -319,29 +319,20 @@ function UI:NumberedUIPanel(title, ...)
 
         if (key > 0) and (key <= 9) and (not self.keylimit) then
             if (key == 8) and (self.hasPages) then
-                if (self.page == 1) then 
-                    self:OnPrevious(self.page == 1)
-                else
-                    self.page = (self.page == 1 and 1 or self.page - 1)
-                    self:OnPrevious()
-                end
+                self:OnPrevious()
             elseif (key == 9) and (self.hasPages) then
-                -- local max = math.ceil(#self.options / 7)
-                -- self.page = self.page == max and self.page or self.page + 1
-                self:OnNext(self.page == max)
-                self:UpdateLongestOption()
+                self:OnNext()
             else
                 local pageAddition = (self.page - 1) * 7
                 if (not self.options[key + pageAddition]) or (not self.options[key + pageAddition]["function"]) then
-                    return end
-
+                    return
+                end
                 self.options[key + pageAddition]["function"]()
             end
 
             self.keylimit = true
             timer.Simple(self.keydelay or 0.25, function()
-                -- Bug fix
-                if not Iv(self) then return end
+                if not IsValid(self) or not UI.ActiveNumberedUIPanel or self ~= UI.ActiveNumberedUIPanel then return end
                 self.keylimit = false
             end)
         elseif (key == 0) then
@@ -520,15 +511,19 @@ function UI:NumberedUIPanel(title, ...)
         local maxPages = math.ceil(#self.options / 7)
         if self.page < maxPages then
             self.page = self.page + 1
-            self:UpdateLongestOption()
+        else
+            self.page = maxPages
         end
+        self:UpdateLongestOption()
     end
 
     function pan:OnPrevious()
         if self.page > 1 then
             self.page = self.page - 1
-            self:UpdateLongestOption()
+        else
+            self.page = 1
         end
+        self:UpdateLongestOption()
     end
 
     self.ActiveNumberedUIPanel = pan
@@ -860,19 +855,21 @@ UI:AddListener("nominate", function(_, data)
 
     for _, mapItem in ipairs(Cache.M_Data) do
         if mapItem and mapItem.name then
-            options[#options + 1] = {
-                ["name"] = mapItem.name .. " (" .. (mapItem.points or 0) .. " points)",
-                ["col"] = (mapItem.name == currentMap) and Color(0, 150, 255) or Color(255, 255, 255),
-                ["function"] = Nominate_Callback(mapItem.name)
-            }
+            if not (mapItem.name == currentMap and (mapItem.points or 0) <= 0) then
+                options[#options + 1] = {
+                    ["name"] = mapItem.name .. " (" .. (mapItem.points or 0) .. " points)",
+                    ["col"] = (mapItem.name == currentMap) and Color(0, 150, 255) or Color(255, 255, 255),
+                    ["function"] = Nominate_Callback(mapItem.name)
+                }
+            end
         end
     end
 
     if UI.nominate and UI.nominate.title then
         UI.nominate.options = options
-        UI.nominate:UpdateTitle("Nominate (" .. #Cache.M_Data .. " maps)")
+        UI.nominate:UpdateTitle("Nominate (" .. #options .. " maps)")
     else
-        UI.nominate = UI:NumberedUIPanel("Nominate (" .. #Cache.M_Data .. " maps)", unpack(options))
+        UI.nominate = UI:NumberedUIPanel("Nominate (" .. #options .. " maps)", unpack(options))
     end
 end)
 
