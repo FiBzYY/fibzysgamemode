@@ -16,8 +16,8 @@ local ZONE = {
 
 local Iv = IsValid
 
-resource.AddWorkshop "3020406990" -- Zone texture DL
-resource.AddWorkshop "3444798278" -- Zone sounds DL
+resource.AddWorkshop("3020406990") -- Zone texture DL
+resource.AddWorkshop("3444798278") -- Zone sounds DL
 
 util.AddNetworkString("ZoneExitSound")
 
@@ -50,47 +50,48 @@ local function HandleStartZone(ent, zone)
     local moveType = ent:GetMoveType()
 
     if zone == ZONE.MAIN_START then
+        JUMPTICK:HandleStartZone(ent)
         ent.InStartZone = true
         if ent.time and not isJumping and isOnGround then
             TIMER:ResetTimer(ent)
         elseif not ent.time and isJumping and moveType ~= MOVETYPE_NOCLIP then
             TIMER:StartTimer(ent)
-
             if not ent:GetNWBool("inPractice") then
                 net.Start("ZoneExitSound")
                 net.Send(ent)
             end
         end
     elseif zone == ZONE.BONUS_START then
+        JUMPTICK:HandleStartZone(ent)
         ent.InStartZone = false
         if ent.bonustime and not isJumping and isOnGround then
             TIMER:BonusReset(ent)
         elseif not ent.bonustime and isJumping and moveType ~= MOVETYPE_NOCLIP then
             TIMER:BonusStart(ent)
+            if not ent:GetNWBool("inPractice") then
+                net.Start("ZoneExitSound")
+                net.Send(ent)
+            end
         end
     end
 end
 
 function ENT:StartTouch(ent)
-    if not IsValid(ent) or not ent:IsPlayer() or ent:Team() == TEAM_SPECTATOR then return end
+    if not Iv(ent) or not ent:IsPlayer() or ent:Team() == TEAM_SPECTATOR then return end
 
     local zone = self:GetNWInt("zonetype")
 
-    if zone == ZONE.MAIN_START then
-        JUMPTICK:HandleStartZone(ent)
-
-        ent.InStartZone = true
-        if ent.time and ent:IsOnGround() and not ent:KeyDown(IN_JUMP) then
-            TIMER:ResetTimer(ent)
-        elseif not ent.time and ent:KeyDown(IN_JUMP) and ent:GetMoveType() ~= MOVETYPE_NOCLIP then
-            TIMER:StartTimer(ent)
-        end
+    -- Unified for main & bonus
+    if zone == ZONE.MAIN_START or zone == ZONE.BONUS_START then
+        HandleStartZone(ent, zone)
     elseif zone == ZONE.MAIN_END and ent.time and not ent.finished then
         TIMER:StopTimer(ent)
+    elseif zone == ZONE.BONUS_END and ent.bonustime and not ent.bonusfinished then
+        TIMER:BonusStop(ent)
     end
 
     if zone == ZONE.AC or zone == ZONE.NormalAC then
-      TIMER:Disable(ent)
+        TIMER:Disable(ent)
     end
 
     if zone == ZONE.BonusAC and ent.bonustime then
@@ -112,17 +113,17 @@ function ENT:Touch(ent)
 end
 
 function ENT:EndTouch(ent)
-    if not IsValid(ent) or not ent:IsPlayer() or ent:Team() == TEAM_SPECTATOR then return end
+    if not Iv(ent) or not ent:IsPlayer() or ent:Team() == TEAM_SPECTATOR then return end
 
     local zone = self:GetNWInt("zonetype")
 
     if zone == ZONE.MAIN_START then
         JUMPTICK:HandleEndZone(ent)
-
         if not ent.time then
             TIMER:StartTimer(ent)
         end
     elseif zone == ZONE.BONUS_START then
+        JUMPTICK:HandleEndZone(ent)
         if not ent.bonustime then
             TIMER:BonusStart(ent)
         end
