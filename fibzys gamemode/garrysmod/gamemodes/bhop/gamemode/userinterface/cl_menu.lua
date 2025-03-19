@@ -449,6 +449,8 @@ function UI:CreateMenu()
         y = y + 60
         self:CreateToggle(container, y, "bhop_nosway", "Weapon Sway", "Controls how weapon view models move.")
         y = y + 60
+        self:CreateToggle(container, y, "bhop_autoshoot", "Auto Shoot", "Enables or disables weapon auto spammer.")
+        y = y + 60
         self:CreateToggle(container, y, "bhop_alwaysshowtriggers", "Always Show Triggers", "Enables or disables showtriggers on spawn.")
     end, isActive = true },
 

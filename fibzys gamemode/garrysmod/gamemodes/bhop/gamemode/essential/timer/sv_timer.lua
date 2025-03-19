@@ -722,6 +722,19 @@ function TIMER:AddRecord(ply, time, old)
     end)
 end
 
+local function GetRainbowColor()
+    local rainbowColors = {
+        16711680,
+        16744192,
+        16776960,
+        65280,
+        255,
+        16711935,
+        65535
+    }
+    return rainbowColors[math.random(1, #rainbowColors)]
+end
+
 function TIMER:PostDiscordWR(ply, time, styleID, currentWR)
     if not reqwest then return end
 
@@ -791,8 +804,11 @@ function TIMER:PostDiscordWR(ply, time, styleID, currentWR)
     local compiled = {
         username = "Server Record",
         embeds = {{
-            title = string.format("Server Record | %s Record | %s", styleName, mapName),
-            color = 16755200,
+            author = {
+                name = "Server Record | " .. styleName .. " | " .. mapName,
+                icon_url = "https://i.imgur.com/YREHNoE.png"
+            },
+            color = GetRainbowColor(),
             fields = fields,
             timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ"),
             footer = { text = "Top time on server" }
