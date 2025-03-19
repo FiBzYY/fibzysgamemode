@@ -90,7 +90,7 @@ Huge shoutout to these amazing contributors and inspirations:
 *Default bhop movement code and assistance with Long Jump.*
 
 - **OpenAI** – [Website](https://openai.com/)  
-*Helped squash countless Lua syntax bugs with custom AI insights.*
+*Helped squash countless Lua syntax bugs with custom AI insights. Note: Only helped with syntax bugs and insights thats it*
 
 ---
 
