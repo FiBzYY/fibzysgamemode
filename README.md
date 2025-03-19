@@ -100,4 +100,4 @@ Every player matters greatly to me. Hope you enjoy the smooth and refined Bhop e
 Note: if you fork this keep the About: the same its disrespectful to change my README or About:
 
 Ingore: Niflheimrx's fork there is no artificial intelligence splattered throughout **
-All code is mine and deved by me, artificial intelligence was only used for syntax bugs and insights and ideas.
+All code is mine and deved by me, artificial intelligence was only used for syntax bugs and insights and ideas. 
