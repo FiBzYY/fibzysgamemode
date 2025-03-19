@@ -1,4 +1,4 @@
-# Bunny Hop by FiBzY v13
+# Bunny Hop by FiBzY v13.1
 
 Welcome to **Bunny Hop by FiBzY!**
 
@@ -58,7 +58,7 @@ This system is designed to be **fully modular**, allowing easy integration into 
 ## Need Help or Have Feedback?
 I'm here to support you! Feel free to reach out:
 
-- **Discord**: [Join Here](https://discord.gg/EhUFYJxZya)
+- **Discord**: [Join Here](https://discord.gg/mGh2KE9FzD)
 - **GitHub**: [FiBzYY](https://github.com/FiBzYY)
 - **Steam**: [FiBzY](https://steamcommunity.com/id/fibzy_/)
 - **Report Issues**: Please use GitHub to report any problems.
@@ -100,4 +100,4 @@ Every player matters greatly to me. Hope you enjoy the smooth and refined Bhop e
 Note: if you fork this keep the About: the same its disrespectful to change my README or About:
 
 Ingore: Niflheimrx's fork there is no artificial intelligence splattered throughout **
-All code is mine and deved by me, artificial intelligence was only used for syntax bugs and insights and ideas.
+All code is mine and deved by me, artificial intelligence was only used for syntax bugs and insights and ideas. 
