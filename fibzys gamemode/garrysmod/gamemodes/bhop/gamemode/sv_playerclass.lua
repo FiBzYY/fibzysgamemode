@@ -257,13 +257,13 @@ function TIMER:Load(ply)
         BHDATA:Broadcast("Print", { "Server", TIMER:RedToBlackFade("Happy Halloween!") })
     end
 
-    BHDATA:Broadcast("Print", { "Server", "Gamemode loaded (" .. BHOP.Version.GM .. ")." })
+    BHDATA:Broadcast("Print", { "Server", Lang:Get("GMLoaded", {BHOP.Version.GM})})
 
     local connectionCount = ply:GetPData("connectionv2", 0)
     connectionCount = connectionCount + 1
     ply:SetPData("connectionv2", connectionCount)
 
-    BHDATA:Broadcast("Print", { "Server", ply:Nick() .. " has connected " .. connectionCount .. " times." })
+    BHDATA:Broadcast("Print", { "Server", Lang:Get("DetailsCount", { ply:Nick(), connectionCount})})
 end
 
 -- Load the style

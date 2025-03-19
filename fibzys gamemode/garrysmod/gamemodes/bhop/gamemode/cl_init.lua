@@ -30,6 +30,7 @@ local files = {
     },
     ui = {
         "userinterface/cl_fonts.lua",
+        "userinterface/cl_theme.lua",
         "userinterface/cl_ui.lua",
         "userinterface/cl_hud.lua",
         "userinterface/cl_settings.lua",

@@ -41,6 +41,7 @@ local files = {
     clientModules = {
         "userinterface/cl_fonts.lua",
         "userinterface/cl_settings.lua",
+        "userinterface/cl_theme.lua",
         "userinterface/cl_themes.lua",
         "userinterface/cl_ui.lua",
         "userinterface/cl_hud.lua",
