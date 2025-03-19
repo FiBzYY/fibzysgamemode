@@ -95,6 +95,7 @@ local sounds_enabledbad = CreateClientConVar("bhop_wrsfx_bad", "1", true, false,
 local chat_sounds = CreateClientConVar("bhop_chatsounds", "0", true, false, "Play chat sounds", 0, 1)
 local zone_sounds = CreateClientConVar("bhop_zonesounds", "1", true, false, "Play sound on zone left", 0, 1)
 local bhop_showplayers = CreateConVar("bhop_showplayerslabel", "1", FCVAR_ARCHIVE, "Show or hide player names when looking at them")
+local bhop_wepspammer = CreateConVar("bhop_autoshoot", "1", FCVAR_ARCHIVE, "Show or disable weapon auto shoot")
 
 -- Cvars
 CreateClientConVar("bhop_simpletextures", 0, true, false, "Toggle simple solid textures", 0, 1)
@@ -557,6 +558,21 @@ function GM:CalcViewModelView(weapon, viewmodel, op, oa, p, a)
 
     return newPos, newAng
 end
+
+local oldbts = {}
+hook.Add("StartCommand", "WepSpamer", function(ply, cmd)
+    if not bhop_wepspammer:GetBool() then return end
+    if not IsValid(ply) or not ply:Alive() then return end
+
+    local buttons = cmd:GetButtons()
+    oldbts[ply] = oldbts[ply] or 0
+
+    if bit.band(oldbts[ply], IN_ATTACK) ~= 0 and bit.band(buttons, IN_ATTACK) ~= 0 then
+        cmd:RemoveKey(IN_ATTACK)
+    end
+
+    oldbts[ply] = cmd:GetButtons()
+end)
 
 -- Map Colors and Brightness
 CreateConVar("bhop_enable_map_colors", "0", FCVAR_ARCHIVE, "Enable or disable map color overwrites")
