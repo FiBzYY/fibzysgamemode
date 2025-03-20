@@ -37,6 +37,7 @@ local files = {
         "userinterface/cl_themes.lua",
         "userinterface/cl_uiutilize.lua",
         "userinterface/cl_menu.lua",
+        "userinterface/numbered/ui_mapvote.lua",
         "essential/cl_network.lua",
         "userinterface/scoreboards/cl_default.lua",
         "userinterface/chatbox/cl_chatbox.lua"
@@ -401,7 +402,7 @@ function GM:OnPlayerChat(ply, szText, bTeam, bDead)
 
             tab[#tab + 1] = color_white
             tab[#tab + 1] = " | "
-            tab[#tab + 1] = DynamicColors.RankColors
+            tab[#tab + 1] = DynamicColors.PanelColor -- Color(98, 176, 255)
             tab[#tab + 1] = ply:Name()
         end
     else
@@ -409,7 +410,7 @@ function GM:OnPlayerChat(ply, szText, bTeam, bDead)
     end
 
     tab[#tab + 1] = color_white
-    tab[#tab + 1] = " | "
+    tab[#tab + 1] = ": "
     tab[#tab + 1] = szText
 
     chat.AddText(unpack(tab))

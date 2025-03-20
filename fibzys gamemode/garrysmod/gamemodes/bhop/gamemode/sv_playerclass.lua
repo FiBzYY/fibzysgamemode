@@ -291,17 +291,17 @@ end
 -- Load the rank
 function TIMER:LoadRank(ply, update)
     self:CachePointSum(ply.style, ply:SteamID())
-    local nSum = self:GetPointSum(ply.style, ply:SteamID())
-    local nRank = self:GetRank(nSum, self:GetRankType(ply.style, true))
+    local Sum = self:GetPointSum(ply.style, ply:SteamID())
+    local Rank = self:GetRank(Sum, self:GetRankType(ply.style, true))
 
-    ply.RankSum = nSum
+    ply.RankSum = Sum
 
-    if nRank ~= ply.Rank then
-        ply.Rank = nRank
+    if Rank ~= ply.Rank then
+        ply.Rank = Rank
         ply:SetNWInt("Rank", ply.Rank)
     end
 
-    self:SetSubRank(ply, nRank, nSum)
+    self:SetSubRank(ply, Rank, Sum)
     
     if not update then
         NETWORK:StartNetworkMessageTimer(ply, "Timer", {"Ranks", Player.NormalScalar, Player.AngledScalar})
@@ -317,8 +317,8 @@ function TIMER:LoadBest(ply)
     if ply.style == practicestyleID then
         if not IsValid(ply) then return end
         ply:SetNWFloat("Record", ply.record)
-        ply.SpecialRank = 0
-        ply:SetNWInt("SpecialRank", ply.SpecialRank)
+        ply.WRCount = 0
+        ply:SetNWInt("WRCount", ply.WRCount)
 
         TIMER:SetRecord(ply, ply.record, ply.style)
 
@@ -332,7 +332,7 @@ function TIMER:LoadBest(ply)
     if not IsValid(ply) then return end
 
     MySQL:Start("SELECT t1.time, (SELECT COUNT(*) + 1 FROM timer_times AS t2 WHERE map = '" .. game.GetMap() ..
-        "' AND t2.time < t1.time AND style = " .. ply.style .. ") AS nRank FROM timer_times AS t1 WHERE t1.uid = '" ..
+        "' AND t2.time < t1.time AND style = " .. ply.style .. ") AS Rank FROM timer_times AS t1 WHERE t1.uid = '" ..
         ply:SteamID() .. "' AND t1.style = " .. ply.style .. " AND t1.map = '" .. game.GetMap() .. "'", function(Fetch)
         
         if not IsValid(ply) then return end
@@ -345,8 +345,8 @@ function TIMER:LoadBest(ply)
             TIMER:SetRecord(ply, recordTime, ply.style)
             NETWORK:StartNetworkMessage(ply, "TIMER/Record", ply, recordTime, ply.style)
 
-            ply.SpecialRankMap = tonumber(Fetch[1].nRank)
-            ply:SetNWInt("SpecialRankMap", ply.SpecialRankMap)
+            ply.Placement = tonumber(Fetch[1].Rank)
+            ply:SetNWInt("Placement", ply.Placement)
         else
             ply.record = 0
             ply:SetNWFloat("Record", ply.record)
@@ -354,8 +354,8 @@ function TIMER:LoadBest(ply)
             TIMER:SetRecord(ply, 0, ply.style)
             NETWORK:StartNetworkMessage(ply, "TIMER/Record", ply, 0, ply.style)
 
-            ply.SpecialRankMap = 0
-            ply:SetNWInt("SpecialRankMap", ply.SpecialRankMap)
+            ply.Placement = 0
+            ply:SetNWInt("Placement", ply.Placement)
         end
     end)
 
@@ -375,14 +375,14 @@ function TIMER:LoadBest(ply)
                     table.insert(ply.FirstPlaceTimes, {Map = record.map, Time = tonumber(record.time)})
                 end
 
-                ply.SpecialRank = #Fetch
-                ply:SetNWInt("SpecialRank", ply.SpecialRank)
+                ply.WRCount = #Fetch
+                ply:SetNWInt("WRCount", ply.WRCount)
 
                 NETWORK:StartNetworkMessage(ply, "TIMER/RecordList", ply.FirstPlaceTimes)
             else
                 ply.FirstPlaceTimes = {}
-                ply.SpecialRank = 0
-                ply:SetNWInt("SpecialRank", ply.SpecialRank)
+                ply.WRCount = 0
+                ply:SetNWInt("WRCount", ply.WRCount)
 
                 NETWORK:StartNetworkMessage(ply, "TIMER/RecordList", {})
             end
@@ -393,9 +393,9 @@ end
 Player.Points = {}
 
 function TIMER:CachePointSum(style, id, callback)
-    MySQL:Start("SELECT SUM(points) AS nSum FROM timer_times WHERE uid = '" .. id .. "' AND (" .. self:GetMatchingstyles(style) .. ")", function(data)
-        if data and data[1] and data[1].nSum then
-            local pointSum = tonumber(data[1].nSum) or 0
+    MySQL:Start("SELECT SUM(points) AS Sum FROM timer_times WHERE uid = '" .. id .. "' AND (" .. self:GetMatchingstyles(style) .. ")", function(data)
+        if data and data[1] and data[1].Sum then
+            local pointSum = tonumber(data[1].Sum) or 0
             Player.Points[id] = Player.Points[id] or {}
             Player.Points[id][style] = pointSum
 
@@ -433,20 +433,20 @@ end
 -- Load the players rank
 function TIMER:LoadRank(ply, update)
     self:CachePointSum(ply.style, ply:SteamID(), function()
-        local nSum = self:GetPointSum(ply.style, ply:SteamID())
-        local nRank = self:GetRank(nSum, self:GetRankType(ply.style, true))
+        local Sum = self:GetPointSum(ply.style, ply:SteamID())
+        local Rank = self:GetRank(Sum, self:GetRankType(ply.style, true))
 
-        if nRank ~= ply.Rank then
-            ply.Rank = nRank
+        if Rank ~= ply.Rank then
+            ply.Rank = Rank
             ply:SetNWInt("Rank", ply.Rank)
         end
 
-        self:SetSubRank(ply, nRank, nSum)
+        self:SetSubRank(ply, Rank, Sum)
 
-        ply.nSum = nSum
+        ply.Sum = Sum
 
         net.Start("UpdatePointsSum")
-        net.WriteInt(nSum, 32)
+        net.WriteInt(Sum, 32)
         net.Send(ply)
 
         if not update then
@@ -480,8 +480,8 @@ function TIMER:SetSubRank(ply, rank, points)
 end
 
 function TIMER:ReloadSubRanks(ply, old)
-    local nMultiplier = self:GetMultiplier(ply.style)
-    if not nMultiplier or nMultiplier == 0 then return end
+    local Points = self:GetMultiplier(ply.style)
+    if not Points or Points == 0 then return end
     
     local nAverage = self:GetAverage(ply.style)
     if not nAverage or not old then return end
@@ -491,13 +491,13 @@ function TIMER:ReloadSubRanks(ply, old)
             continue
         end
 
-        local nCurrent = nMultiplier * (old / p.Record)
-        local nNew = nMultiplier * (nAverage / p.Record)
+        local nCurrent = Points * (old / p.Record)
+        local nNew = Points * (nAverage / p.Record)
         local nPoints = p.RankSum - nCurrent + nNew
 
-        local nRank = self:GetRank(nPoints, Player:GetRankType(p.Style, true))
-        if nRank ~= p.Rank then
-            p.Rank = nRank
+        local Rank = self:GetRank(nPoints, Player:GetRankType(p.Style, true))
+        if Rank ~= p.Rank then
+            p.Rank = Rank
             p:SetNWInt("Rank", p.Rank)
         end
 
@@ -507,7 +507,7 @@ function TIMER:ReloadSubRanks(ply, old)
 end
 
 function TIMER:SetRankMedal(ply, nPos)
-    MySQL:Start("SELECT t1.uid, (SELECT COUNT(*) + 1 FROM timer_times AS t2 WHERE map = '" .. game.GetMap() .. "' AND t2.time < t1.time AND style = " .. ply.style .. ") AS nRank FROM timer_times AS t1 WHERE t1.map = '" .. game.GetMap() .. "' AND t1.style = " .. ply.style .. " ORDER BY nRank ASC LIMIT 100", function(Query)
+    MySQL:Start("SELECT t1.uid, (SELECT COUNT(*) + 1 FROM timer_times AS t2 WHERE map = '" .. game.GetMap() .. "' AND t2.time < t1.time AND style = " .. ply.style .. ") AS Rank FROM timer_times AS t1 WHERE t1.map = '" .. game.GetMap() .. "' AND t1.style = " .. ply.style .. " ORDER BY Rank ASC LIMIT 100", function(Query)
         if self:Assert(Query, "uid") then
             for _, p in pairs(player.GetHumans()) do
                 if p.style ~= ply.style then continue end
@@ -515,13 +515,13 @@ function TIMER:SetRankMedal(ply, nPos)
                 for _, d in pairs(Query) do
                     if p:SteamID() == d.uid then
                         bSet = true
-                        p.SpecialRankMap = tonumber(d.nRank) > 3 and 0 or tonumber(d.nRank)
-                        p:SetNWInt("SpecialRankMap", p.SpecialRank)
+                        p.Placement = tonumber(d.Rank) > 3 and 0 or tonumber(d.Rank)
+                        p:SetNWInt("Placement", p.WRCount)
                     end
                 end
-                if not bSet and p.SpecialRank then
-                    p.SpecialRankMap = 0
-                    p:SetNWInt("SpecialRankMap", p.SpecialRank)
+                if not bSet and p.WRCount then
+                    p.Placement = 0
+                    p:SetNWInt("Placement", p.WRCount)
                 end
             end
         end
@@ -583,9 +583,9 @@ function TIMER:GetMatchingstyles(style)
     return string.Implode(" OR ", t)
 end
 
-function TIMER:FindScalar(nMultiplier)
+function TIMER:FindScalar(Points)
     local count = #self.Ranks
-    local sum = nMultiplier * Player.LadderScalar
+    local sum = Points * Player.LadderScalar
     return (sum / count) ^ 0.33333
 end
 
@@ -610,10 +610,10 @@ TIMER.TopCache = {}
 TIMER.TopLimit = 10
 
 local function CacheTopPlayers(result, cache, style)
-    if TIMER:Assert(result, "nSum") then
+    if TIMER:Assert(result, "Sum") then
         for i, d in ipairs(result) do
             if d.nStyle == style then
-                cache[style][i] = { string_sub(d.szPlayer, 1, 20), math_floor(tonumber(d.nSum)) }
+                cache[style][i] = { string_sub(d.szPlayer, 1, 20), math_floor(tonumber(d.Sum)) }
             end
         end
 
@@ -634,12 +634,12 @@ function TIMER:LoadTop()
 
     self.TopCache[nNormal], self.TopCache[nAngled] = {}, {}
 
-    MySQL:Start("SELECT player, SUM(points) as nSum, style FROM timer_times WHERE style IN (" .. nNormal .. ", " .. self:GetStyleID("bonus") .. ") GROUP BY uid ORDER BY nSum DESC LIMIT " .. self.TopLimit, function(Normal)
+    MySQL:Start("SELECT player, SUM(points) as Sum, style FROM timer_times WHERE style IN (" .. nNormal .. ", " .. self:GetStyleID("bonus") .. ") GROUP BY uid ORDER BY Sum DESC LIMIT " .. self.TopLimit, function(Normal)
         CacheTopPlayers(Normal, self.TopCache, nNormal)
         TIMER:ClearOldCache(self.TopCache[nNormal], TIMER.TopLimit)
     end)
 
-    MySQL:Start("SELECT player, SUM(points) as nSum, style FROM timer_times WHERE style IN (" .. self:GetStyleID("sideways") .. ", " .. self:GetStyleID("halfsideways") .. ") GROUP BY uid ORDER BY nSum DESC LIMIT " .. self.TopLimit, function(Angled)
+    MySQL:Start("SELECT player, SUM(points) as Sum, style FROM timer_times WHERE style IN (" .. self:GetStyleID("sideways") .. ", " .. self:GetStyleID("halfsideways") .. ") GROUP BY uid ORDER BY Sum DESC LIMIT " .. self.TopLimit, function(Angled)
         CacheTopPlayers(Angled, self.TopCache, nAngled)
         TIMER:ClearOldCache(self.TopCache[nAngled], TIMER.TopLimit)
     end)

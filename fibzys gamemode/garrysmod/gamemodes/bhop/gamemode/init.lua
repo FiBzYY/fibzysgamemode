@@ -46,6 +46,7 @@ local files = {
         "userinterface/cl_ui.lua",
         "userinterface/cl_hud.lua",
         "userinterface/cl_uiutilize.lua",
+        "userinterface/numbered/ui_mapvote.lua",
         "userinterface/cl_menu.lua",
         "essential/cl_network.lua",
         "userinterface/scoreboards/cl_default.lua",
@@ -138,13 +139,8 @@ CreateConVar("bhop_version", tostring(BHOP.Version.GM), {FCVAR_ARCHIVE, FCVAR_NO
 CreateConVar("bhop_prediction", "1", {FCVAR_ARCHIVE, FCVAR_NOTIFY, FCVAR_REPLICATED}, "Prediction enabled")
 CreateConVar("bhop_remove_dustmotes", "1", {FCVAR_ARCHIVE, FCVAR_NOTIFY, FCVAR_REPLICATED}, "Toggle remove func_dustmotes")
 
-local nextNameChange = 0
-local IsWhitelisted = true
-
-local hook_Add = hook.Add
-local lp = LocalPlayer
-local Iv = IsValid
-local ct = CurTime
+local nextNameChange, IsWhitelisted = 0, true
+local hook_Add, lp, Iv, ct, format = hook.Add, LocalPlayer, IsValid, CurTime, string.format
 
 -- Host name updater
 local function ChangeName()
@@ -188,25 +184,14 @@ hook_Add("Initialize", "PrintBhopVersion", function()
 end)
 
 -- Banned users list
-local format = string.format
-local bannedPlayers = {
-    ["STEAM_0:0:47491394"] = true,  -- henwi
-    ["STEAM_0:0:74583369"] = true,   -- rq
-    ["STEAM_0:1:70037803"] = true,    -- cat
-    ["STEAM_0:0:53974417"] = true,     -- justa
-    ["STEAM_0:0:53053491"] = true,      -- sad
-    ["STEAM_0:1:205142"] = true,         -- vehnex
-    ["STEAM_0:0:64764232"] = true         -- nilf
-}
-
-function IsPlayerBanned(steamID)
-    return bannedPlayers[steamID] or false
+function IsPlayerCfgBanned(steamID)
+    return BHOP.Banlist[steamID] or false
 end
 
 -- Family sharing bans
 function GM:PlayerAuthed(ply, steamID, uniqueID)
     if not ply:IsFullyAuthenticated() then
-        UTIL:Notify(Color(255, 0, 255), "CheckFamilySharing", string.format("[Family Sharing] Player %s is not fully authenticated yet.", ply:Nick()))
+        UTIL:Notify(Color(255, 0, 255), "CheckFamilySharing", format("[Family Sharing] Player %s is not fully authenticated yet.", ply:Nick()))
         return
     end
 
@@ -214,9 +199,9 @@ function GM:PlayerAuthed(ply, steamID, uniqueID)
 
     if lenderSteamID64 ~= ply:SteamID64() then
         local lenderSteamID = util.SteamIDFrom64(lenderSteamID64)
-        UTIL:Notify(Color(255, 0, 255), "CheckFamilySharing", string.format("[Family Sharing] %s | %s is using a family-shared account from %s", ply:Nick(), ply:SteamID(), lenderSteamID))
+        UTIL:Notify(Color(255, 0, 255), "CheckFamilySharing", format("[Family Sharing] %s | %s is using a family-shared account from %s", ply:Nick(), ply:SteamID(), lenderSteamID))
 
-        if IsPlayerBanned(lenderSteamID) then
+        if IsPlayerCfgBanned(lenderSteamID) then
             ply:Kick("Your main account is banned.")
         end
     end

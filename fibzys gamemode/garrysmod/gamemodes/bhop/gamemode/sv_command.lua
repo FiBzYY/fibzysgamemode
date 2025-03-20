@@ -760,8 +760,8 @@ function Command:Init()
                     for _, map in pairs(RTV.Selections) do
                         table.insert(RTVSend, RTV:GetMapData(map))
                     end
-                    UI:SendToClient(false, "rtv", "Revote", RTVSend)
-                    UI:SendToClient(false, "rtv", "VoteList", RTV.MapVoteList)
+                    UI:SendToClient(false, "MapVote", "revote", RTVSend)
+                    UI:SendToClient(false, "MapVote", "update", RTV.MapVoteList)
                 end
             end,
             "Re-open the RTV voting menu",
