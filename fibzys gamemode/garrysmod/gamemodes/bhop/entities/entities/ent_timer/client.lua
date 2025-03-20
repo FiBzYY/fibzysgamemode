@@ -4,7 +4,6 @@ local bhop_thickness = CreateClientConVar("bhop_thickness", 2, true, false, "Cha
 local bhop_flatzones = CreateClientConVar("bhop_flatzones", 0, true, false, "Change to flat zones")
 local bhop_rainbowzones = CreateClientConVar("bhop_rainbowzones", 0, true, false, "Change to rainbow zones")
 
-local Col = HSVToColor(RealTime() * 40 % 360, 1, 1)
 local Iv = IsValid
 
 local Zone = {
@@ -51,29 +50,38 @@ function ENT:Initialize()
     self.initialized = true
 end
 
-local DrawArea = {
-    [Zone.MStart] = Color(0, 255, 0, 255),
-    [Zone.MEnd] = Color(255, 0, 0, 255),
-    [Zone.BStart] = Color(0, 80, 255, 255),
-    [Zone.BEnd] = Color(0, 80, 255, 100),
-    [Zone.FS] = Color(0, 80, 255, 100),
-    [Zone.AC] =  Color(153, 0, 153, 100),
-    [Zone.BAC] = Color(0, 0, 153, 100),
-    [Zone.NAC] = Color(140, 140, 140, 100),
-    [Zone.SStart] = Color(255, 128, 0, 100),
-    [Zone.SEnd] = Color(255, 128, 128, 100),
-    [Zone.Restart] = Color(128, 0, 255, 100),
-    [Zone.Velocity] = Color(255, 0, 128, 100),
-    [Zone.HELPER] = Color(255, 0, 128, 100),
-}
-
 function ENT:Draw()
     if not bhop_showzones:GetBool() then return end
 
     self:UpdateZoneData()
 
     local zoneType = self:GetNWInt("zonetype")
-    local Col = DrawArea[zoneType]
+    local selectedZoneTheme = Settings:GetValue('selected.zones') or 'zones.kawaii'
+    local zoneTheme, zoneThemeId = Theme:GetPreference("Zones", selectedZoneTheme)
+    local themeColors = zoneTheme["Colours"] or {}
+
+    local DrawArea = {
+        [Zone.MStart] = themeColors["Start Zone Colour"] or Color(0, 255, 0, 255),
+        [Zone.MEnd] = themeColors["End Zone Colour"] or Color(255, 0, 0, 255),
+        [Zone.BStart] = themeColors["Bonus Start Colour"] or Color(0, 80, 255, 255),
+        [Zone.BEnd] = themeColors["Bonus End Colour"] or Color(0, 80, 255, 100),
+        [Zone.FS] = Color(0, 80, 255, 100),
+        [Zone.AC] = themeColors["Anti-Cheat Colour"] or Color(153, 0, 153, 100),
+        [Zone.BAC] = Color(0, 0, 153, 100),
+        [Zone.NAC] = Color(140, 140, 140, 100),
+        [Zone.SStart] = Color(255, 128, 0, 100),
+        [Zone.SEnd] = Color(255, 128, 128, 100),
+        [Zone.Restart] = Color(128, 0, 255, 100),
+        [Zone.Velocity] = Color(255, 0, 128, 100),
+        [Zone.HELPER] = DynamicColors.PanelColor or Color(255, 0, 128, 100)
+    }
+
+    if bhop_rainbowzones:GetBool() then
+        Col = HSVToColor(RealTime() * 40 % 360, 1, 1)
+    else
+        Col = DrawArea[zoneType]
+    end
+
     if not Col then return end
 
     local isWireframe = bhop_wireframe:GetBool()
@@ -84,7 +92,6 @@ function ENT:Draw()
 
     if table.HasValue({Zone.AC, Zone.BAC, Zone.NAC}, zoneType) then
         local acConVar = GetConVar("bhop_anticheats"):GetInt()
-
         if acConVar == 1 then
             render.DrawBox(GetPos, Angle(0, 0, 0), rm, rma, Col)
         else
