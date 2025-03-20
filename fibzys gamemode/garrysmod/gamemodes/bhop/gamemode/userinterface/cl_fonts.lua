@@ -112,12 +112,12 @@ if not FONT_CACHE then
     MakeFont("ui.mainmenu.title2", {font = "Roboto", size = 20, weight = 500, antialias = true})
 
     -- Flow
-    MakeFont("ScoreboardPlayer", { font = "coolvetica", size = 24, weight = 500, antialias = true, italic = false })
+    MakeFont("ScoreboardPlayer", { font = "Coolvetica", size = 24, weight = 500, antialias = true, italic = false })
     MakeFont("FlowText", { font = "Tahoma", size = 16, weight = 1000, antialias = true, italic = false })
-    MakeFont("FlowRadial", { font = "coolvetica", size = math.ceil(ScrW() / 34), weight = 500, antialias = true, italic = false })
+    MakeFont("FlowRadial", { font = "Coolvetica", size = math.ceil(ScrW() / 34), weight = 500, antialias = true, italic = false })
 
     -- Chat box
-    MakeFont("chatbox.font", { size = 19, weight = 2000, font = "Coolvetica", antialias = true })
+    MakeFont("chatbox.font", { size = 19, weight = 500, font = "Roboto", antialias = true })
 
     -- Older
     MakeFont("CustomHeaderBig", { size = 44, font = "Coolvetica" })

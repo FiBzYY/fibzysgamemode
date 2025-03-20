@@ -111,9 +111,9 @@ function CS_Mode(nMode)
 end
 
 local timer_prefix = CreateClientConVar("bhop_timer_prefix_rainbow", "0", true, false, "Enable or disable rainbow timer prefix.")
-local timer_format = CreateClientConVar("bhop_timer_format", "pipe", true, false, "Choose the timer format: 'brackets' or 'pipe'.")
+local timer_format = CreateClientConVar("bhop_timer_format", "pipe", true, false, "Choose the timer format: brackets or pipe.")
 local use_dynamic_color = CreateClientConVar("bhop_use_dynamic_color", "0", true, false, "Use DynamicColors.TextColor for all prefixes.")
-local timer_sound = CreateClientConVar("bhop_chatsound", "0", true, false, "Toggle sound when displaying chat messages (1 = enabled, 0 = disabled)")
+local timer_sound = CreateClientConVar("bhop_timerchatsound", "0", true, false, "Toggle sound when displaying chat messages")
 
 local prefixColors = {
     ["Server"] = UTIL.Colour["Server"],

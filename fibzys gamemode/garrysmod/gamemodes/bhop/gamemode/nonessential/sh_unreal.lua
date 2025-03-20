@@ -33,16 +33,16 @@ local function DoUnrealBoost(ply, nForce)
     end
 
     local nCooldown = BoostCooldown[nType]
-    local nMultiplier = BoostMultiplier[nType]
+    local Points = BoostMultiplier[nType]
 
     if nType == 1 then
-        ply:SetVelocity(Vector(vel[1] * nMultiplier, vel[2] * nMultiplier, vel[3] * (nMultiplier * 1.5)))
+        ply:SetVelocity(Vector(vel[1] * Points, vel[2] * Points, vel[3] * (Points * 1.5)))
     elseif nType == 2 then
-        ply:SetVelocity(Vector(vel[1] * nMultiplier, vel[2] * nMultiplier, vel[3]))
+        ply:SetVelocity(Vector(vel[1] * Points, vel[2] * Points, vel[3]))
     elseif nType == 3 then
-        ply:SetVelocity(Vector(vel[1], vel[2], vel[3] * (vel[3] < 0 and -0.5 * nMultiplier or nMultiplier)))
+        ply:SetVelocity(Vector(vel[1], vel[2], vel[3] * (vel[3] < 0 and -0.5 * Points or Points)))
     elseif nType == 4 then
-        ply:SetVelocity(Vector(vel[1], vel[2], vel[3] * (vel[3] > 0 and -nMultiplier or nMultiplier)))
+        ply:SetVelocity(Vector(vel[1], vel[2], vel[3] * (vel[3] > 0 and -Points or Points)))
     end
 
     ply.BoostTimer = currentTime + nCooldown

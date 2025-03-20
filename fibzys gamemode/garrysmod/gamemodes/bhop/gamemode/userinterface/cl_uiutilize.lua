@@ -16,16 +16,42 @@ colors = {
     box = Color(75, 75, 75),
     boxActive = Color(70, 90, 100),
     infoText = Color(120, 120, 120),
-    hightlight = Color(0, 255, 255)
+    hightlight = Color(0, 255, 255),
+    scrollbar = Color(60, 60, 60),
+    scrollbarbackground = Color(40, 40, 40)
 }
 
 local function ConVarExists(name)
     return GetConVar(name) ~= nil
 end
 
+function UI:MenuScrollbar(vBar, barColor, btnColor, gripColor)
+    vBar:SetWide(8)
+
+    vBar.Paint = function(self, w, h)
+        surface.SetDrawColor(barColor or colors.scrollbarbackground)
+        surface.DrawRect(0, 0, w, h)
+    end
+
+    vBar.btnUp.Paint = function(self, w, h)
+        surface.SetDrawColor(btnColor or colors.scrollbar)
+        surface.DrawRect(0, 0, w, h)
+    end
+
+    vBar.btnDown.Paint = function(self, w, h)
+        surface.SetDrawColor(btnColor or colors.scrollbar)
+        surface.DrawRect(0, 0, w, h)
+    end
+
+    vBar.btnGrip.Paint = function(self, w, h)
+        surface.SetDrawColor(gripColor or Color(255, 255, 255))
+        surface.DrawRect(0, 0, w, h)
+    end
+end
+
 function UI:ColorBox(parent, y, convarName, labelText, infoText)
     local pnl = vgui.Create("DPanel", parent)
-    pnl:SetSize(parent:GetWide(), 80)
+    pnl:SetSize(parent:GetWide(), 90)
     pnl:SetPos(0, y)
 
     local colStr = GetConVar(convarName):GetString()
@@ -34,9 +60,9 @@ function UI:ColorBox(parent, y, convarName, labelText, infoText)
 
     pnl.Paint = function(self, w, h)
         surface.SetDrawColor(colors.box)
-        surface.DrawOutlinedRect(w - 50, 10, 30, 30, 2)
+        surface.DrawOutlinedRect(w - 60, 15, 36, 36, 2)
         surface.SetDrawColor(color)
-        surface.DrawRect(w - 46, 14, 22, 22)
+        surface.DrawRect(w - 56, 19, 28, 28)
     end
 
     pnl.OnMousePressed = function()
@@ -48,7 +74,7 @@ function UI:ColorBox(parent, y, convarName, labelText, infoText)
         frame:MakePopup()
         frame.Paint = function(self, w, h)
             draw.RoundedBox(0, 0, 0, w, h, Color(30, 30, 30, 255))
-            draw.SimpleText("Pick a Color", "DermaDefaultBold", w / 2, 10, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+            draw.SimpleText("Pick a Color", "ui.mainmenu.button", w / 2, 10, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
         end
 
         local mixer = vgui.Create("DColorMixer", frame)
@@ -77,19 +103,18 @@ function UI:ColorBox(parent, y, convarName, labelText, infoText)
         end
     end
 
-    -- Labels
     local lbl = vgui.Create("DLabel", parent)
-    lbl:SetPos(10, y + 8)
+    lbl:SetPos(10, y + 10)
     lbl:SetText(labelText)
     lbl:SetTextColor(colors.text)
-    lbl:SetFont("ToggleButtonFontTitle")
+    lbl:SetFont("ui.mainmenu.button")
     lbl:SizeToContents()
 
     local infoLbl = vgui.Create("DLabel", parent)
-    infoLbl:SetPos(10, y + 28)
+    infoLbl:SetPos(10, y + 34)
     infoLbl:SetText(infoText)
     infoLbl:SetTextColor(colors.infoText)
-    infoLbl:SetFont("SmallTextFont")
+    infoLbl:SetFont("ui.mainmenu.button")
     infoLbl:SizeToContents()
 
     return pnl, lbl, infoLbl
@@ -102,7 +127,7 @@ function UI:CreateCustomDropdown(parent, y, themeID, labelText, themeOptions)
 
     pnl.Paint = function(self, w, h)
         draw.RoundedBox(0, 10, 5, w - 20, 70, Color(42, 42, 42, 250))
-        draw.SimpleText(labelText, "ToggleButtonFontTitle", 20, 15, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+        draw.SimpleText(labelText, "ui.mainmenu.button", 20, 15, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
     end
 
     local dropdownButton = vgui.Create("DButton", pnl)
@@ -120,7 +145,7 @@ function UI:CreateCustomDropdown(parent, y, themeID, labelText, themeOptions)
         local bgColor = self:IsHovered() and Color(50, 50, 50, 255) or Color(35, 35, 35, 255)
         draw.RoundedBox(0, 0, 0, w, h, bgColor)
 
-        draw.SimpleText(selectedText, "hud.subtitle", 10, h / 2, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+        draw.SimpleText(selectedText, "ui.mainmenu.button", 10, h / 2, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
         surface.SetDrawColor(200, 200, 200, 255)
         draw.NoTexture()
@@ -150,7 +175,7 @@ function UI:CreateCustomDropdown(parent, y, themeID, labelText, themeOptions)
         option.Paint = function(self, w, h)
             local bgColor = self:IsHovered() and Color(60, 60, 60, 255) or Color(35, 35, 35, 255)
             draw.RoundedBox(0, 0, 0, w, h, bgColor)
-            draw.SimpleText(name, "hud.subtitle", 10, h / 2, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+            draw.SimpleText(name, "ui.mainmenu.button", 10, h / 2, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
         end
 
         option.DoClick = function()
@@ -187,7 +212,7 @@ function UI:CreateCustomDropdownPreset(parent, y, themeID, labelText, themeOptio
 
     pnl.Paint = function(self, w, h)
         draw.RoundedBox(0, 10, 5, w - 20, 70, Color(42, 42, 42, 250))
-        draw.SimpleText(labelText, "ToggleButtonFontTitle", 20, 15, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+        draw.SimpleText(labelText, "ui.mainmenu.button", 20, 15, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
     end
 
     local dropdownButton = vgui.Create("DButton", pnl)
@@ -204,7 +229,7 @@ function UI:CreateCustomDropdownPreset(parent, y, themeID, labelText, themeOptio
         local bgColor = self:IsHovered() and Color(50, 50, 50, 255) or Color(35, 35, 35, 255)
         draw.RoundedBox(0, 0, 0, w, h, bgColor)
 
-        draw.SimpleText(selectedText, "hud.subtitle", 10, h / 2, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+        draw.SimpleText(selectedText, "ui.mainmenu.button", 10, h / 2, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
         surface.SetDrawColor(200, 200, 200, 255)
         draw.NoTexture()
@@ -270,7 +295,7 @@ function UI:CreateCustomDropdownSB(parent, y, cvarName, labelText, options)
 
     pnl.Paint = function(self, w, h)
         draw.RoundedBox(0, 10, 5, w - 20, 70, Color(42, 42, 42, 250))
-        draw.SimpleText(labelText, "ToggleButtonFontTitle", 20, 15, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+        draw.SimpleText(labelText, "ui.mainmenu.button", 20, 15, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
     end
 
     local dropdownButton = vgui.Create("DButton", pnl)
@@ -285,7 +310,7 @@ function UI:CreateCustomDropdownSB(parent, y, cvarName, labelText, options)
     dropdownButton.Paint = function(self, w, h)
         local bgColor = self:IsHovered() and Color(50, 50, 50, 255) or Color(35, 35, 35, 255)
         draw.RoundedBox(0, 0, 0, w, h, bgColor)
-        draw.SimpleText(selectedText, "hud.subtitle", 10, h / 2, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+        draw.SimpleText(selectedText, "ui.mainmenu.button", 10, h / 2, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
         surface.SetDrawColor(200, 200, 200, 255)
         draw.NoTexture()
@@ -315,7 +340,7 @@ function UI:CreateCustomDropdownSB(parent, y, cvarName, labelText, options)
         option.Paint = function(self, w, h)
             local bgColor = self:IsHovered() and Color(60, 60, 60, 255) or Color(35, 35, 35, 255)
             draw.RoundedBox(0, 0, 0, w, h, bgColor)
-            draw.SimpleText(name, "hud.subtitle", 10, h / 2, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+            draw.SimpleText(name, "ui.mainmenu.button", 10, h / 2, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
         end
 
         option.DoClick = function()
@@ -393,14 +418,14 @@ function UI:CreateThemeToggle(parent, y, themeID, labelText)
     lbl:SetPos(10, y + 8)
     lbl:SetText(labelText)
     lbl:SetTextColor(colors.text)
-    lbl:SetFont("ToggleButtonFontTitle")
+    lbl:SetFont("ui.mainmenu.button")
     lbl:SizeToContents()
 
     local infoLbl = vgui.Create("DLabel", parent)
     infoLbl:SetPos(10, y + 28)
     infoLbl:SetText("Enable HUD for " .. labelText)
     infoLbl:SetTextColor(colors.infoText)
-    infoLbl:SetFont("SmallTextFont")
+    infoLbl:SetFont("ui.mainmenu.button")
     infoLbl:SizeToContents()
 
     return pnl, lbl, infoLbl
@@ -408,108 +433,67 @@ end
 
 function UI:CreateInputBox(parent, y, command, defaultVal, labelText, infoText, minVal, maxVal)
     local pnl = vgui.Create("DPanel", parent)
-    pnl:SetSize(parent:GetWide(), 80)
+    pnl:SetSize(parent:GetWide(), 90)
     pnl:SetPos(0, y)
     pnl.Paint = function(self, w, h)
         surface.SetDrawColor(0, 0, 0, 0)
         surface.DrawRect(0, 0, w, h)
     end
 
-    local boxSize = 31
     minVal = minVal or 0.1
     maxVal = maxVal or 10
 
     local cvarValue = GetConVar(command) and GetConVar(command):GetFloat() or defaultVal
 
     local inputBox = vgui.Create("DTextEntry", pnl)
-    inputBox:SetPos(pnl:GetWide() - 50, 0)
-    inputBox:SetSize(boxSize, boxSize)
+    inputBox:SetPos(pnl:GetWide() - 60, 15)
+    inputBox:SetSize(36, 36)
     inputBox:SetNumeric(true)
-    inputBox:SetText(tostring(cvarValue))
 
-    inputBox:SetFont("ToggleButtonFont")
+    local function formatValue(val)
+        return tonumber(string.format("%.1f", val))
+    end
+
+    inputBox:SetText(tostring(formatValue(cvarValue)))
+    inputBox:SetFont("ui.mainmenu.button")
 
     inputBox.Paint = function(self, w, h)
+        surface.SetDrawColor(colors.box)
+        surface.DrawOutlinedRect(0, 0, w, h, 2)
         surface.SetDrawColor(colors.toggleButton)
-        surface.DrawRect(0, 0, w, h)
+        surface.DrawRect(2, 2, w - 4, h - 4)
         self:DrawTextEntryText(Color(255, 255, 255), Color(30, 130, 255), Color(255, 255, 255))
     end
 
     inputBox.OnChange = function(self)
         local value = tonumber(self:GetValue()) or minVal
         if value < minVal then
-            self:SetText(tostring(minVal))
+            value = minVal
         elseif value > maxVal then
-            self:SetText(tostring(maxVal))
+            value = maxVal
         end
+        self:SetText(tostring(formatValue(value)))
     end
 
     inputBox.OnEnter = function(self)
         local newValue = math.Clamp(tonumber(self:GetValue()) or minVal, minVal, maxVal)
-        lp():ConCommand(command .. " " .. tostring(newValue)) 
+        newValue = formatValue(newValue)
+        self:SetText(tostring(newValue))
+        lp():ConCommand(command .. " " .. tostring(newValue))
     end
 
     local lbl = vgui.Create("DLabel", parent)
-    lbl:SetPos(10, y + 8)
+    lbl:SetPos(10, y + 10)
     lbl:SetText(labelText)
     lbl:SetTextColor(colors.text)
-    lbl:SetFont("ToggleButtonFont")
+    lbl:SetFont("ui.mainmenu.button")
     lbl:SizeToContents()
 
     local infoLbl = vgui.Create("DLabel", parent)
-    infoLbl:SetPos(10, y + 28)
+    infoLbl:SetPos(10, y + 34)
     infoLbl:SetText(infoText)
     infoLbl:SetTextColor(colors.infoText)
-    infoLbl:SetFont("SmallTextFont")
-    infoLbl:SizeToContents()
-
-    return pnl, lbl, infoLbl, inputBox
-end
-
-function UI:CreateInputBoxWide(parent, y, command, defaultVal, labelText, infoText)
-    local pnl = vgui.Create("DPanel", parent)
-    pnl:SetSize(parent:GetWide(), 80)
-    pnl:SetPos(0, y)
-    pnl.Paint = function(self, w, h)
-        surface.SetDrawColor(0, 0, 0, 0)
-        surface.DrawRect(0, 0, w, h)
-    end
-
-    local boxSize = 31
-    local cvarValue = GetConVar(command) and GetConVar(command):GetFloat() or defaultVal
-    cvarValue = tonumber(string.format("%.2f", cvarValue))
-
-    local inputBox = vgui.Create("DTextEntry", pnl)
-    inputBox:SetPos(pnl:GetWide() - 60, 15)
-    inputBox:SetSize(boxSize + 20, boxSize)
-    inputBox:SetNumeric(true)
-    inputBox:SetText(tostring(cvarValue))
-    inputBox:SetFont("ToggleButtonFont")
-
-    inputBox.Paint = function(self, w, h)
-        surface.SetDrawColor(colors.toggleButton)
-        surface.DrawRect(0, 0, w, h)
-        self:DrawTextEntryText(Color(255, 255, 255), Color(30, 130, 255), Color(255, 255, 255))
-    end
-
-    inputBox.OnEnter = function(self)
-        local value = tonumber(self:GetValue()) or defaultVal
-        value = tonumber(string.format("%.2f", value))
-        lp():ConCommand(command .. " " .. tostring(value))
-    end
-
-    local lbl = vgui.Create("DLabel", parent)
-    lbl:SetPos(10, y + 8)
-    lbl:SetText(labelText)
-    lbl:SetTextColor(colors.text)
-    lbl:SetFont("ToggleButtonFont")
-    lbl:SizeToContents()
-
-    local infoLbl = vgui.Create("DLabel", parent)
-    infoLbl:SetPos(10, y + 28)
-    infoLbl:SetText(infoText)
-    infoLbl:SetTextColor(colors.infoText)
-    infoLbl:SetFont("SmallTextFont")
+    infoLbl:SetFont("ui.mainmenu.button")
     infoLbl:SizeToContents()
 
     return pnl, lbl, infoLbl, inputBox
@@ -517,45 +501,47 @@ end
 
 function UI:CreateInputBoxText(parent, y, command, defaultVal, labelText, infoText)
     local pnl = vgui.Create("DPanel", parent)
-    pnl:SetSize(parent:GetWide(), 80)
+    pnl:SetSize(parent:GetWide(), 90)
     pnl:SetPos(0, y)
     pnl.Paint = function(self, w, h)
         surface.SetDrawColor(0, 0, 0, 0)
         surface.DrawRect(0, 0, w, h)
     end
 
-    local boxSize = 31
-    local cvarValue = GetConVar(command) and GetConVar(command):GetString() or "pyramid"
+    local cvarValue = GetConVar(command) and GetConVar(command):GetString() or defaultVal or "pyramid"
 
     local inputBox = vgui.Create("DTextEntry", pnl)
     inputBox:SetPos(pnl:GetWide() - 60, 15)
-    inputBox:SetSize(boxSize + 20, boxSize)
+    inputBox:SetSize(36, 36)
     inputBox:SetText(cvarValue)
-    inputBox:SetFont("ToggleButtonFont")
+    inputBox:SetFont("ui.mainmenu.desc")
 
     inputBox.Paint = function(self, w, h)
+        surface.SetDrawColor(colors.box)
+        surface.DrawOutlinedRect(0, 0, w, h, 2)
         surface.SetDrawColor(colors.toggleButton)
-        surface.DrawRect(0, 0, w, h)
+        surface.DrawRect(2, 2, w - 4, h - 4)
         self:DrawTextEntryText(Color(255, 255, 255), Color(30, 130, 255), Color(255, 255, 255))
     end
 
     inputBox.OnEnter = function(self)
-        local newValue = self:GetValue() or "pyramid"
+        local newValue = self:GetValue() or defaultVal or "pyramid"
         lp():ConCommand(command .. " " .. newValue)
     end
 
+    -- Labels
     local lbl = vgui.Create("DLabel", parent)
-    lbl:SetPos(10, y + 8)
+    lbl:SetPos(10, y + 10)
     lbl:SetText(labelText)
     lbl:SetTextColor(colors.text)
-    lbl:SetFont("ToggleButtonFont")
+    lbl:SetFont("ui.mainmenu.button")
     lbl:SizeToContents()
 
     local infoLbl = vgui.Create("DLabel", parent)
-    infoLbl:SetPos(10, y + 28)
+    infoLbl:SetPos(10, y + 34)
     infoLbl:SetText(infoText)
     infoLbl:SetTextColor(colors.infoText)
-    infoLbl:SetFont("SmallTextFont")
+    infoLbl:SetFont("ui.mainmenu.button")
     infoLbl:SizeToContents()
 
     return pnl, lbl, infoLbl, inputBox
@@ -573,14 +559,14 @@ function UI:CreateDropdown(parent, y, labelText, optionsWithCommands, defaultTex
     lbl:SetPos(10, 10)
     lbl:SetText(labelText)
     lbl:SetTextColor(colors.text)
-    lbl:SetFont("ToggleButtonFont")
+    lbl:SetFont("ui.mainmenu.button")
     lbl:SizeToContents()
 
     local dropdown = vgui.Create("DComboBox", pnl)
     dropdown:SetPos(10, 40)
     dropdown:SetSize(parent:GetWide() - 200, 30)
     dropdown:SetValue(defaultText)
-    dropdown:SetFont("ToggleButtonFont")
+    dropdown:SetFont("ui.mainmenu.button")
 
     dropdown.Paint = function(self, w, h)
         surface.SetDrawColor(50, 50, 50)
@@ -599,7 +585,7 @@ function UI:CreateDropdown(parent, y, labelText, optionsWithCommands, defaultTex
 
     dropdown.OnMenuOpened = function(self, menu)
         for _, option in ipairs(menu:GetCanvas():GetChildren()) do
-            option:SetFont("ToggleButtonFont")
+            option:SetFont("ui.mainmenu.button")
             option.Paint = function(self, w, h)
                 if self:IsHovered() then
                     surface.SetDrawColor(100, 100, 100)
@@ -632,7 +618,7 @@ function UI:CreateColorPicker(parent, y, labelText, defaultColor)
     lbl:SetPos(10, 10)
     lbl:SetText(labelText)
     lbl:SetTextColor(colors.text)
-    lbl:SetFont("ToggleButtonFont")
+    lbl:SetFont("ui.mainmenu.button")
     lbl:SizeToContents()
 
     local colorBox = vgui.Create("DPanel", pnl)
@@ -672,7 +658,7 @@ end
 
 function UI:CreateToggle(parent, y, command, labelText, infoText, toggleValues)
     local pnl = vgui.Create("DPanel", parent)
-    pnl:SetSize(parent:GetWide(), 80)
+    pnl:SetSize(parent:GetWide(), 90)
     pnl:SetPos(0, y)
 
     local convar = GetConVar(command)
@@ -688,11 +674,11 @@ function UI:CreateToggle(parent, y, command, labelText, infoText, toggleValues)
 
         local boxColor = colors.box
         surface.SetDrawColor(boxColor)
-        surface.DrawOutlinedRect(w - 50, 10, 30, 30, 2)
+        surface.DrawOutlinedRect(w - 60, 15, 36, 36, 2)
 
         if isActive then
             surface.SetDrawColor(DynamicColors.PanelColor)
-            surface.DrawRect(w - 46, 14, 22, 22)
+            surface.DrawRect(w - 56, 19, 28, 28)
         end
     end
 
@@ -709,21 +695,22 @@ function UI:CreateToggle(parent, y, command, labelText, infoText, toggleValues)
     end
 
     local lbl = vgui.Create("DLabel", parent)
-    lbl:SetPos(10, y + 8)
+    lbl:SetPos(10, y + 10)
     lbl:SetText(labelText)
     lbl:SetTextColor(colors.text)
-    lbl:SetFont("ToggleButtonFontTitle")
+    lbl:SetFont("ui.mainmenu.button")
     lbl:SizeToContents()
 
     local infoLbl = vgui.Create("DLabel", parent)
-    infoLbl:SetPos(10, y + 28)
+    infoLbl:SetPos(10, y + 34)
     infoLbl:SetText(infoText)
     infoLbl:SetTextColor(colors.infoText)
-    infoLbl:SetFont("SmallTextFont")
+    infoLbl:SetFont("ui.mainmenu.button")
     infoLbl:SizeToContents()
 
     return pnl, lbl, infoLbl
 end
+
 
 local cos, sin, rad = math.cos, math.sin, math.rad
 
@@ -738,7 +725,7 @@ function UI:CreateFOVSlider(parent, x, y)
     slider:SetValue(selectedFOV)
     slider.Label:SetTextColor(colors.text)
     slider.TextArea:SetTextColor(colors.text)
-    slider.TextArea:SetFont("SmallTextFont")
+    slider.TextArea:SetFont("ui.mainmenu.button")
 
     slider.Slider.Paint = function(self, w, h)
         surface.SetDrawColor(0, 0, 0, 0)
@@ -836,14 +823,14 @@ function UI:CreateRoundedBoxToggle(parent, y, labelText)
     lbl:SetPos(10, y + 2)
     lbl:SetText(labelText)
     lbl:SetTextColor(colors.text)
-    lbl:SetFont("ToggleButtonFont")
+    lbl:SetFont("ui.mainmenu.button")
     lbl:SizeToContents()
 
     local infoLbl = vgui.Create("DLabel", parent)
     infoLbl:SetPos(10, y + 18)
     infoLbl:SetText("Disables or enables rounded boxes")
     infoLbl:SetTextColor(colors.infoText)
-    infoLbl:SetFont("SmallTextFont")
+    infoLbl:SetFont("ui.mainmenu.button")
     infoLbl:SizeToContents()
 
     return pnl, lbl, infoLbl
@@ -890,9 +877,9 @@ function UI:UpdatePlayerList(parent)
         local leftWidth = w * 0.4
         local middleWidth = w * 0.4
 
-        DrawText("Name", "SmallTextFont", 10, h / 2, colors.text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-        DrawText("SteamID", "SmallTextFont", leftWidth + 10, h / 2, colors.text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-        DrawText("Rank", "SmallTextFont", leftWidth + middleWidth + 10, h / 2, colors.text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+        DrawText("Name", "ui.mainmenu.button", 10, h / 2, colors.text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+        DrawText("SteamID", "ui.mainmenu.button", leftWidth + 10, h / 2, colors.text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+        DrawText("Rank", "ui.mainmenu.button", leftWidth + middleWidth + 10, h / 2, colors.text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
     end
 
     local players = player.GetAll()
@@ -917,9 +904,9 @@ function UI:UpdatePlayerList(parent)
             surface.SetDrawColor(0, 0, 0, 0) 
             surface.DrawRect(0, 0, w, h)
 
-            DrawText(plyName, "SmallTextFont", 10, h / 2, colors.text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-            DrawText(plySteamID, "SmallTextFont", leftWidth + 10, h / 2, colors.text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-            DrawText(rankName, "SmallTextFont", leftWidth + middleWidth + 10, h / 2, rankColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+            DrawText(plyName, "ui.mainmenu.button", 10, h / 2, colors.text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+            DrawText(plySteamID, "ui.mainmenu.button", leftWidth + 10, h / 2, colors.text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+            DrawText(rankName, "ui.mainmenu.button", leftWidth + middleWidth + 10, h / 2, rankColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
             surface.SetDrawColor(255, 255, 255, 100)
             surface.DrawLine(0, h - 1, w, h - 1)
@@ -949,7 +936,7 @@ function UI:UpdateServerLogs(parent)
         surface.SetDrawColor(32, 32, 32)
         surface.DrawRect(0, 0, w, h)
 
-        DrawText("Logs Listing", "SmallTextFont", 10, h / 2, colors.text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+        DrawText("Logs Listing", "ui.mainmenu.button", 10, h / 2, colors.text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
     end
 
     local scrollPanel = vgui.Create("DScrollPanel", self.PlayerListPanel)
@@ -966,13 +953,13 @@ function UI:UpdateServerLogs(parent)
             logPanel.Paint = function(self, w, h)
                 surface.SetDrawColor(42, 42, 42)
                 surface.DrawRect(0, 0, w, h)
-                DrawText(log, "SmallTextFont", 10, h / 2, colors.text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+                DrawText(log, "ui.mainmenu.button", 10, h / 2, colors.text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
             end
         end
     else
         local emptyLabel = vgui.Create("DLabel", scrollPanel)
         emptyLabel:SetText("No logs available yet.")
-        emptyLabel:SetFont("SmallTextFont")
+        emptyLabel:SetFont("ui.mainmenu.button")
         emptyLabel:SizeToContents()
         emptyLabel:Dock(TOP)
         emptyLabel:DockMargin(10, 10, 10, 0)
@@ -989,7 +976,7 @@ function CreateCustomButton(parent, buttonText, onClickFunc)
         surface.SetDrawColor(bgColor)
         surface.DrawRect(0, 0, w, h)
 
-        DrawText(buttonText, "SmallTextFont", w / 2, h / 2, Color(255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+        DrawText(buttonText, "ui.mainmenu.button", w / 2, h / 2, Color(255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
     end
 
     button.DoClick = onClickFunc
@@ -1012,7 +999,7 @@ function CreateSettingRow(labelText, buttonText, parentPanel, onClickFunc)
 
     local label = vgui.Create("DLabel", rowPanel)
     label:SetText(labelText)
-    label:SetFont("SmallTextFont")
+    label:SetFont("ui.mainmenu.button")
     label:Dock(LEFT)
     label:SetWidth(200)
     label:DockMargin(10, 0, 0, 0)
@@ -1044,7 +1031,7 @@ function UI:CreateInputBoxSettings(parent, y, command, defaultVal, labelText, in
     local convarVal = ConVarExists(command) and GetConVar(command):GetFloat() or defaultVal
     inputBox:SetText(string.format("%.2f", convarVal))
 
-    inputBox:SetFont("ToggleButtonFont")
+    inputBox:SetFont("ui.mainmenu.button")
 
     inputBox.Paint = function(self, w, h)
         surface.SetDrawColor(colors.toggleButton)
@@ -1091,14 +1078,14 @@ function UI:CreateInputBoxSettings(parent, y, command, defaultVal, labelText, in
     lbl:SetPos(10, y + 8)
     lbl:SetText(labelText)
     lbl:SetTextColor(colors.text)
-    lbl:SetFont("ToggleButtonFont")
+    lbl:SetFont("ui.mainmenu.button")
     lbl:SizeToContents()
 
     local infoLbl = vgui.Create("DLabel", parent)
     infoLbl:SetPos(10, y + 28)
     infoLbl:SetText(infoText)
     infoLbl:SetTextColor(colors.infoText)
-    infoLbl:SetFont("SmallTextFont")
+    infoLbl:SetFont("ui.mainmenu.button")
     infoLbl:SizeToContents()
 
     return pnl, lbl, infoLbl, inputBox
@@ -1125,8 +1112,8 @@ function UI:UpdateAdminSettings(parent)
     headerPanel.Paint = function(self, w, h)
         surface.SetDrawColor(32, 32, 32)
         surface.DrawRect(0, 0, w, h)
-        DrawText("Settings", "SmallTextFont", 10, h / 2, colors.text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-        DrawText("Options", "SmallTextFont", w * 0.5 + 290, h / 2, colors.text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+        DrawText("Settings", "ui.mainmenu.button", 10, h / 2, colors.text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+        DrawText("Options", "ui.mainmenu.button", w * 0.5 + 290, h / 2, colors.text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
     end
 
     CreateSettingRow("Normal Start", "Set Start", self.PlayerListPanel, function()
@@ -1171,7 +1158,7 @@ function UI:OpenChangeMapUI()
 
     local label = vgui.Create("DLabel", frame)
     label:SetText("Map Name:")
-    label:SetFont("SmallTextFont")
+    label:SetFont("ui.mainmenu.button")
     label:Dock(TOP)
     label:SetHeight(30)
     label:DockMargin(10, 10, 10, 0)

@@ -58,7 +58,7 @@ hook.Add("KeyPress", "FJT_DetectJump", function(ply, key)
 
             playerFJT[ply] = jumpTick
 
-            local ColorSSJ = Color(255, 255, 0)
+            local ColorSSJ = ply.DynamicColor or Color(255, 255, 255)
             local str = {ColorSSJ, color_white}
             str[#str + 1] = "FJT: "
             str[#str + 1] = ColorSSJ
@@ -96,7 +96,7 @@ function JUMPTICK:HandleEndZone(ply)
 
         playerFJT[ply] = negativeTick
 
-        local ColorSSJ = Color(255, 255, 0)
+        local ColorSSJ = ply.DynamicColor or Color(255, 255, 255)
         local str = {ColorSSJ, color_white}
         str[#str + 1] = "FJT: "
         str[#str + 1] = ColorSSJ

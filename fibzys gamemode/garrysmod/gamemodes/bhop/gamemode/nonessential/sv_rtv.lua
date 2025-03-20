@@ -106,14 +106,14 @@ function RTV:StartVote()
         table.insert(RTVSend, RTV:GetMapData(map))
     end
 
-    UI:SendToClient(false, "rtv", "GetList", RTVSend)
+    UI:SendToClient(false, "MapVote", "started", RTVSend)
     RTV:CreateTimer("EndVote", 15, function() if not RTV.VIPTriggered then RTV:EndVote() end end)
 
     RTV:CreateTimer("InstantVote", 0.1, function()
         for map, voters in pairs(RTV.Nominations) do
             for id, data in ipairs(RTVSend) do
                 if data[1] == map then
-                    UI:SendToClient(voters, "rtv", "InstantVote", id)
+                    UI:SendToClient(voters, "MapVote", "instant", id)
                 end
             end
         end
@@ -277,7 +277,6 @@ end
 
 function RTV:ReceiveVote(ply, nVote, nOld)
     if not RTV.VotePossible or not nVote then return end
-
     local nAdd = ply.IsVIP and ply.VIPLevel and ply.VIPLevel >= Admin.Level.Elevated and 1 or 1
 
     if not nOld then
@@ -291,14 +290,15 @@ function RTV:ReceiveVote(ply, nVote, nOld)
     end
 
     BHDATA:Broadcast("RTV", {"VoteList", RTV.MapVoteList})
-    UI:SendToClient(false, "rtv", "VoteList", RTV.MapVoteList)
+
+    UI:SendToClient(false, "MapVote", "update", RTV.MapVoteList)
+    NETWORK:GetNetworkMessage(ply, "MapVote", RTV.MapVoteList)
 end
 
-UI:AddListener("rtv", function(client, data)
-    local vote = data[1]
-    local old = data[2]
-
-    RTV:ReceiveVote(client, vote, old)
+NETWORK:GetNetworkMessage("VoteCallback", function(ply, data)
+    local mapId = data[1]
+    local oldId = data[2]
+    RTV:ReceiveVote(ply, mapId, oldId)
 end)
 
 function RTV:IsAvailable(szMap)

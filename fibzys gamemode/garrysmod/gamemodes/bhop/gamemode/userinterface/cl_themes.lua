@@ -59,6 +59,8 @@ function Theme:DisableHUD()
     -- DO TO: Remove HUDs
 end
 
+Settings:Register('selected.hud', 'hud.momentum', {'hud.flow', 'hud.momentum', 'hud.css', 'hud.simple', "hud.shavit", "hud.stellar"})
+
 Theme:Register("HUD", "hud.flow", "Flow Network (Re-Design)", {
 	["Transparent"] = {
 		["Colours"] = {
@@ -331,17 +333,18 @@ function Theme:GetPreference(id, base)
 		local selop = Settings:GetValue('preference.' .. sel) or "Dark"
 		local theme = themes[sel].options
 		return theme[selop], sel
-elseif (id == "Scoreboard") then 
-    local sel = Settings:GetValue('selected.scoreboard') or "scoreboard.kawaii"
-    local selop = Settings:GetValue('preference.' .. sel) or "Default"
-    local theme = themes[sel].options
 
-    -- Multi
-    if (theme.HasMulti) then 
-        return theme[selop], sel
-    else
-        return theme, sel
-    end
+	elseif (id == "Scoreboard") then 
+		local sel = Settings:GetValue('selected.scoreboard') or "scoreboard.kawaii"
+		local selop = Settings:GetValue('preference.' .. sel) or "Default"
+		local theme = themes[sel].options
+
+		if (theme.HasMulti) then 
+			return theme[selop], sel
+		else
+			return theme, sel
+		end
+
 	elseif (id == "HUD") then
 		local t = Settings:GetValue('selected.hud')
 		local thms = Settings:GetValue(t).options
@@ -352,8 +355,11 @@ elseif (id == "Scoreboard") then
 		local preset = Settings:GetValue('preference.' .. z) or "Default"
 		local theme = themes[z].options
 		return theme[preset], z
-
 	end
+end
+
+function Theme:Get(id)
+	return Settings:GetValue(id).options
 end
 
 -- way to change themes

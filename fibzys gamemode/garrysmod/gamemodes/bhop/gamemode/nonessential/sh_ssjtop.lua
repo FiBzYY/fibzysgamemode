@@ -1,30 +1,39 @@
-SSJTOP = SSJTOP or {}
+﻿SSJTOP = SSJTOP or {}
 
--- Cache
+-- Cache system
 local hook_Add = hook.Add
 local util_TableToJSON, util_JSONToTable = util.TableToJSON, util.JSONToTable
 local file_Write, file_Read, file_Exists = file.Write, file.Read, file.Exists
 local ipairs, IsValid, timer_Create, timer_Start = ipairs, IsValid, timer.Create, timer.Start
 local ents_FindByClass = ents.FindByClass
 
--- Data
+-- Data file name
 local ssjFileName = "ssjtop.txt"
 playerDuckStatus = {}
 
 if SERVER then
     util.AddNetworkString("SSJTOP_SendData")
 
-    -- Load SSJ Data from File
     local function LoadSSJTopFromFile()
         if file_Exists(ssjFileName, "DATA") then
             local ssjData = util_JSONToTable(file_Read(ssjFileName, "DATA"))
-            if ssjData then SSJTOP = ssjData end
+            if ssjData and istable(ssjData) then
+                for k, v in pairs(ssjData) do
+                    SSJTOP[k] = v
+                end
+            end
         end
     end
-    hook_Add("Initialize", "LoadSSJTopData", LoadSSJTopFromFile)
 
-    -- Autosave SSJ Data
-    timer_Create("SSJTOP_AutoSave", 30, 0, function()
+    hook_Add("Initialize", "LoadSSJTopData", function()
+        LoadSSJTopFromFile()
+    end)
+
+    timer_Create("SSJTOP_AutoSave", 2, 0, function()
+        file_Write(ssjFileName, util_TableToJSON(SSJTOP, true))
+    end)
+
+    hook_Add("ShutDown", "SSJTOP_SaveOnShutdown", function()
         file_Write(ssjFileName, util_TableToJSON(SSJTOP, true))
     end)
 end
@@ -50,6 +59,10 @@ hook_Add("StartCommand", "TrackDuckDuringJumps", function(ply)
 
     if ply:IsOnGround() then
         playerDuckStatus[ply:SteamID()] = ply:Crouching()
+    end
+
+    if ply.InStartZone and not ply:KeyDown(IN_JUMP) and ply:IsOnGround() then
+        gB_IllegalSSJ[ply] = false
     end
 end)
 

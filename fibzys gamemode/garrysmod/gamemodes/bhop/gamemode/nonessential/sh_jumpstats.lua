@@ -569,7 +569,7 @@ local function SSJ_PrintStats(ply, lastSpeed, jumpTimeDiff)
                 local Data = { ply:Nick(), tostring(jumpSpeed), ssjType:upper(), "6th" }
                 NETWORK:StartNetworkMessageTimer(nil, "Print", { ID, Lang:Get(ID, Data) })
 
-                timer.Start("SSJTOP_AutoSave")
+                UpdateSSJTop(ply, jumpSpeed)
             end
         end
     end

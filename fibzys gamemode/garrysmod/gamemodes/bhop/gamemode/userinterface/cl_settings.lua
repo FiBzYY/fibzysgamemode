@@ -1,59 +1,79 @@
-if not Settings then
-    Settings = Settings or {}
-    local settingsList = {}
-    local possibleValues = {}
+if not Settings then 
 
-    function Settings:Register(settingId, default, options)
-        settingsList[settingId] = {value = default, default = default}
-        possibleValues[settingId] = options
-        return settingsList[settingId].value
-    end
+-- Module is neat
+Settings = Settings or {}
+local lst = lst or {}
+local possibilites = possibilities or {}
 
-    function Settings:Load()
-        self.loaded = true
-        if file.Exists("timer", "DATA") and file.Exists("timer/settings.txt", "DATA") then
-            local settings = file.Read("timer/settings.txt", "DATA")
-            settingsList = util.JSONToTable(settings)
-            return
-        end
-        file.CreateDir("timer")
-    end
+-- Add new setting
+function Settings:Register(settingId, default, ops, ty)
+    lst[settingId] = {
+        value = default,
+        default = default,
+        ty = ty or SETTINGTYPE_BOOL
+    }
+    possibilites[settingId] = ops
+    return lst[settingId].value
+end
 
-    hook.Add("Initialize", "Settings_Load", function()
-        if Settings.loaded then return end
-        Settings:Load()
-    end)
+function Settings:GetType(settingId)
+    if not lst[settingId] then return nil end
+    return lst[settingId].ty
+end
 
-    function Settings:Save()
-        local settings = util.TableToJSON(settingsList, true)
-        file.Write("timer/settings.txt", settings)
-    end
+-- Load settings
+function Settings:Load()
+	self.loaded = true 
+	-- Does file exist
+	if file.Exists("timer", "DATA") and file.Exists("timer/settings.txt", "DATA") then 
+		local settings = file.Read("timer/settings.txt", "DATA")
+		lst = util.JSONToTable(settings)
 
-    function Settings:GetValue(settingId)
-        if not settingsList or not settingsList[settingId] then
-            return nil
-        end
-        return settingsList[settingId].value
-    end
+		return
+	end
 
-    function Settings:SetValue(settingId, value)
-        if not settingsList[settingId] then
-            return nil
-        end
+	file.CreateDir("timer")
+end
+hook.Add("Initialize", "Settings_Load", function()
+	if Settings.loaded then return end
+	Settings:Load()
+end)
 
-        if possibleValues[settingId] and not table.HasValue(possibleValues[settingId], value) then
-            return nil
-        end
+function Settings:Save()
+	local settings = util.TableToJSON(lst, true)
+	file.Write("timer/settings.txt", settings)
+end
 
-        settingsList[settingId].value = value
-        self:Save()
-    end
+function Settings:GetValue(settingId)
+	if (not lst) or (not lst[settingId]) then
+		return nil 
+	end
 
-    function Settings:GetOptions(settingId)
-        return possibleValues[settingId]
-    end
+	return lst[settingId].value 
+end
 
-    function Settings:ResetDefault(settingId)
-        self:SetValue(settingId, settingsList[settingId].default)
-    end
+function Settings:SetValue(settingId, value)
+	if (not lst[settingId]) then
+		return nil 
+	end
+
+	if (possibilites[settingId] and (not table.HasValue(possibilites[settingId], value))) then 
+		return nil 
+	end
+
+	lst[settingId].value = value
+	self:Save() 
+end
+
+function Settings:GetOptions(settingId)
+	if (not possibilites[settingId]) then 
+		return nil 
+	end
+	return possibilites[settingId]
+end
+
+function Settings:ResetDefault(settingId)
+	self:SetValue(settingId, lst[settingId].default)
+end
+
 end

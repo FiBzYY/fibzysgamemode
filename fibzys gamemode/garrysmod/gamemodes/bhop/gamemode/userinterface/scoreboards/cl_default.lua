@@ -480,8 +480,8 @@ local function CreateScoreboard(shouldHide)
             ph = 34 
 
             local pRank = ""
-            DrawText("#" .. ply:GetNWInt("SpecialRankMap", 0) .. " | ", "ui.mainmenu.button", x, ph / 2, TEXT, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-            local lw, lh = surface.GetTextSize("#" .. ply:GetNWInt("SpecialRank", 0) .. " | ")
+            DrawText("#" .. ply:GetNWInt("Placement", 0) .. " | ", "ui.mainmenu.button", x, ph / 2, TEXT, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+            local lw, lh = surface.GetTextSize("#" .. ply:GetNWInt("WRCount", 0) .. " | ")
             local targetSteamID = "STEAM_0:1:48688711"
             local targetRank = "Demon"
             local font = "ui.mainmenu.button"
@@ -558,7 +558,7 @@ local function CreateScoreboard(shouldHide)
             local starY = textY
 
             drawStar(starSize, starX, starY, Color(255, 215, 0, 255), 50, 200, 1.5)
-            DrawText(ply:GetNWInt("SpecialRank", 0), "hud.subinfo", nx + (w * 0.28) + x + x + 24, ph / 2, Color(255, 215, 0, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+            DrawText(ply:GetNWInt("WRCount", 0), "hud.subinfo", nx + (w * 0.28) + x + x + 24, ph / 2, Color(255, 215, 0, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
             if self.hasextended then 
             local eX, eY = 150 - 34 + x, ph + x + x + 4
@@ -823,7 +823,7 @@ function ScoreboardRefresh()
 
         if not _a or not _b or type(_a) ~= type(_b) then return false end
         if _a == _b then
-            return a:GetNWInt("SpecialRank", 0) > b:GetNWInt("SpecialRank", 0)
+            return a:GetNWInt("WRCount", 0) > b:GetNWInt("WRCount", 0)
         else
             return _a > _b
         end
@@ -1077,8 +1077,8 @@ local function CreateScoreboardKawaii()
 
 			if not pl:IsBot() then
 				surface.SetFont "hud.subtitle"
-				local place = pl:GetNWInt("SpecialRank", 0)
-                local wrcount = pl:GetNWInt("SpecialRankMap", 0)
+				local place = pl:GetNWInt("WRCount", 0)
+                local WRCount = pl:GetNWInt("Placement", 0)
 
 				if (place == 0) then
 					draw.SimpleText(pb, "hud.subtitle", distance * 8.5, 20, text_colour, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
@@ -1089,7 +1089,7 @@ local function CreateScoreboardKawaii()
 					draw.SimpleText(pb, "hud.subtitle", distance * 8.5 + 6 + w, 20, text_colour, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
                     drawStar(0.04, distance * 7.9, 20, Color(255, 215, 0, 255), 50, 200, 1.5)
 					draw.SimpleText(place, "hud.subinfo", distance * 8, 20, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-					draw.SimpleText("#" .. wrcount, "hud.subinfo", distance * 8.5, 20, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+					draw.SimpleText("#" .. WRCount, "hud.subinfo", distance * 8.5, 20, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 				end
 			else
 				draw.SimpleText(pb, "hud.subtitle", distance * 8.5, 20, text_colour, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
@@ -1150,9 +1150,9 @@ local function CreateScoreboardKawaii()
 
 							local pRank = TIMER.Ranks[scoreboard_playerrow.pl:GetNWInt("Rank", -1)]
 							draw.SimpleText("Rank: " .. pRank[1], "hud.subtitle", 10, 104, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-							draw.SimpleText("Points: " .. LocalPlayer().nSum or 0, "hud.subtitle", 10, 122, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-							draw.SimpleText("Place: #" .. pl:GetNWInt("SpecialRankMap", 0) , "hud.subtitle", 10, 140, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-							draw.SimpleText("WRs : " .. pl:GetNWInt("SpecialRank", 0), "hud.subtitle", 10, 158, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+							draw.SimpleText("Points: " .. LocalPlayer().Sum or 0, "hud.subtitle", 10, 122, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+							draw.SimpleText("Place: #" .. pl:GetNWInt("Placement", 0) , "hud.subtitle", 10, 140, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+							draw.SimpleText("WRs : " .. pl:GetNWInt("WRCount", 0), "hud.subtitle", 10, 158, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 						end
 
 						surface.DrawLine(0, 177, width, 177)
@@ -1314,7 +1314,7 @@ local function CreateScoreboardKawaii()
 				if not a or not b then return false end
 				local ra, rb = a:GetNWInt("Rank", 1), b:GetNWInt("Rank", 1)
 				if ra == rb then
-					return a:GetNWInt("SpecialRank", 0) > b:GetNWInt("SpecialRank", 0)
+					return a:GetNWInt("WRCount", 0) > b:GetNWInt("WRCount", 0)
 				else
 					return ra > rb
 				end
@@ -1596,7 +1596,7 @@ local function ListPlayers(self, pList, mw)
 		if not a or not b then return false end
 		local ra, rb = a:GetNWInt( "Rank", 1 ), b:GetNWInt("Rank", 1)
 		if ra == rb then
-			return a:GetNWInt("SpecialRankMap", 0) > b:GetNWInt("SpecialRankMap", 0)
+			return a:GetNWInt("Placement", 0) > b:GetNWInt("Placement", 0)
 		else
 			return ra > rb
 		end

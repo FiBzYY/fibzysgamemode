@@ -121,6 +121,18 @@ end
 
 local detourAddText = chat.AddText
 local firstMessage = true
+local FADE_TIME = 5
+local FADE_DURATION = 2
+local messages = {}
+
+local function addMessage(segments)
+    table.insert(messages, {
+        segments = segments,
+        time = CurTime(),
+        alpha = 255
+    })
+end
+
 function chat.AddText(...)
     if GetConVar("bhop_chatbox"):GetInt() == 0 then
         detourAddText(...)
@@ -136,27 +148,56 @@ function chat.AddText(...)
     end
     firstMessage = false
 
+    local segments = {}
+
     for _, v in ipairs({...}) do
         if type(v) == "table" then
-            local r = v.r or 255
-            local g = v.g or 255
-            local b = v.b or 255
-            local a = v.a or 255
-
-            chatbox.rich:InsertColorChange(r, g, b, a)
+            table.insert(segments, {type = "color", value = Color(v.r or 255, v.g or 255, v.b or 255, v.a or 255)})
         elseif type(v) == "string" then
-            chatbox.rich:AppendText(v)
+            table.insert(segments, {type = "text", value = v})
         elseif IsValid(v) and v:IsPlayer() then
-            chatbox.rich:InsertColorChange(0, 0, 200, 255)
-            chatbox.rich:AppendText(v:Nick())
+            table.insert(segments, {type = "color", value = Color(0, 0, 200, 255)})
+            table.insert(segments, {type = "text", value = v:Nick()})
         end
     end
 
-    if not chatboxHid then
-        chatbox.rich:CheckScroll()
-    end
+    addMessage(segments)
     detourAddText(...)
 end
+
+hook.Add("Think", "ChatboxFader", function()
+    if not chatbox or not chatbox.rich then return end
+
+    local isOpen = not chatboxHid
+
+    chatbox.rich:SetText("")
+
+    for _, data in ipairs(messages) do
+        if isOpen then
+            data.alpha = 255
+        else
+            local elapsed = CurTime() - data.time
+            if elapsed > FADE_TIME then
+                local fadeProgress = math.Clamp((elapsed - FADE_TIME) / FADE_DURATION, 0, 1)
+                data.alpha = 255 * (1 - fadeProgress)
+            else
+                data.alpha = 255
+            end
+        end
+
+        for _, segment in ipairs(data.segments) do
+            if segment.type == "color" then
+                local c = segment.value
+                chatbox.rich:InsertColorChange(c.r, c.g, c.b, math.Clamp(data.alpha, 0, 255))
+            elseif segment.type == "text" then
+                chatbox.rich:AppendText(segment.value)
+            end
+        end
+        chatbox.rich:AppendText("\n")
+    end
+
+    chatbox.rich:CheckScroll()
+end)
 
 function GM:StartChat()
     if GetConVar("bhop_chatbox"):GetInt() == 0 then

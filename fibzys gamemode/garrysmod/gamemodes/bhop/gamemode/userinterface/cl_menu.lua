@@ -7,17 +7,20 @@
 
 ]]--
 
+-- Cache
 local activeButtonSideNav, activeButtonTopNav, f1Pressed, f4Pressed = nil, nil, false, false
 local lp, Iv, DrawText, Text, hook_Add = LocalPlayer, IsValid, draw.SimpleText, draw.DrawText, hook.Add
 local bhopMenuOpen = CreateConVar("bhop_menu_open", "0", FCVAR_ARCHIVE, "Tracks whether the bhop menu is open.")
 local selectedTheme = GetConVar("bhop_hud") and GetConVar("bhop_hud"):GetInt() or 0
 local selectedFOV = GetConVar("bhop_set_fov") and GetConVar("bhop_set_fov"):GetInt() or GetConVar("default_fov"):GetInt()
 
+-- silly cvar saves
 function UI:SaveSettings()
     RunConsoleCommand("bhop_hud", tostring(selectedTheme))
     RunConsoleCommand("bhop_set_fov", tostring(selectedFOV))
 end
 
+-- Lets create the main button
 function UI:CreateButton(parent, text, dock, dockMargin, isTopNav, font)
     if not Iv(parent) then return nil end
 
@@ -65,6 +68,7 @@ function UI:CreateButton(parent, text, dock, dockMargin, isTopNav, font)
     return btn
 end
 
+-- Menu playetesters
 local clickableWords = {
     ["FiBzY"] = {
         color = Color(255, 50, 50),
@@ -73,9 +77,14 @@ local clickableWords = {
     ["obvixus"] = {
         color = Color(50, 150, 255),
         url = "https://steamcommunity.com/id/obvixus"
+    },
+    ["amne"] = {
+        color = Color(186, 85, 211),
+        url = "https://steamcommunity.com/id/amne"
     }
 }
 
+-- Lets create the main panel
 function UI:CreatePanel(parent, textLines)
     if not Iv(parent) then return nil end
 
@@ -89,7 +98,7 @@ function UI:CreatePanel(parent, textLines)
         self.clickables = {}
 
         for i, line in ipairs(textLines) do
-            local font = i == 1 and "TopNavFont" or "SmallTextFont"
+            local font = i == 1 and "ui.mainmenu.button" or "ui.mainmenu.button"
             local hasClickable = false
 
             for word in string.gmatch(line, "%S+") do
@@ -143,6 +152,7 @@ function UI:CreatePanel(parent, textLines)
     return pnl
 end
 
+-- Made for switching each tab
 function UI:SwitchPanel(panelContent, newActiveButton, isTopNav)
     if not Iv(ContentPanel) then return end
 
@@ -171,13 +181,14 @@ function UI:SwitchPanel(panelContent, newActiveButton, isTopNav)
     end
 end
 
+-- Updates the side tabs
 function UI:UpdateSideNav(buttons)
     if not Iv(NavPanel) then return end
 
     NavPanel:Clear()
     local createdButtons = {}
     for _, btnInfo in ipairs(buttons) do
-        local btn = self:CreateButton(NavPanel, btnInfo.text, TOP, {0, 0, 0, 5}, false, "ToggleButtonFont")
+        local btn = self:CreateButton(NavPanel, btnInfo.text, TOP, {0, 0, 0, 5}, false, "ui.mainmenu.button")
         if btn then
             btn.DoClick = function()
                 self:SwitchPanel(btnInfo.panelContent, btn, false)
@@ -190,6 +201,7 @@ function UI:UpdateSideNav(buttons)
     end
 end
 
+-- Lets get WR list
 function UI:FetchAndDisplayWR()
     net.Start("RequestWRList")
     net.WriteString(game.GetMap())
@@ -215,10 +227,11 @@ net.Receive("WRList", function()
     end
 end)
 
+-- Lets create the main top tab menu
 function UI:CreateTopNavButton(text, sideNavButtons)
     if not Iv(TopNavPanel) then return nil end
 
-    local btn = self:CreateButton(TopNavPanel, text, LEFT, {15, 0, 15, 0}, true, "TopNavFont")
+    local btn = self:CreateButton(TopNavPanel, text, LEFT, {10, 0, 10, 0}, true, "ui.mainmenu.button-bold")
 
     btn:SetWide(110)
     btn.DoClick = function()
@@ -235,6 +248,7 @@ function UI:CreateTopNavButton(text, sideNavButtons)
     return btn
 end
 
+-- Main Menu
 function UI:CreateMenu()
     if Iv(Frame) then
         if not Frame:IsVisible() then
@@ -249,7 +263,11 @@ function UI:CreateMenu()
     local roundedBoxEnabled = GetConVar("bhop_roundedbox"):GetInt() == 1
     Frame = vgui.Create("DFrame")
 
-    Frame:SetSize(940, 600)
+    local scale = 0.96
+    local baseW, baseH = 1000, 700
+    local newW, newH = baseW * scale, baseH * scale
+
+    Frame:SetSize(newW, newH)
     Frame:Center()
     Frame:SetTitle("")
     Frame:ShowCloseButton(false)
@@ -266,9 +284,10 @@ function UI:CreateMenu()
     end
 
     TopNavPanel = vgui.Create("DPanel", Frame)
-    TopNavPanel:SetHeight(20)
+    TopNavPanel:SetHeight(30)
+    TopNavPanel:DockMargin(0, -12, 0, 13)
     TopNavPanel:Dock(TOP)
-    TopNavPanel:DockMargin(0, 0, 0, 15)
+
     TopNavPanel.Paint = function(self, w, h)
         surface.SetDrawColor(colors.nav)
         if roundedBoxEnabled then
@@ -278,13 +297,14 @@ function UI:CreateMenu()
         end
     end
 
+    -- Gamemode Info tab
     local InfoButton = self:CreateTopNavButton("Info", {
         { 
             text = "Overview", 
             panelContent = {
                 "Information Overview", 
                 "Gamemode: FiBzY", 
-                "Play Testers: FiBzY, obvixus"
+                "Play Testers: FiBzY, obvixus, amne"
             }, 
             isActive = true 
         },
@@ -312,6 +332,7 @@ function UI:CreateMenu()
         }
     })
 
+    -- Gameplay Tab
     local GameplayButton = self:CreateTopNavButton("Gameplay", {
         { text = "Rules", panelContent = {
             "Rules",
@@ -353,6 +374,7 @@ function UI:CreateMenu()
         { text = "World Records", panelContent = function() self:FetchAndDisplayWR() end },
         { text = "Ranks", panelContent = function(parent) self:CreateRankPanel(parent) end },
 
+        -- DO TO: Make styles clickable
         { text = "Styles", panelContent = {
             "Styles",
             "Normal, 1000 AA",
@@ -366,6 +388,7 @@ function UI:CreateMenu()
         } },
     })
 
+    -- If we want scrollable or not
     local function createPanelWithScrollOrNot(parent, panelHeight)
         local availableHeight = parent:GetTall()
 
@@ -388,6 +411,7 @@ function UI:CreateMenu()
         end
     end
 
+    -- Settings Tab
     local SettingsButton = self:CreateTopNavButton("Settings", {
     { text = "Settings", panelContent = function(parent)
         local scrollPanel = vgui.Create("DScrollPanel", parent)
@@ -399,30 +423,10 @@ function UI:CreateMenu()
         end
 
         local vBar = scrollPanel:GetVBar()
-
-        vBar:SetWide(8)
-
-        vBar.Paint = function(self, w, h)
-            surface.SetDrawColor(40, 40, 40)
-            surface.DrawRect(0, 0, w, h)
-        end
-
-        vBar.btnUp.Paint = function(self, w, h)
-            surface.SetDrawColor(60, 60, 60)
-            surface.DrawRect(0, 0, w, h)
-        end
-        vBar.btnDown.Paint = function(self, w, h)
-            surface.SetDrawColor(60, 60, 60)
-            surface.DrawRect(0, 0, w, h)
-        end
-
-        vBar.btnGrip.Paint = function(self, w, h)
-            surface.SetDrawColor(255, 255, 255)
-            surface.DrawRect(0, 0, w, h)
-        end
+        UI:MenuScrollbar(vBar)
 
         local container = vgui.Create("DPanel", scrollPanel)
-        container:SetSize(parent:GetWide() - 20, 1400)
+        container:SetSize(parent:GetWide() - 20, 700)
         container:SetPos(0, 0)
         container.Paint = function(self, w, h)
             surface.SetDrawColor(colors.content)
@@ -454,6 +458,7 @@ function UI:CreateMenu()
         self:CreateToggle(container, y, "bhop_alwaysshowtriggers", "Always Show Triggers", "Enables or disables showtriggers on spawn.")
     end, isActive = true },
 
+    -- Graphics Tab
     { text = "Graphics", panelContent = function(parent)
         local scrollPanel = vgui.Create("DScrollPanel", parent)
         scrollPanel:Dock(FILL)
@@ -464,29 +469,10 @@ function UI:CreateMenu()
         end
 
         local vBar = scrollPanel:GetVBar()
-        vBar:SetWide(8)
-
-        vBar.Paint = function(self, w, h)
-            surface.SetDrawColor(40, 40, 40)
-            surface.DrawRect(0, 0, w, h)
-        end
-
-        vBar.btnUp.Paint = function(self, w, h)
-            surface.SetDrawColor(60, 60, 60)
-            surface.DrawRect(0, 0, w, h)
-        end
-        vBar.btnDown.Paint = function(self, w, h)
-            surface.SetDrawColor(60, 60, 60)
-            surface.DrawRect(0, 0, w, h)
-        end
-
-        vBar.btnGrip.Paint = function(self, w, h)
-            surface.SetDrawColor(255, 255, 255)
-            surface.DrawRect(0, 0, w, h)
-        end
+        UI:MenuScrollbar(vBar)
 
         local container = vgui.Create("DPanel", scrollPanel)
-        container:SetSize(parent:GetWide() - 20, 1200)
+        container:SetSize(parent:GetWide() - 20, 1000)
         container:SetPos(0, 0)
         container.Paint = function(self, w, h)
             surface.SetDrawColor(colors.content)
@@ -528,34 +514,16 @@ function UI:CreateMenu()
         self:CreateToggle(container, y, "bhop_fullbright", "Full bright toggle", "This will allow you to see the map in full bright when flashlight is pressed.")
     end },
 
+      -- SSJ Tab
       { text = "SSJ", panelContent = function(parent)
         local scrollPanel = vgui.Create("DScrollPanel", parent)
         scrollPanel:Dock(FILL)
 
         local vBar = scrollPanel:GetVBar()
-        vBar:SetWide(8)
-
-        vBar.Paint = function(self, w, h)
-            surface.SetDrawColor(40, 40, 40)
-            surface.DrawRect(0, 0, w, h)
-        end
-
-        vBar.btnUp.Paint = function(self, w, h)
-            surface.SetDrawColor(60, 60, 60)
-            surface.DrawRect(0, 0, w, h)
-        end
-        vBar.btnDown.Paint = function(self, w, h)
-            surface.SetDrawColor(60, 60, 60)
-            surface.DrawRect(0, 0, w, h)
-        end
-
-        vBar.btnGrip.Paint = function(self, w, h)
-            surface.SetDrawColor(255, 255, 255)
-            surface.DrawRect(0, 0, w, h)
-        end
+        UI:MenuScrollbar(vBar)
 
         local container = vgui.Create("DPanel", scrollPanel)
-        container:SetSize(parent:GetWide() - 20, 1200)
+        container:SetSize(parent:GetWide() - 20, 650)
         container:SetPos(0, 0)
         container.Paint = function(self, w, h)
             surface.SetDrawColor(colors.content)
@@ -577,7 +545,7 @@ function UI:CreateMenu()
         y = y + 60
         self:CreateToggle(container, y, "bhop_showfjthud", "First jump tick HUD", "Enables or disables jump tick HUD.")
         y = y + 60
-        self:CreateInputBoxText(container, y, "bhop_jhud_style", "claz", "JHUD Choose a Style", "JHUD style picker 'pyramid', 'kawaii', 'claz', 'old'")
+        self:CreateInputBoxText(container, y, "bhop_jhud_style", "claz", "JHUD Choose a Style", "JHUD style picker 'jcs', 'kawaii', 'claz', 'old'")
         y = y + 60
         self:CreateToggle(container, y, "bhop_jhud", "Display JHUD", "Enables or disables SSJ HUD.")
         y = y + 60
@@ -588,64 +556,62 @@ function UI:CreateMenu()
         self:CreateToggle(container, y, "bhop_center_speed", "Display center speed", "Enables or disables the center speed.")
     end },
 
-        { text = "Strafe Trainer", panelContent = function(parent)
-            local x, y = 10, 0
-            self:CreatePanel(parent, {"Strafe Trainer"})
-            y = y + 45
-            self:CreateToggle(parent, y, "bhop_strafetrainer", "Display Strafe Trainer", "Enables or disables show strafe trainer.")
-            y = y + 60
-            self:CreateInputBox(parent, y, "bhop_strafetrainer_interval", 10, "Update rate", "Update rate in ticks.", 1, 100)
-            y = y + 60
-            self:CreateToggle(parent, y, "bhop_strafetrainer_ground", "Ground Update", "Should update on ground.")
-            y = y + 60
-            self:CreateToggle(parent, y, "bhop_strafesync", "Strafe Synchronizer", "Enables or disables show strafe synchronizer.")
-        end },
+    -- Strafe Trainer Tab
+    { text = "Strafe Trainer", panelContent = function(parent)
+        local x, y = 10, 0
+        self:CreatePanel(parent, {"Strafe Trainer"})
+        y = y + 45
+        self:CreateToggle(parent, y, "bhop_strafetrainer", "Display Strafe Trainer", "Enables or disables show strafe trainer.")
+        y = y + 60
+        self:CreateInputBox(parent, y, "bhop_strafetrainer_interval", 10, "Update rate", "Update rate in ticks.", 1, 100)
+        y = y + 60
+        self:CreateToggle(parent, y, "bhop_strafetrainer_ground", "Ground Update", "Should update on ground.")
+        y = y + 60
+        self:CreateToggle(parent, y, "bhop_strafesync", "Strafe Synchronizer", "Enables or disables show strafe synchronizer.")
+    end },
 
-        { text = "Audio", panelContent = function(parent)
-            local x, y = 10, 0
-            self:CreatePanel(parent, {"Audio"})
-            y = y + 45
-            self:CreateToggle(parent, y, "bhop_chatsounds", "Chat sounds", "Enables or disables chat sounds on messages.")
-            y = y + 60
-            self:CreateToggle(parent, y, "bhop_mute_music", "Disable Map Music", "Use if you want to disable music on all maps.")
-            y = y + 60
-            self:CreateToggle(parent, y, "bhop_gunsounds", "Gun Sounds", "Enables or disables weapon sounds.")
-            y = y + 60
-            self:CreateInputBoxText(parent, y, "bhop_footsteps", "on", "Footsteps", "Options: 'off', 'local', 'spectate', 'all'.")
-            y = y + 60
-            self:CreateToggle(parent, y, "bhop_zonesounds", "Zone sounds", "Enables or disables zone sounds on leave.")
-            y = y + 60
-            self:CreateToggle(parent, y, "bhop_wrsfx", "WR Sounds", "Enables or disables the World Record sounds.")
-            y = y + 60
-            self:CreateInputBoxWide(parent, y, "bhop_wrsfx_volume", 0.4, "WR Sounds Volume", "Customize your WR sound volume, 1 is loud 0.4 is default.")
-            y = y + 60
-            self:CreateToggle(parent, y, "bhop_wrsfx_bad", "Bad Improvement Sounds", "Enables or disables the bad improvement sounds.")
-        end },
+    -- Auto Tab
+    { text = "Audio", panelContent = function(parent)
+        local x, y = 10, 0
+        self:CreatePanel(parent, {"Audio"})
+        y = y + 45
+        self:CreateToggle(parent, y, "bhop_chatsounds", "Chat Sounds", "Enables or disables chat sounds on messages.")
+        y = y + 60
+        self:CreateToggle(parent, y, "bhop_timerchatsound", "Chat Timer Sounds", "Enables or disables chat timer sounds on messages.")
+        y = y + 60
+        self:CreateToggle(parent, y, "bhop_mute_music", "Disable Map Music", "Use if you want to disable music on all maps.")
+        y = y + 60
+        self:CreateToggle(parent, y, "bhop_gunsounds", "Gun Sounds", "Enables or disables weapon sounds.")
+        y = y + 60
+        self:CreateInputBoxText(parent, y, "bhop_footsteps", "on", "Footsteps", "Options: 'off', 'local', 'spectate', 'all'.")
+        y = y + 60
+        self:CreateToggle(parent, y, "bhop_zonesounds", "Zone sounds", "Enables or disables zone sounds on leave.")
+        y = y + 60
+        self:CreateToggle(parent, y, "bhop_wrsfx", "WR Sounds", "Enables or disables the World Record sounds.")
+        y = y + 60
+        self:CreateInputBox(parent, y, "bhop_wrsfx_volume", "0.4", "WR Sounds Volume", "Customize your WR sound volume, 1 is loud 0.4 is default.")
+        y = y + 60
+        self:CreateToggle(parent, y, "bhop_wrsfx_bad", "Bad Improvement Sounds", "Enables or disables the bad improvement sounds.")
+    end },
 
-        { text = "Controls", panelContent = function(parent)
-            local x, y = 10, 0
-            self:CreatePanel(parent, {"Controls"})
-            y = y + 45
-            self:CreateToggle(parent, y, "bhop_viewtransfrom", "View Transfrom View", "Enables or disables transfrom viewing.")
-            y = y + 60
-            self:CreateToggle(parent, y, "bhop_thirdperson", "Third Person View", "Enables or disables the third person view.")
-            y = y + 60
-            self:CreateToggle(parent, y, "bhop_viewinterp", "View Interpolation", "Enables or disables interpolation view.")
-            y = y + 60
-            self:CreateToggle(parent, y, "bhop_viewpunch", "View Punch", "Enables or disables view punch.")
-            y = y + 60
-            self:CreateToggle(parent, y, "bhop_sourcesensitivity", "CS:S Sensitivity", "Enables or disables CS:S Sensitivity. (3.125% Slower)")
-        end },
-
-        --[[{ text = "FOV", panelContent = function(parent)
-            local x, y = 10, 0
-            self:CreatePanel(parent, {"FOV"})
-            y = y + 45
-            self:CreateToggle(parent, y, "bhop_morefov", "Enable more FOV", "For FOV 100+ and higher.")
-            y = y + 75
-            self:CreateFOVSlider(parent, x, y)
-        end }--]]
+    -- Controls Tab
+    { text = "Controls", panelContent = function(parent)
+        local x, y = 10, 0
+        self:CreatePanel(parent, {"Controls"})
+        y = y + 45
+        self:CreateToggle(parent, y, "bhop_viewtransfrom", "View Transfrom View", "Enables or disables transfrom viewing.")
+        y = y + 60
+        self:CreateToggle(parent, y, "bhop_thirdperson", "Third Person View", "Enables or disables the third person view.")
+        y = y + 60
+        self:CreateToggle(parent, y, "bhop_viewinterp", "View Interpolation", "Enables or disables interpolation view.")
+        y = y + 60
+        self:CreateToggle(parent, y, "bhop_viewpunch", "View Punch", "Enables or disables view punch.")
+        y = y + 60
+        self:CreateToggle(parent, y, "bhop_sourcesensitivity", "CS:S Sensitivity", "Enables or disables CS:S Sensitivity. (3.125% Slower)")
+    end }
     })
+    
+    -- Now lets to Interface Tab
     local InterfaceButton = self:CreateTopNavButton("User Interface", {
         { text = "Themes", panelContent = function(parent)
             local x, y = 10, 0
@@ -706,24 +672,10 @@ function UI:CreateMenu()
                 ["kawaii"] = "Kawaii",
                 ["flow"] = "Flow"
             })
-
-           --[[self:CreateCustomDropdownPreset(parent, y, "nui.kawaii", "Set HUD preset", {
-            ["nui.kawaii"] = "Kawaii",
-            ["nui.css"] = "CS:S"
-            })--]]
-
-           --[[[ self:CreateDropdown(parent, y, "Set HUD preset", {["Default"] = "change_preset Default", ["White"] = "change_preset White", ["Grey"] = "change_preset Grey", ["Blur"] = "change_preset Blur"}, "Choose Preset...")
-            y = y + 75
-           self:CreateDropdown(parent, y, "Set scoreboard theme", {["Default"] = "change_scoreboard Default", ["Kawaii"] = "change_scoreboard Kawaii"}, "Choose Theme...")
-            y = y + 75
-           self:CreateDropdown(parent, y, "Set scoreboard preset", {["Default"] = "scoreboard Default", ["Kawaii"] = "scoreboard Kawaii"}, "Choose Preset...")
-            y = y + 75
-           self:CreateDropdown(parent, y, "Set zones preset", {["Default"] = "change_zones_preset Default", ["Kawaii"] = "change_zones_preset Kawaii"}, "Choose Preset...")
-            y = y + 75
-           self:CreateDropdown(parent, y, "Set scoreboard style", {["Default"] = "bhop_scoreboard_style Default", ["Kawaii"] = "bhop_scoreboard_style Kawaii"}, "Choose Style...")--]]
         end }
     })
 
+    -- Admin Tab
     if lp():IsAdmin() then
         local AdminButton = self:CreateTopNavButton("Admin", {
             { text = "Users", panelContent = function(parent)
@@ -792,6 +744,7 @@ function UI:CreateMenu()
         surface.DrawRect(0, 0, w, h)
     end
 
+    -- Draw Close X
     local CloseButton = vgui.Create("DButton", Frame)
     CloseButton:SetText("")
     CloseButton:SetSize(24, 24)
@@ -802,7 +755,7 @@ function UI:CreateMenu()
 
         local xColor = self:IsHovered() and Color(255, 50, 50) or colors.text
 
-        draw.SimpleText("X", "SmallTextFont", w / 2, h / 2, xColor, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+        draw.SimpleText("X", "ui.mainmenu.desc", w / 2, h / 2, xColor, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
     end
     CloseButton.DoClick = function()
         Frame:Close()
@@ -811,25 +764,18 @@ function UI:CreateMenu()
         RunConsoleCommand("bhop_menu_open", "0")
     end
 
-    local roundedBox = vgui.Create("DPanel", Frame)
-    roundedBox:SetSize(100 + 20, 40)
-    roundedBox:SetPos(Frame:GetWide() - 140 - 10, 12)
-    roundedBox:SetBackgroundColor(Color(32, 32, 32, 0))
-    roundedBox.Paint = function(self, w, h)
-        draw.RoundedBox(0, 0, 0, w, h, Color(36, 36, 36, 255))
-    end
-
-    BuildCircularAvatarPic(Frame, Frame:GetWide() - 140, 14, 18, lp():SteamID64())
+    -- Draw player avatar and name
+    BuildCircularAvatarPic(Frame, Frame:GetWide() - 144, 8, 22, lp():SteamID64())
 
     local steamID64 = lp():SteamID64()
     local profileURL = "https://steamcommunity.com/profiles/" .. steamID64
 
     local playerNameLabel = vgui.Create("DLabel", Frame)
     playerNameLabel:SetText(lp():Nick())
-    playerNameLabel:SetFont("SmallTextFont")
+    playerNameLabel:SetFont("ui.mainmenu.button-bold")
     playerNameLabel:SetTextColor(Color(0, 150, 255))
     playerNameLabel:SizeToContents()
-    playerNameLabel:SetPos(Frame:GetWide() - 140 + 36 + 10, 24)
+    playerNameLabel:SetPos(Frame:GetWide() - 136 + 36 + 10, 22)
     playerNameLabel:SetCursor("hand")
     playerNameLabel:SetMouseInputEnabled(true)
 
@@ -847,24 +793,28 @@ function UI:CreateMenu()
     InfoButton:DoClick()
 end
 
+-- Update points
 local cachedSum = nil
 net.Receive("UpdatePointsSum", function()
     local pointsSum = net.ReadInt(32)
 
     if Iv(lp()) then
-        lp().nSum = pointsSum
+        lp().Sum = pointsSum
     else
         cachedSum = pointsSum
     end
 end)
 
+-- Load Points on start
 hook_Add("InitPostEntity", "AssignCachedPointsSum", function()
     if cachedSum and Iv(lp()) then
-        lp().nSum = cachedSum
+        lp().Sum = cachedSum
 
         cachedSum = nil
     end
 end)
+
+-- Rank Panel List
 function UI:CreateRankPanel(parent)
     if not Iv(parent) then return end
 
@@ -888,16 +838,15 @@ function UI:CreateRankPanel(parent)
     pnl.Paint = function(self, w, h)
         local y = 10
 
-        Text("Ranks", "SmallTextFont", 15, y, colors.text, TEXT_ALIGN_LEFT)
+        Text("Ranks", "ui.mainmenu.button", 15, y, colors.text, TEXT_ALIGN_LEFT)
         surface.SetDrawColor(120, 120, 120)
         surface.DrawRect(15, y + 25, w - 30, 1)
         y = y + 50
 
-        Text("Displaying " .. rankCount .. " Ranks", "SmallTextFont", 15, y - 10, Color(200, 200, 200), TEXT_ALIGN_LEFT)
+        Text("Displaying " .. rankCount .. " Ranks", "ui.mainmenu.button", 15, y - 10, Color(200, 200, 200), TEXT_ALIGN_LEFT)
         y = y + 25
 
         -- DO TO: Finish Dropdowns here
-
 
         local tableMargin = 20
         local tableX, tableY = tableMargin, y
@@ -910,11 +859,11 @@ function UI:CreateRankPanel(parent)
         surface.SetDrawColor(32, 32, 32)
         surface.DrawRect(tableX, tableY, tableWidth, titleHeight)
 
-        Text("Rank", "SmallTextFont", tableX + 10, tableY + 10 - 3, Color(200, 200, 200), TEXT_ALIGN_LEFT)
-        Text("Name", "SmallTextFont", tableX + 100, tableY + 10 - 3, Color(200, 200, 200), TEXT_ALIGN_LEFT)
+        Text("Rank", "ui.mainmenu.button", tableX + 10, tableY + 10 - 3, Color(200, 200, 200), TEXT_ALIGN_LEFT)
+        Text("Name", "ui.mainmenu.button", tableX + 100, tableY + 10 - 3, Color(200, 200, 200), TEXT_ALIGN_LEFT)
 
-        Text("Rank", "SmallTextFont", tableX + 10 + 340, tableY + 10 - 3, Color(200, 200, 200), TEXT_ALIGN_LEFT)
-        Text("Name", "SmallTextFont", tableX + 100  + 345, tableY + 10 - 3, Color(200, 200, 200), TEXT_ALIGN_LEFT)
+        Text("Rank", "ui.mainmenu.button", tableX + 10 + 340, tableY + 10 - 3, Color(200, 200, 200), TEXT_ALIGN_LEFT)
+        Text("Name", "ui.mainmenu.button", tableX + 100  + 345, tableY + 10 - 3, Color(200, 200, 200), TEXT_ALIGN_LEFT)
 
         surface.SetDrawColor(150, 150, 150, 50)
         surface.DrawRect(tableX, tableY + titleHeight, tableWidth, 1)
@@ -924,19 +873,19 @@ function UI:CreateRankPanel(parent)
         local xLeft, xRight = tableX + 10, tableX + (tableWidth / 2) + 10
 
         if rankCount == 0 then
-            Text("No Ranks Found", "SmallTextFont", tableX + 10, tableY, Color(255, 0, 0), TEXT_ALIGN_LEFT)
+            Text("No Ranks Found", "ui.mainmenu.button", tableX + 10, tableY, Color(255, 0, 0), TEXT_ALIGN_LEFT)
         else
             for i, rank in ipairs(rankDisplayLeft) do
                 local rankName, rankColor, rankNumber = rank[1], rank[2], rank[3]
-                Text(rankNumber .. ".", "SmallTextFont", xLeft, yLeft, Color(255, 255, 255), TEXT_ALIGN_LEFT)
-                Text(rankName, "SmallTextFont", xLeft + 90, yLeft, rankColor, TEXT_ALIGN_LEFT)
+                Text(rankNumber .. ".", "ui.mainmenu.button", xLeft, yLeft, Color(255, 255, 255), TEXT_ALIGN_LEFT)
+                Text(rankName, "ui.mainmenu.button", xLeft + 90, yLeft, rankColor, TEXT_ALIGN_LEFT)
                 yLeft = yLeft + 25
             end
 
             for i, rank in ipairs(rankDisplayRight) do
                 local rankName, rankColor, rankNumber = rank[1], rank[2], rank[3]
-                Text(rankNumber .. ".", "SmallTextFont", xRight, yRight, Color(255, 255, 255), TEXT_ALIGN_LEFT)
-                Text(rankName, "SmallTextFont", xRight + 90, yRight, rankColor, TEXT_ALIGN_LEFT)
+                Text(rankNumber .. ".", "ui.mainmenu.button", xRight, yRight, Color(255, 255, 255), TEXT_ALIGN_LEFT)
+                Text(rankName, "ui.mainmenu.button", xRight + 90, yRight, rankColor, TEXT_ALIGN_LEFT)
                 yRight = yRight + 25
             end
         end
@@ -945,22 +894,23 @@ function UI:CreateRankPanel(parent)
         surface.SetDrawColor(32, 32, 32)
         surface.DrawRect(tableX, statsY, tableWidth, 30)
 
-        Text("Your Stats:", "SmallTextFont", tableX + 10, statsY + 10 - 3, Color(200, 200, 200), TEXT_ALIGN_LEFT)
+        Text("Your Stats:", "ui.mainmenu.button", tableX + 10, statsY + 10 - 3, Color(200, 200, 200), TEXT_ALIGN_LEFT)
 
         if TIMER.ranking then
             local playerRank = lp():GetNWInt("Rank", 0)
-            local playerPoints = lp().nSum or 0
+            local playerPoints = lp().Sum or 0
 
-            Text("Rank: " .. playerRank, "SmallTextFont", tableX + 150, statsY + 10 - 3, Color(255, 255, 255), TEXT_ALIGN_LEFT)
-            Text("Total Points: " .. playerPoints, "SmallTextFont", tableX + 250, statsY + 10 - 3, Color(255, 255, 255), TEXT_ALIGN_LEFT)
+            Text("Rank: " .. playerRank, "ui.mainmenu.button", tableX + 150, statsY + 10 - 3, Color(255, 255, 255), TEXT_ALIGN_LEFT)
+            Text("Total Points: " .. playerPoints, "ui.mainmenu.button", tableX + 250, statsY + 10 - 3, Color(255, 255, 255), TEXT_ALIGN_LEFT)
         else
-            Text("Waiting for Ranking stats...", "SmallTextFont", tableX + 150, statsY + 10 - 3, Color(255, 0, 0), TEXT_ALIGN_LEFT)
+            Text("Waiting for Ranking stats...", "ui.mainmenu.button", tableX + 150, statsY + 10 - 3, Color(255, 0, 0), TEXT_ALIGN_LEFT)
         end
     end
 
     return pnl
 end
 
+-- WR Panel List
 function UI:CreateWRPanel(parent)
     if not Iv(parent) then return end
 
@@ -974,12 +924,12 @@ function UI:CreateWRPanel(parent)
     pnl.Paint = function(self, w, h)
         local y = 10
 
-        Text("World Records", "SmallTextFont", 15, y, colors.text, TEXT_ALIGN_LEFT)
+        Text("World Records", "ui.mainmenu.button", 15, y, colors.text, TEXT_ALIGN_LEFT)
         surface.SetDrawColor(120, 120, 120)
         surface.DrawRect(15, y + 25, w - 30, 1)
         y = y + 50
 
-        Text("Displaying " .. lastPlace .. "/" .. recordCount .. " times", "SmallTextFont", 15, y - 10, Color(200, 200, 200), TEXT_ALIGN_LEFT)
+        Text("Displaying " .. lastPlace .. "/" .. recordCount .. " times", "ui.mainmenu.button", 15, y - 10, Color(200, 200, 200), TEXT_ALIGN_LEFT)
         y = y + 25
 
         local tableMargin = 20
@@ -993,16 +943,16 @@ function UI:CreateWRPanel(parent)
         surface.SetDrawColor(32, 32, 32)
         surface.DrawRect(tableX, tableY, tableWidth, titleHeight)
 
-        Text("Place", "SmallTextFont", tableX + 10, tableY + 10 - 3, Color(200, 200, 200), TEXT_ALIGN_LEFT)
-        Text("Name", "SmallTextFont", tableX + 80, tableY + 10 - 3, Color(200, 200, 200), TEXT_ALIGN_LEFT)
-        Text("Time", "SmallTextFont", tableX + tableWidth - 60, tableY + 10 - 3, Color(200, 200, 200), TEXT_ALIGN_RIGHT)
+        Text("Place", "ui.mainmenu.button", tableX + 10, tableY + 10 - 3, Color(200, 200, 200), TEXT_ALIGN_LEFT)
+        Text("Name", "ui.mainmenu.button", tableX + 80, tableY + 10 - 3, Color(200, 200, 200), TEXT_ALIGN_LEFT)
+        Text("Time", "ui.mainmenu.button", tableX + tableWidth - 60, tableY + 10 - 3, Color(200, 200, 200), TEXT_ALIGN_RIGHT)
 
         surface.SetDrawColor(150, 150, 150, 50)
         surface.DrawRect(tableX, tableY + titleHeight, tableWidth, 1)
         tableY = tableY + titleHeight + 10
 
         if recordCount == 0 then
-            Text("No Records Found", "SmallTextFont", tableX + 10, tableY, Color(255, 0, 0), TEXT_ALIGN_LEFT)
+            Text("No Records Found", "ui.mainmenu.button", tableX + 10, tableY, Color(255, 0, 0), TEXT_ALIGN_LEFT)
         else
             for i, record in ipairs(UI.WRList or {}) do
                 local recordName = record[1]
@@ -1010,9 +960,9 @@ function UI:CreateWRPanel(parent)
 
                 local textColorName = (i == 1) and Color(0, 255, 255) or (recordName == playerName and Color(200, 200, 200) or Color(255, 255, 255))
 
-                Text(tostring(i), "SmallTextFont", tableX + 10, tableY, color_white, TEXT_ALIGN_LEFT)
-                Text(recordName, "SmallTextFont", tableX + 80, tableY, textColorName, TEXT_ALIGN_LEFT)
-                Text(recordTime, "SmallTextFont", tableX + tableWidth - 30, tableY, color_white, TEXT_ALIGN_RIGHT)
+                Text(tostring(i), "ui.mainmenu.button", tableX + 10, tableY, color_white, TEXT_ALIGN_LEFT)
+                Text(recordName, "ui.mainmenu.button", tableX + 80, tableY, textColorName, TEXT_ALIGN_LEFT)
+                Text(recordTime, "ui.mainmenu.button", tableX + tableWidth - 30, tableY, color_white, TEXT_ALIGN_RIGHT)
                 tableY = tableY + 25
             end
         end
@@ -1021,6 +971,7 @@ function UI:CreateWRPanel(parent)
     return pnl
 end
 
+-- Command for opening Menu
 concommand.Add("bhop_menu", function()
     if not GetConVar("bhop_menu_open"):GetBool() then
         UI:CreateMenu()
@@ -1032,10 +983,12 @@ concommand.Add("bhop_menu", function()
     end
 end)
 
+-- IsValid?
 local function Iv(obj)
     return obj ~= nil and obj:IsValid()
 end
 
+-- Network Menu
 net.Receive("OpenBhopMenu", function()
     if not Iv(Frame) then
         UI:CreateMenu()
@@ -1051,6 +1004,7 @@ net.Receive("OpenBhopMenu", function()
     end
 end)
 
+-- Open WR List
 net.Receive("OpenWorldRecords", function()
     if not Iv(Frame) then
         UI:CreateMenu()

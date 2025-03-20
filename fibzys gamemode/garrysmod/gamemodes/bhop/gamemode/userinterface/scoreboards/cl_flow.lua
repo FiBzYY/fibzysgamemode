@@ -216,7 +216,7 @@ local function ListPlayers(self, pList, mw)
 		if not a or not b then return false end
 		local ra, rb = a:GetNWInt( "Rank", 1 ), b:GetNWInt("Rank", 1)
 		if ra == rb then
-			return a:GetNWInt("SpecialRankMap", 0) > b:GetNWInt("SpecialRankMap", 0)
+			return a:GetNWInt("Placement", 0) > b:GetNWInt("Placement", 0)
 		else
 			return ra > rb
 		end

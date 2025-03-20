@@ -113,47 +113,47 @@ AdminLoad.Setup = {
 local ti, tr = table.insert, table.remove
 
 -- Loads all admins from the master server and saves their access levels in a AdminLoad table
-function Admin:LoadAdmins( operator )
+function Admin:LoadAdmins(operator)
     if not self.Loaded then
 	SQL:Prepare(
 		"SELECT steam, level FROM timer_admins WHERE type = {0} or type = 0 ORDER BY level DESC",
 		{ Admin.GamemodeKey }
-	):Execute( function( data, varArg, szError )
+	):Execute( function(data, varArg, szError)
 		AdminLoad.Levels = {}
 		
 		if data then
-			for _,item in pairs( data ) do
+			for _,item in pairs(data) do
 				AdminLoad.Levels[ item["steam"] ] = item["level"]
 			end
 		end
 		
 		if varArg then
 			if operator and operator != "" then
-				AdminLoad.Levels[ operator ] = Admin.Level.Owner
+				AdminLoad.Levels[operator] = Admin.Level.Owner
 			end
 		end
 		
-		for _,p in pairs( player.GetHumans() ) do
-			Admin:CheckPlayerStatus( p, true )
+		for _,p in pairs(player.GetHumans()) do
+			Admin:CheckPlayerStatus(p, true)
 		end
 		
 		Admin.Loaded = true
-	end, operator )
+	end, operator)
 	end
 end
 
-function Admin:GetAccess( ply )
-	return AdminLoad.Levels[ ply:SteamID() ] or Admin.Level.None
+function Admin:GetAccess(ply)
+	return AdminLoad.Levels[ply:SteamID()] or Admin.Level.None
 end
 
-function Admin:CanAccess( ply, required )
-	return Admin:GetAccess( ply ) >= required
+function Admin:CanAccess(ply, required)
+	return Admin:GetAccess(ply) >= required
 end
 
-function Admin:CanAccessID( ply, id, bypass )
+function Admin:CanAccessID(ply, id, bypass)
 	local l
 	
-	for _,data in pairs( AdminLoad.Setup ) do
+	for _,data in pairs(AdminLoad.Setup) do
 		if data[ 1 ] == id then
 			l = data[ 3 ]
 			break
@@ -164,19 +164,18 @@ function Admin:CanAccessID( ply, id, bypass )
 		if bypass then return true end
 		return false
 	end
-	return Admin:CanAccess( ply, l )
+	return Admin:CanAccess(ply, l)
 end
 
-function Admin:IsHigherThan( a, b, eq, by )
-	if not by and (not IsValid( a ) or not IsValid( b )) then return false end
-	local ac, bc = Admin:GetAccess( a ), Admin:GetAccess( b )
+function Admin:IsHigherThan(a, b, eq, by)
+	if not by and (not IsValid(a) or not IsValid(b)) then return false end
+	local ac, bc = Admin:GetAccess(a), Admin:GetAccess(b)
 	return eq and ac >= bc or ac > bc
 end
 
-
 function Admin:SetAccessIcon( ply, nLevel )
 	if Admin.Icons[ nLevel ] then
-		ply:SetNWInt( "AccessIcon", Admin.Icons[ nLevel ] )
+		ply:SetNWInt("AccessIcon", Admin.Icons[nLevel])
 	end
 end
 
@@ -191,7 +190,6 @@ function Admin:CheckPlayerStatus(ply, reload)
     if nAccess >= Admin.Level.Base then
         Admin:SetAccessIcon(ply, nAccess)
     end
-   
 end
 
 -- Sends a message to the master server which then saves it in the database
@@ -525,14 +523,14 @@ function Admin:HandleRequest( ply, args )
 		
 		Zones:StartSet( ply, Type )
 	elseif ID == 3 then
-		local nMultiplier = tonumber(Value)
-		if not nMultiplier then
+		local Points = tonumber(Value)
+		if not Points then
 			return BHDATA:Send(ply, "Print", { "Admin", Lang:Get("AdminInvalidFormat", { Value, "Number" }) })
 		end
 
 		local mapName = MySQL:Escape(game.GetMap())
 		local nOld = Timer.Multiplier or 0
-		Timer.Multiplier = nMultiplier
+		Timer.Multiplier = Points
 
 		MySQL:Start("SELECT map FROM timer_map WHERE map = " .. mapName, function(result)
 			if result and result[1] then
@@ -554,7 +552,7 @@ function Admin:HandleRequest( ply, args )
 		RTV:UpdateMapListVersion()
 
 		BHDATA:Send(ply, "Print", { "Admin", Lang:Get("AdminSetValue", { "Multiplier", Timer.Multiplier }) })
-		Admin:AddLog("Changed map multiplier on " .. game.GetMap() .. " from " .. nOld .. " to " .. nMultiplier, ply:SteamID(), ply:Name())
+		Admin:AddLog("Changed map multiplier on " .. game.GetMap() .. " from " .. nOld .. " to " .. Points, ply:SteamID(), ply:Name())
 	elseif ID == 5 then
 		BHDATA:Unload()
 		RunConsoleCommand( "changelevel", Value )
@@ -722,7 +720,7 @@ function Admin:HandleRequest( ply, args )
 		local d = ply.TimeRemoveData
 		if not d then return end
 
-		local nStyle, nRank, szUID = tonumber(d[1]), tonumber(d[2]), MySQL:Escape(tostring(d[3]))
+		local nStyle, Rank, szUID = tonumber(d[1]), tonumber(d[2]), MySQL:Escape(tostring(d[3]))
 		local mapName = MySQL:Escape(game.GetMap())
 
 		MySQL:Start("DELETE FROM timer_times WHERE map = " .. mapName .. " AND style = " .. nStyle .. " AND uid = " .. szUID .. "", function()
@@ -759,7 +757,7 @@ function Admin:HandleRequest( ply, args )
 		end
 
 		ply.TimeRemoveData = nil
-		BHDATA:Send(ply, "Print", { "Admin", d[4] .. "'s #" .. nRank .. " time has been deleted and records have been reloaded!" })
+		BHDATA:Send(ply, "Print", { "Admin", d[4] .. "'s #" .. Rank .. " time has been deleted and records have been reloaded!" })
 	elseif ID == 18 then
 		local nStyle = tonumber(Value)
 		if not nStyle then
@@ -809,14 +807,14 @@ function Admin:HandleRequest( ply, args )
 		Replay:SetInfoData( ply.AdminBotStyle, info )
 		Replay:SetFramePosition( ply.AdminBotStyle, nFrame )
 	elseif ID == 21 then
-		local nMultiplier = tonumber(Value)
-		if not nMultiplier then
+		local Points = tonumber(Value)
+		if not Points then
 			return BHDATA:Send(ply, "Print", { "Admin", Lang:Get("AdminInvalidFormat", { Value, "Number" }) })
 		end
 
 		local mapName = MySQL:Escape(game.GetMap())
 		local nOld = Timer.BonusMultiplier or 0
-		Timer.BonusMultiplier = nMultiplier
+		Timer.BonusMultiplier = Points
 
 		MySQL:Start("SELECT map FROM timer_map WHERE map = " .. mapName, function(result)
 			if result and result[1] then
@@ -832,7 +830,7 @@ function Admin:HandleRequest( ply, args )
 			TIMER:UpdateRank(p)
 		end
 
-		Admin:AddLog("Changed bonus multiplier on " .. game.GetMap() .. " from " .. nOld .. " to " .. nMultiplier, ply:SteamID(), ply:Name())
+		Admin:AddLog("Changed bonus multiplier on " .. game.GetMap() .. " from " .. nOld .. " to " .. Points, ply:SteamID(), ply:Name())
 		BHDATA:Send(ply, "Print", { "Admin", Lang:Get("AdminSetValue", { "Bonus multiplier", Timer.BonusMultiplier }) })
 	elseif ID == 22 then
 		if not RTV:MapExists(Value) then
@@ -925,16 +923,16 @@ net.Receive("AdminChangeMapMultiplier", function(len, ply)
         return
     end
 
-    local nMultiplier = net.ReadFloat()
+    local Points = net.ReadFloat()
     
-    if not nMultiplier or nMultiplier <= 0 then
+    if not Points or Points <= 0 then
         ply:ChatPrint("Invalid multiplier value!")
         return
     end
 
     local mapName = MySQL:Escape(game.GetMap())
     local nOld = Timer.Multiplier or 0
-    Timer.Multiplier = nMultiplier
+    Timer.Multiplier = Points
 
     MySQL:Start("SELECT map FROM timer_map WHERE map = " .. mapName, function(result)
         if result and result[1] then
@@ -956,7 +954,7 @@ net.Receive("AdminChangeMapMultiplier", function(len, ply)
     RTV:UpdateMapListVersion()
 
     BHDATA:Send(ply, "Print", { "Admin", "Map multiplier updated to " .. Timer.Multiplier })
-    Admin:AddLog("Changed map multiplier on " .. game.GetMap() .. " from " .. nOld .. " to " .. nMultiplier, ply:SteamID(), ply:Name())
+    Admin:AddLog("Changed map multiplier on " .. game.GetMap() .. " from " .. nOld .. " to " .. Points, ply:SteamID(), ply:Name())
 end)
 
 -- Dev
@@ -1022,6 +1020,31 @@ local function LoadBans()
     UTIL:Notify(Color(255, 0, 0), "BanSystem", "Loaded " .. table.Count(Bans.steam) .. " SteamID bans and " .. table.Count(Bans.ip) .. " IP bans.")
 end
 
+local function IsPlayerBanned(steamID)
+    steamID = string.upper(steamID)
+
+    Bans.steam = Bans.steam or {}
+
+    local banData = Bans.steam[steamID]
+    if not banData then return false end
+
+    if banData.expires == 0 then
+        return true, banData.reason
+    end
+
+    if os.time() > banData.expires then
+        Bans.steam[steamID] = nil
+        SaveBans()
+        return false
+    end
+
+    return true, banData.reason
+end
+
+local function IsPlayerCfgBanned(steamID)
+    return BHOP.Banlist[steamID] or false
+end
+
 local function IsIPBanned(ip)
     if not ip then return false end
 
@@ -1058,22 +1081,31 @@ end
 
 hook.Add("CheckPassword", "BanCheck", function(steamID64, ip, sv_password, cl_password, name)
     local steamID = util.SteamIDFrom64(steamID64)
-	UTIL:Notify(Color(255, 0, 0), "BanSystem",(BanSystem .. " Checking ban status for SteamID: " .. steamID .. " | IP: " .. ip .. " | Name: " .. name))
+    UTIL:Notify(Color(255, 0, 0), "BanSystem", (BanSystem .. " Checking ban status for SteamID: " .. steamID .. " | IP: " .. ip .. " | Name: " .. name))
 
+    -- Check IP bans
     local isIPBanned, ipReason = IsIPBanned(ip)
     if isIPBanned then
-		UTIL:Notify(Color(255, 0, 0), "BanSystem", BanSystem .. " IP " .. ip .. " is banned. Reason: " .. ipReason)
+        UTIL:Notify(Color(255, 0, 0), "BanSystem", BanSystem .. " IP " .. ip .. " is banned. Reason: " .. ipReason)
         return false, "You are banned from this server: " .. ipReason
     end
 
+    -- Check config bans
+    if IsPlayerCfgBanned(steamID) then
+        UTIL:Notify(Color(255, 0, 0), "BanSystem", BanSystem .. " SteamID " .. steamID .. " is banned via config.")
+        return false, "You are banned from this server your unwanted (config ban)."
+    end
+
+    -- Steam bans from live ban system
     local isSteamBanned, steamReason = IsPlayerBanned(steamID)
     if isSteamBanned then
-		UTIL:Notify(Color(255, 0, 0), "BanSystem", BanSystem .. " SteamID " .. steamID .. " is banned. Reason: " .. steamReason)
+        UTIL:Notify(Color(255, 0, 0), "BanSystem", BanSystem .. " SteamID " .. steamID .. " is banned. Reason: " .. steamReason)
         return false, "You are banned from this server: " .. steamReason
     end
 
+    -- Server password check
     if sv_password ~= "" and cl_password ~= sv_password then
-		UTIL:Notify(Color(255, 0, 0), "BanSystem", BanSystem .. " " .. name .. " failed password check!")
+        UTIL:Notify(Color(255, 0, 0), "BanSystem", BanSystem .. " " .. name .. " failed password check!")
         return false, "Incorrect server password!"
     end
 

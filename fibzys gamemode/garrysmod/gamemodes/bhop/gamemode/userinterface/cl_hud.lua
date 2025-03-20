@@ -1232,7 +1232,7 @@ CreateConVar("bhop_jhud_difference", "1", FCVAR_ARCHIVE, "Enable or disable Diff
 
 -- JHUD Styles
 local hudStyles = {
-    pyramid = function(scrW, scrH, data, fadedWhite, colorToUse)
+    jcs = function(scrW, scrH, data, fadedWhite, colorToUse)
         drawSpeed(data.speed, colorToUse)
 
         if data.jumps > 1 then
@@ -1305,7 +1305,7 @@ end
 }
 
 -- Main HUD Display
-local jhudstyle = CreateClientConVar("bhop_jhud_style", "pyramid", true, false, "Choose a JHUD style: 'pyramid', 'kawaii', 'claz'.")
+local jhudstyle = CreateClientConVar("bhop_jhud_style", "jcs", true, false, "Choose a JHUD style: 'jcs', 'kawaii', 'claz'.")
 
 -- JHUD Display
 local function JumpHudDisplay()

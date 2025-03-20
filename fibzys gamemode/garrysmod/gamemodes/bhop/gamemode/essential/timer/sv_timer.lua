@@ -582,8 +582,8 @@ function TIMER:Finish(ply, time)
         MySQL:Start("SELECT COUNT(*) AS totalRecords FROM timer_times WHERE map = '" .. game.GetMap() .. "' AND style = " .. ply.style, function(TotalRecords)
             local nRec = TotalRecords and TotalRecords[1] and tonumber(TotalRecords[1]["totalRecords"]) or 0
 
-            MySQL:Start("SELECT COUNT(*) AS nRank FROM timer_times WHERE map = '" .. game.GetMap() .. "' AND time < " .. time .. " AND style = " .. ply.style, function(Rank)
-                local playerRank = Rank and Rank[1] and tonumber(Rank[1]["nRank"]) or 0
+            MySQL:Start("SELECT COUNT(*) AS Rank FROM timer_times WHERE map = '" .. game.GetMap() .. "' AND time < " .. time .. " AND style = " .. ply.style, function(Rank)
+                local playerRank = Rank and Rank[1] and tonumber(Rank[1]["Rank"]) or 0
                 local id = playerRank + 1
 
                 if nRec == 1 and time >= record then
@@ -850,7 +850,7 @@ function TIMER:HandleRecordCompletion(ply, time, old, styleData)
 
     local id = 1
     local query = "SELECT t1.*, (SELECT COUNT(*) + 1 FROM timer_times AS t2 WHERE t2.time < t1.time AND map = '" .. 
-    game.GetMap() .. "' AND style = " .. ply.style .. ") AS nRank FROM timer_times t1 WHERE t1.uid = '" .. 
+    game.GetMap() .. "' AND style = " .. ply.style .. ") AS Rank FROM timer_times t1 WHERE t1.uid = '" .. 
     ply:SteamID() .. "' AND t1.map = '" .. game.GetMap() .. "' AND t1.style = " .. ply.style
 
     MySQL:Start(query, function(Rank)
@@ -858,7 +858,7 @@ function TIMER:HandleRecordCompletion(ply, time, old, styleData)
             return
         end
 
-        id = tonumber(Rank[1].nRank) or 1
+        id = tonumber(Rank[1].Rank) or 1
 
         styleData:AddRecord({ply:SteamID(), Rank[1]["player"], time, self:Null(Rank[1]["date"]), nil})
 
@@ -972,9 +972,9 @@ function TIMER:LoadRecords()
             return
         end
 
-        MySQL:Start("SELECT SUM(time) AS nSum, COUNT(time) AS nCount, AVG(time) AS nAverage FROM timer_times WHERE map = '" .. game.GetMap() .. "' AND style = " .. id, function(Query) 
+        MySQL:Start("SELECT SUM(time) AS Sum, COUNT(time) AS nCount, AVG(time) AS nAverage FROM timer_times WHERE map = '" .. game.GetMap() .. "' AND style = " .. id, function(Query) 
             local styleData = self.Styles[id].Data
-            styleData.Total = self:Assert(Query, "nSum") and tonumber(Query[1]["nSum"]) or 0
+            styleData.Total = self:Assert(Query, "Sum") and tonumber(Query[1]["Sum"]) or 0
             styleData.Count = self:Assert(Query, "nCount") and tonumber(Query[1]["nCount"]) or 0
             styleData.Average = self:Assert(Query, "nAverage") and tonumber(Query[1]["nAverage"]) or 0
         end)
