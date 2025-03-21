@@ -42,6 +42,9 @@ else
     UTIL:Notify(Color(255, 0, 0), "Database", "MySQLoo module successfully loaded.")
 end
 
+resource.AddFile("resource/fonts/FiBuchetMS-Bold.ttf")
+resource.AddFile("resource/fonts/Verdana.ttf")
+
 BHDATA = BHDATA or {}
 BHDATA.Protocol = "TimerNetworkProtocol"
 BHDATA.Protocol2 = "BinaryTransfer"
