@@ -100,12 +100,6 @@ function TIMER:ResetPlayerAttributes(ply, previous, start)
     elseif ply:GetGravity() != 0 then
         ply:SetGravity(0)
     end
-
-    --[[if ply.style == TIMER:GetStyleID("Stamina") and ply.style == TIMER:GetStyleID("legit") then
-        STAMINA_USE[ply] = true
-    else
-        STAMINA_USE[ply] = false
-    end--]]
 end
 
 local LastPlayerAngles = {}
@@ -135,76 +129,11 @@ function TIMER:SpawnChecks(ply)
     end
 end
 
--- FoV
---[[local default_fov = 90
-local fov_data_path = "fov_data/"
-local playerFOVState = {}
-
-if not file.IsDir(fov_data_path, "DATA") then
-    file.CreateDir(fov_data_path)
-end
-
-local function SavePlayerFOV(ply, fov)
-    local steam_id = ply:SteamID64()
-    file.Write(fov_data_path .. steam_id .. ".txt", tostring(fov))
-end
-
-local function LoadPlayerFOV(ply)
-    local steam_id = ply:SteamID64()
-    if file.Exists(fov_data_path .. steam_id .. ".txt", "DATA") then
-        local fov = tonumber(file.Read(fov_data_path .. steam_id .. ".txt", "DATA"))
-        return fov and fov >= 1 and fov <= 180 and fov or default_fov
-    else
-        return default_fov
-    end
-end
-
-hook_Add("PlayerInitialSpawn", "LoadFOVOnJoin", function(ply)
-    local steam_id = ply:SteamID64()
-    if playerFOVState[steam_id] == nil then
-        playerFOVState[steam_id] = true
-    end
-
-    local saved_fov = LoadPlayerFOV(ply)
-    
-    timer.Simple(2, function()
-        if IsValid(ply) and playerFOVState[steam_id] then
-            local fov_to_set = saved_fov or default_fov
-            ply:SetFOV(fov_to_set, 0.2)
-            
-            net.Start("SyncFOV")
-            net.WriteInt(fov_to_set, 32)
-            net.Send(ply)
-        end
-    end)
-end)
-
-net.Receive("SyncFOV", function(len, ply)
-    local steam_id = ply:SteamID64()
-
-    if playerFOVState[steam_id] == false then
-        return
-    end
-
-    local new_fov = math.Clamp(net.ReadInt(32) or default_fov, 1, 180)
-    if new_fov < 1 or new_fov > 180 then
-        new_fov = default_fov
-    end
-
-    ply:SetFOV(new_fov, 0.2)
-    SavePlayerFOV(ply, new_fov)
-end)
-
-hook_Add("PlayerDisconnected", "ResetFOVOnDisconnect", function(ply)
-    ply:SetFOV(default_fov, 0.2)
-    playerFOVState[ply:SteamID64()] = nil
-end)--]]
-
 -- What gets loaded when the player spawns
 function TIMER:Load(ply)
     ply:SetTeam(1)
 
-    ply.style = TIMER:GetStyleID("Normal")
+    ply.style, ply.mode = TIMER:GetStyleID("Normal"), 1
     ply.record, ply.Rank = 0, -1
 
     ply:SetNWInt("Style", ply.style)
@@ -214,6 +143,7 @@ function TIMER:Load(ply)
     timer.Simple(0.1, function()
         if IsValid(ply) then
             NETWORK:StartNetworkMessage(ply, "UpdateSingleVar", ply, "style", ply.style)
+            NETWORK:StartNetworkMessage(ply, "UpdateSingleVar", ply, "mode", ply.mode)
         end
     end)
 
@@ -268,7 +198,7 @@ end
 
 -- Load the style
 function TIMER:LoadStyle(ply, style)
-    ply.style, ply.record = style, 0
+    ply.style, ply.record, ply.mode = style, 0, 1
     Command:PerformRestart(ply)
 
     self:LoadBest(ply)

@@ -112,6 +112,7 @@ CreateClientConVar("bhop_thirdperson", 0, true, false, "Shows third person view 
 CreateClientConVar("bhop_viewpunch", "1", true, false, "Enable or disable view punch effect")
 CreateClientConVar("bhop_weaponpickup", "1", true, false, "Enable or disable weapon pickup for yourself.")
 CreateClientConVar("bhop_viewinterp", "0", true, false, "Enable or disable view interpolation.")
+CreateClientConVar("bhop_water_toggle", "0", true, false, "Enable or disable water reflections.")
 
 -- So we dont need to keep calling hook.add ect...
 local lp, Iv, ct, Vector, hook_Add = LocalPlayer, IsValid, CurTime, Vector, hook.Add
@@ -452,6 +453,11 @@ concommand.Add("bhop_showplayers_toggle", function()
     end
 end)
 
+net.Receive("bhop_set_showplayers", function()
+    local shouldShow = net.ReadBool()
+    RunConsoleCommand("bhop_showplayers", shouldShow and "1" or "0")
+end)
+
 -- Hide players based on ConVar
 hook_Add("PrePlayerDraw", "PlayerVisibilityCheck", function(ply)
     local showPlayers = GetConVar("bhop_showplayers"):GetInt()
@@ -462,6 +468,37 @@ hook_Add("PrePlayerDraw", "PlayerVisibilityCheck", function(ply)
     end
 
     return true
+end)
+
+concommand.Add("bhop_watertoggle", function()
+    local toggle = GetConVar("bhop_water_toggle"):GetInt() == 0 and 1 or 0
+    RunConsoleCommand("bhop_water_toggle", toggle)
+
+    RunConsoleCommand("r_waterdrawrefraction", toggle)
+    RunConsoleCommand("r_waterdrawreflection", toggle)
+end)
+
+cvars.AddChangeCallback("bhop_water_toggle", function(_, _, newValue)
+    local value = tonumber(newValue)
+    RunConsoleCommand("r_waterdrawrefraction", value)
+    RunConsoleCommand("r_waterdrawreflection", value)
+end)
+
+net.Receive("bhop_set_water_toggle", function()
+    local cvar = GetConVar("bhop_water_toggle")
+    local current = cvar:GetInt()
+    local new = current == 0 and 1 or 0
+
+    RunConsoleCommand("bhop_water_toggle", tostring(new))
+
+    RunConsoleCommand("r_waterdrawrefraction", new)
+    RunConsoleCommand("r_waterdrawreflection", new)
+
+    if new == 1 then
+        UTIL:AddMessage("Settings", "Enabled Water reflections/refractions.")
+    else
+        UTIL:AddMessage("Settings", "Disabled Water reflections/refractions.")
+    end
 end)
 
 -- Optimize on client boot
@@ -485,9 +522,15 @@ end)
 
 function GM:EntityEmitSound(data)
     if GetConVar("bhop_gunsounds"):GetInt() == 0 then
-        if string.find(data.OriginalSoundName, "footstep") or string.find(data.OriginalSoundName, "player/footstep") then
+        local snd = string.lower(data.OriginalSoundName or "")
+
+        if string.find(snd, "footstep") or 
+           string.find(snd, "step") or 
+           string.find(snd, "run") or 
+           string.find(snd, "walk") then
             return
         end
+
         return false
     end
 end
@@ -564,7 +607,8 @@ end
 local oldbts = {}
 hook.Add("StartCommand", "WepSpamer", function(ply, cmd)
     if not bhop_wepspammer:GetBool() then return end
-    if not IsValid(ply) or not ply:Alive() then return end
+
+    if not IsValid(ply) or not ply:Alive() or ply:Team() == TEAM_SPECTATOR then return end
 
     local buttons = cmd:GetButtons()
     oldbts[ply] = oldbts[ply] or 0
@@ -729,7 +773,6 @@ local function DrawTargetIDs()
     local lpc = lp()
     if not Iv(lpc) then return end
 
-    -- Refresh Players table every 2 seconds
     if not Players or ct() - LastCheck > 2 then
         Players = player.GetAll()
         LastCheck = ct()
@@ -737,7 +780,7 @@ local function DrawTargetIDs()
 
     local pos = lpc:GetPos()
 
-    for i = #Players, 1, -1 do -- loop backwards to safely remove invalid players
+    for i = #Players, 1, -1 do
         local ply = Players[i]
 
         if not Iv(ply) or not ply:Alive() then
@@ -750,19 +793,18 @@ local function DrawTargetIDs()
         local ppos = ply:GetPos()
         local diff = (ppos - pos):Length()
 
-        if diff < 90 then
-            local pos2d = Vector(ppos.x, ppos.y, ppos.z + 50):ToScreen()
-            if ply:IsBot() then
-                draw.SimpleText("Replay Bot", "HUDTimerMedThick", pos2d.x, pos2d.y, DynamicColors.PanelColor, DrawPos)
-            else
-                draw.SimpleText("Player: " .. ply:Name(), "HUDTimerMedThick", pos2d.x, pos2d.y, DynamicColors.PanelColor, DrawPos)
-            end
+        if diff < 1000 then
+            local alpha = math.Clamp(255 - (diff / 1000) * 255, 50, 255)
+            local pos2d = Vector(ppos.x, ppos.y, ppos.z + 70):ToScreen()
+
+            local label = ply:IsBot() and "Replay Bot" or "Player: " .. ply:Name()
+            draw.SimpleText(label, "HUDTimerMedThick", pos2d.x, pos2d.y, Color(DynamicColors.PanelColor.r, DynamicColors.PanelColor.g, DynamicColors.PanelColor.b, alpha), DrawPos)
         end
 
         if Markers[ply] then
             local pos2d = Vector(ppos.x, ppos.y, ppos.z + 100):ToScreen()
             if pos2d.visible then
-                surface.SetDrawColor(DynamicColors.PanelColor)
+                surface.SetDrawColor(DynamicColors.PanelColor.r, DynamicColors.PanelColor.g, DynamicColors.PanelColor.b, 255)
                 surface.DrawTexturedRect(pos2d.x - 8, pos2d.y, 16, 16)
             end
         end

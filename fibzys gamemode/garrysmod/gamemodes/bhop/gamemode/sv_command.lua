@@ -20,6 +20,8 @@ util.AddNetworkString("SendNewMapsList")
 util.AddNetworkString("JHUD_SendData")
 util.AddNetworkString("PAINT_SendData")
 util.AddNetworkString("TRAINER_SendData")
+util.AddNetworkString("bhop_set_showplayers")
+util.AddNetworkString("bhop_set_water_toggle")
 
 function SendSSJTopToClient(ply)
     if not IsValid(ply) then return end
@@ -359,7 +361,8 @@ local styleIDs = {
     [13] = TIMER:GetStyleID("Backwards"),   [14] = TIMER:GetStyleID("Stamina"),
     [15] = TIMER:GetStyleID("Segment"),     [16] = TIMER:GetStyleID("LG"),
     [17] = TIMER:GetStyleID("AS"),          [18] = TIMER:GetStyleID("MM"),
-    [19] = TIMER:GetStyleID("HG"),          [20] = TIMER:GetStyleID("SPEED")
+    [19] = TIMER:GetStyleID("HG"),          [20] = TIMER:GetStyleID("SPEED"),
+    [21] = TIMER:GetStyleID("Prespeed")
 }
 
 UI:AddListener("style", function(client, data)
@@ -508,6 +511,41 @@ function Command:Init()
             end,
             "Paint Menu command",
             "<arguments>"
+        },
+
+        -- Show or Hide Players
+        {
+        {"show", "hide", "showplayers", "hideplayers"},
+        function(pl, args)
+            local key = args.Key and string.lower(args.Key) or ""
+
+            if string.sub(key, 1, 4) == "show" then
+                net.Start("bhop_set_showplayers")
+                net.WriteBool(true)
+                net.Send(pl)
+                TIMER:Print(pl, "Players Enabled. You can now see players!")
+            elseif string.sub(key, 1, 4) == "hide" then
+                net.Start("bhop_set_showplayers")
+                net.WriteBool(false)
+                net.Send(pl)
+                TIMER:Print(pl, "Players Disabled. Players are now hidden!")
+            else
+                TIMER:Print(pl, "Invalid command. Use show/hide")
+            end
+        end,
+        "Hide or show players",
+        "[subcommand]"
+        },
+
+        -- Water Command
+        {
+        { "water", "fixwater", "reflection", "refraction" },
+        function(pl, args)
+            net.Start("bhop_set_water_toggle")
+            net.Send(pl)
+        end,
+        "Hide or show water",
+        "[subcommand]"
         },
 
         -- Spectate
@@ -819,17 +857,47 @@ function Command:Init()
             "<style> [page]"
         },
 
-        -- Normal WR DO TO:
-        {
+        -- Normal WR
+        --[[{
             {"nwr", "normalwr", "wrnormal"},
             function(ply, args)
-		        local nStyle, page = TIMER:GetStyleID("N"), 1
-		        if #args > 0 then
-			        TIMER:SendRemoteWRList(ply, args[1], stylename, page)
-		        else
-			        UI:SendToClient(ply, "wr", TIMER:GetRecordList(stylename, page), stylename, page, TIMER:GetRecordCount(stylename))
-		        end
+                local nStyle, page = TIMER:GetStyleID("N"), 1
+                if #args > 0 then
+                    TIMER:SendRemoteWRList(ply, args[1], nStyle, page)
+                else
+                    TIMER:GetRecordList(nStyle, page, function(records)
+                        UI:SendToClient(ply, "wr", records, nStyle, page, TIMER:GetRecordCount(nStyle))
+                    end)
+                end
             end,
+
+            "Displays normal world records or record list",
+            "<style> [page]"
+        },--]]
+
+        -- Style WR 
+        {
+            {"wr", "records", "worldrecords"},
+            function(ply, args)
+            local styleAliases = {
+                ["n"] = "N",
+                ["sw"] = "SW",
+                ["hsw"] = "HSW",
+                ["w"] = "W",
+                ["lg"] = "LG",
+                ["bonus"] = "Bonus",
+                ["stamina"] = "Stamina" }
+
+                local styleArg = args[1] and args[1]:lower() or "n"
+                local styleName = styleAliases[styleArg] or "N"
+                local styleID = TIMER:GetStyleID(styleName)
+                local page = tonumber(args[2]) or 1
+
+                TIMER:GetRecordList(styleID, page, function(records)
+                    UI:SendToClient(ply, "wr", records, styleID, page, TIMER:GetRecordCount(styleID))
+                end)
+            end,
+
             "Displays normal world records or record list",
             "<style> [page]"
         },
@@ -1047,130 +1115,6 @@ function Command:Init()
         end, "Switch to style: " .. styleData[1], "<styleID>")
     end
 end
-
-
-
---[[	self:Register( { "wrn", "wrnormal", "nwr" }, function( ply, args )
-		local nStyle, nPage = _C.Style.Normal, 1
-		if #args > 0 then
-			Player:SendRemoteWRList( ply, args[ 1 ], nStyle, nPage )
-		else
-			UI:SendToClient(ply, "wr", Timer:GetRecordList( nStyle, nPage ), nStyle, nPage, Timer:GetRecordCount( nStyle ))
-		end
-	end )
-
-	self:Register( { "wrsw", "wrsideways", "swwr" }, function( ply, args )
-		local nStyle, nPage = _C.Style.SW, 1
-		if #args > 0 then
-			Player:SendRemoteWRList( ply, args[ 1 ], nStyle, nPage )
-		else
-			UI:SendToClient(ply, "wr", Timer:GetRecordList( nStyle, nPage ), nStyle, nPage, Timer:GetRecordCount( nStyle ))
-		end
-	end )
-
-	self:Register( { "wrhsw", "wrhalf", "wrhalfsw", "wrhalfsideways", "hswwr" }, function( ply, args )
-		local nStyle, nPage = _C.Style.HSW, 1
-		if #args > 0 then
-			Player:SendRemoteWRList( ply, args[ 1 ], nStyle, nPage )
-		else
-			UI:SendToClient(ply, "wr", Timer:GetRecordList( nStyle, nPage ), nStyle, nPage, Timer:GetRecordCount( nStyle ))
-		end
-	end )
-
-	self:Register( { "wrw", "wrwonly", "wwr", "wonlywr" }, function( ply, args )
-		local nStyle, nPage = _C.Style["W-Only"], 1
-		if #args > 0 then
-			Player:SendRemoteWRList( ply, args[ 1 ], nStyle, nPage )
-		else
-			UI:SendToClient(ply, "wr", Timer:GetRecordList( nStyle, nPage ), nStyle, nPage, Timer:GetRecordCount( nStyle ))
-		end
-	end )
-
-	self:Register( { "wra", "wraonly", "awr", "aonlywr" }, function( ply, args )
-		local nStyle, nPage = _C.Style["A-Only"], 1
-		if #args > 0 then
-			Player:SendRemoteWRList( ply, args[ 1 ], nStyle, nPage )
-		else
-			UI:SendToClient(ply, "wr", Timer:GetRecordList( nStyle, nPage ), nStyle, nPage, Timer:GetRecordCount( nStyle ))
-		end
-	end )
-
-	self:Register( { "wrl", "wrlegit", "lwr" }, function( ply, args )
-		local nStyle, nPage = _C.Style.Legit, 1
-		if #args > 0 then
-			Player:SendRemoteWRList( ply, args[ 1 ], nStyle, nPage )
-		else
-			UI:SendToClient(ply, "wr", Timer:GetRecordList( nStyle, nPage ), nStyle, nPage, Timer:GetRecordCount( nStyle ))
-		end
-	end )
-
-	self:Register( { "wrs", "wrscroll", "swr", "scrollwr", "wre", "ewr" }, function( ply, args )
-		local nStyle, nPage = _C.Style["Easy Scroll"], 1
-		if #args > 0 then
-			Player:SendRemoteWRList( ply, args[ 1 ], nStyle, nPage )
-		else
-			UI:SendToClient(ply, "wr", Timer:GetRecordList( nStyle, nPage ), nStyle, nPage, Timer:GetRecordCount( nStyle ))
-		end
-	end )
-
-	self:Register( { "wrb", "wrbonus", "bwr" }, function( ply, args )
-		local nStyle, nPage = _C.Style.Bonus, 1
-		if #args > 0 then
-			Player:SendRemoteWRList( ply, args[ 1 ], nStyle, nPage )
-		else
-			UI:SendToClient(ply, "wr", Timer:GetRecordList( nStyle, nPage ), nStyle, nPage, Timer:GetRecordCount( nStyle ))
-		end
-	end )
-	
-	self:Register( { "wrunreal", "wrun", "unrealwr" }, function( ply, args )
-		local nStyle, nPage = _C.Style.Unreal, 1
-		if #args > 0 then
-			Player:SendRemoteWRList( ply, args[ 1 ], nStyle, nPage )
-		else
-			Core:Send( ply, "GUI_Open", { "WR", { 2, Timer:GetRecordList( nStyle, nPage ), nStyle, nPage, Timer:GetRecordCount( nStyle ) } } )
-		end
-	end )
-	
-	self:Register( { "wrswi", "wrswift", "swiftwr" }, function( ply, args )
-		local nStyle, nPage = _C.Style.Swift, 1
-		if #args > 0 then
-			Player:SendRemoteWRList( ply, args[ 1 ], nStyle, nPage )
-		else
-			Core:Send( ply, "GUI_Open", { "WR", { 2, Timer:GetRecordList( nStyle, nPage ), nStyle, nPage, Timer:GetRecordCount( nStyle ) } } )
-		end
-	end )
-	
-	self:Register( { "wrshsw", "wrshalf", "shswwr" }, function( ply, args )
-		local nStyle, nPage = _C.Style.SHSW, 1
-		if #args > 0 then
-			Player:SendRemoteWRList( ply, args[ 1 ], nStyle, nPage )
-		else
-			Core:Send( ply, "GUI_Open", { "WR", { 2, Timer:GetRecordList( nStyle, nPage ), nStyle, nPage, Timer:GetRecordCount( nStyle ) } } )
-		end
-	end )
-	
-	self:Register( { "wrwtf", "wrwat", "wtfwr" }, function( ply, args )
-		local nStyle, nPage = _C.Style.WTF, 1
-		if #args > 0 then
-			Player:SendRemoteWRList( ply, args[ 1 ], nStyle, nPage )
-		else
-			Core:Send( ply, "GUI_Open", { "WR", { 2, Timer:GetRecordList( nStyle, nPage ), nStyle, nPage, Timer:GetRecordCount( nStyle ) } } )
-		end
-	end )
-	
-	self:Register( { "wrd", "wrdonly", "dwr", "donlywr" }, function( ply, args )
-		local nStyle, nPage = _C.Style["D-Only"], 1
-		if #args > 0 then
-			Player:SendRemoteWRList( ply, args[ 1 ], nStyle, nPage )
-		else
-			Core:Send( ply, "GUI_Open", { "WR", { 2, Timer:GetRecordList( nStyle, nPage ), nStyle, nPage, Timer:GetRecordCount( nStyle ) } } )
-		end
-	end )
-
-	self:Register( { "swtop", "hswtop", "wtop", "atop" }, function( ply )
-		local nPage = 1
-		Core:Send( ply, "GUI_Open", { "Top", { 2, Player:GetTopPage( nPage, _C.Style.SW ), nPage, Player:GetTopCount( _C.Style.SW ), Player:GetRankType( _C.Style.SW, true ) } } )
-	end )--]]
 
 UI:AddListener("nominate", function(client, data)
     local mapName = data[1]
