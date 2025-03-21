@@ -109,6 +109,8 @@ function SWEP:PrimaryAttack()
     if self:Clip1() <= 0 then self:Reload() end
     if self:Clip1() <= 0 or not self.FiresUnderwater and self.Owner:WaterLevel() == 3 then return end
 
+    local dmg = self.Primary.Damage
+
     local bullet = {
         Num = self.Primary.NumberofShots,
         Src = self.Owner:GetShootPos(),
@@ -117,8 +119,27 @@ function SWEP:PrimaryAttack()
         Tracer = 0,
         Distance = 4096,
         Force = self.Primary.Force,
-        Damage = self.Primary.Damage,
-        AmmoType = self.Primary.Ammo
+        Damage = dmg,
+        AmmoType = self.Primary.Ammo,
+        Callback = function(attacker, tr, dmginfo)
+            if SERVER and tr.HitPos then
+                local tracedata = {
+                    start = tr.StartPos,
+                    endpos = tr.HitPos + (tr.Normal * 2),
+                    filter = attacker,
+                    mask = MASK_PLAYERSOLID
+                }
+                local trace = util.TraceLine(tracedata)
+
+                if IsValid(trace.Entity) then
+                    if trace.Entity:GetClass() == "func_button" then
+                        trace.Entity:TakeDamage(dmg, attacker, dmginfo:GetInflictor())
+                    elseif trace.Entity:GetClass() == "func_physbox_multiplayer" then
+                        trace.Entity:TakeDamage(dmg, attacker, dmginfo:GetInflictor())
+                    end
+                end
+            end
+        end
     }
 
     self.Owner:FireBullets(bullet)

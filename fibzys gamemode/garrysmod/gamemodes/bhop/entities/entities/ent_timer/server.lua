@@ -46,13 +46,22 @@ local function StartZoneTouch(ent, zone)
     local isJumping = ent:KeyDown(IN_JUMP)
     local isOnGround = ent:IsOnGround()
     local moveType = ent:GetMoveType()
+    local style = TIMER:GetStyle(ent)
 
     if zone == ZONE.MAIN_START then
         ent.InStartZone = true
-        if ent.time and not isJumping and isOnGround then
+
+        local isPrespeed = (style == TIMER:GetStyleID("Prespeed"))
+
+        if ent.time and (isPrespeed or not isJumping) and isOnGround then
             TIMER:ResetTimer(ent)
         elseif not ent.time and isJumping and moveType ~= MOVETYPE_NOCLIP then
             TIMER:StartTimer(ent)
+
+            if isPrespeed and isJumping and isOnGround then
+                ent:SetNWBool("inPractice", false)
+            end
+
             if not ent:GetNWBool("inPractice") then
                 net.Start("ZoneExitSound")
                 net.Send(ent)
