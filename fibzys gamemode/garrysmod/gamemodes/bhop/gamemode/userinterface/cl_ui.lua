@@ -1162,7 +1162,8 @@ UI:AddListener("style", function(_, data)
             {["name"] = "Auto-Strafe", ["function"] = STYLE_Callback(17), ["bool"] = data[17]},
             {["name"] = "Moon Man", ["function"] = STYLE_Callback(18), ["bool"] = data[18]},
             {["name"] = "High Gravity", ["function"] = STYLE_Callback(19), ["bool"] = data[19]},
-            {["name"] = "Speedrun", ["function"] = STYLE_Callback(20), ["bool"] = data[20]}
+            {["name"] = "Speedrun", ["function"] = STYLE_Callback(20), ["bool"] = data[20]},
+            {["name"] = "Prespeed", ["function"] = STYLE_Callback(21), ["bool"] = data[21]}
         )
     end
 end)

@@ -249,19 +249,6 @@ Theme:Register("Zones", "zones.kawaii", "Zones Kawaii Clan", {
         }
     },
 
-    ["White"] = {
-        ["Colours"] = {
-            ["Start Zone Colour"] = Color(255, 255, 255, 255),
-            ["End Zone Colour"] = Color(255, 255, 255, 255),
-            ["Bonus Start Colour"] = Color(255, 255, 255, 255),
-            ["Bonus End Colour"] = Color(255, 255, 255, 255),
-            ["Placement Colour"] = Color(255, 255, 255, 255)
-        },
-        ["Toggles"] = {
-            ["Outlines"] = false
-        }
-    },
-
     ["Changing"] = {
         ["Colours"] = {
             ["Start Zone Colour"] = DynamicColors.PanelColor,

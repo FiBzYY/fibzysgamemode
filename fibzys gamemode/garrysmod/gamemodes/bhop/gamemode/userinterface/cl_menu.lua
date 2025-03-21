@@ -201,32 +201,6 @@ function UI:UpdateSideNav(buttons)
     end
 end
 
--- Lets get WR list
-function UI:FetchAndDisplayWR()
-    net.Start("RequestWRList")
-    net.WriteString(game.GetMap())
-    net.WriteInt(1, 32)
-    net.SendToServer()
-end
-
-net.Receive("WRList", function()
-    local data = net.ReadTable()
-    local records = data.records
-    local page = data.page
-    local total = data.total
-
-    UI.WRList = {}
-    for i, record in ipairs(records) do
-        table.insert(UI.WRList, {record[1], record[2]})
-    end
-
-    if Iv(ContentPanel) then
-        UI:CreateWRPanel(ContentPanel)
-    else
-        print("ERROR")
-    end
-end)
-
 -- Lets create the main top tab menu
 function UI:CreateTopNavButton(text, sideNavButtons)
     if not Iv(TopNavPanel) then return nil end
@@ -246,6 +220,35 @@ function UI:CreateTopNavButton(text, sideNavButtons)
         btn:InvalidateLayout(true)
     end
     return btn
+end
+
+local function WrapText(font, text, maxWidth)
+    surface.SetFont(font)
+    local spaceW = surface.GetTextSize(" ")
+
+    local words = string.Explode(" ", text)
+    local lines = {}
+    local currentLine = ""
+    local currentWidth = 0
+
+    for _, word in ipairs(words) do
+        local wordW = surface.GetTextSize(word)
+
+        if currentWidth + wordW > maxWidth then
+            table.insert(lines, currentLine)
+            currentLine = word .. " "
+            currentWidth = wordW + spaceW
+        else
+            currentLine = currentLine .. word .. " "
+            currentWidth = currentWidth + wordW + spaceW
+        end
+    end
+
+    if currentLine ~= "" then
+        table.insert(lines, currentLine)
+    end
+
+    return lines
 end
 
 -- Main Menu
@@ -374,18 +377,62 @@ function UI:CreateMenu()
         { text = "World Records", panelContent = function() self:FetchAndDisplayWR() end },
         { text = "Ranks", panelContent = function(parent) self:CreateRankPanel(parent) end },
 
-        -- DO TO: Make styles clickable
-        { text = "Styles", panelContent = {
-            "Styles",
-            "Normal, 1000 AA",
-            "Sideways, 1000 AA",
-            "HSW, 1000 AA",
-            "W-Only, 1000 AA",
-            "Legit, 150 AA",
-            "Unreal, 50000 AA",
-            "Segment, 1000 AA",
-            "Auto-Strafe, 1000 AA"
-        } },
+        { 
+            text = "Styles", 
+            panelContent = function(parent)
+            local scrollPanel = vgui.Create("DScrollPanel", parent)
+            scrollPanel:Dock(FILL)
+            local vBar = scrollPanel:GetVBar()
+            UI:MenuScrollbar(vBar)
+
+            local container = vgui.Create("DPanel", scrollPanel)
+            container:Dock(TOP)
+            container:SetTall(50)
+            container.Paint = function(self, w, h)
+                draw.SimpleText("Styles", "ui.mainmenu.button", 10, 10, color_white, TEXT_ALIGN_LEFT)
+                surface.SetDrawColor(120, 120, 120)
+                surface.DrawRect(10, 35, w - 20, 1)
+            end
+
+            local styleList = vgui.Create("DIconLayout", scrollPanel)
+            styleList:Dock(FILL)
+            styleList:SetSpaceY(5)
+            styleList:SetSpaceX(5)
+            styleList:DockMargin(10, 0, 10, 10)
+
+            for index, data in ipairs(TIMER.Styles) do
+                local styleName = data[1]
+                local command = data[3][1]
+                local description = TIMER.StyleInfo[index] or "No description added."
+
+                local btn = styleList:Add("DButton")
+                btn:SetText("")
+
+                local textWrapW = 380
+                local descLines = WrapText("ui.mainmenu.button", description, textWrapW)
+                local buttonHeight = 20 + (#descLines * 15) + 10
+
+                btn:SetSize(400, math.max(50, buttonHeight))
+
+                btn.Paint = function(self, w, h)
+                    local hoverCol = self:IsHovered() and Color(60, 60, 60, 255) or Color(40, 40, 40, 255)
+                    draw.RoundedBox(6, 0, 0, w, h, hoverCol)
+                    draw.SimpleText(styleName, "ui.mainmenu.button", 10, 5, color_white, TEXT_ALIGN_LEFT)
+
+                    local yOffset = 25
+                    for _, line in ipairs(descLines) do
+                        draw.SimpleText(line, "ui.mainmenu.button", 10, yOffset, Color(200, 200, 200), TEXT_ALIGN_LEFT)
+                        yOffset = yOffset + 15
+                    end
+                end
+
+                btn.DoClick = function()
+                    LocalPlayer():ConCommand("say !" .. command)
+                    RunConsoleCommand("bhop_menu_open", "0")
+                end
+            end
+        end
+    },
     })
 
     -- If we want scrollable or not
@@ -896,6 +943,8 @@ function UI:CreateRankPanel(parent)
 
         Text("Your Stats:", "ui.mainmenu.button", tableX + 10, statsY + 10 - 3, Color(200, 200, 200), TEXT_ALIGN_LEFT)
 
+        TIMER.ranking = {}
+
         if TIMER.ranking then
             local playerRank = lp():GetNWInt("Rank", 0)
             local playerPoints = lp().Sum or 0
@@ -910,7 +959,69 @@ function UI:CreateRankPanel(parent)
     return pnl
 end
 
--- WR Panel List
+UI.StyleLookup = {}
+
+function UI:FetchAndDisplayWR(styleID)
+    local style = styleID or "N"
+    net.Start("RequestWRList")
+    net.WriteString(game.GetMap())
+    net.WriteString(style)
+    net.WriteInt(1, 32) -- page default to 1
+    net.SendToServer()
+end
+
+net.Receive("WRList", function()
+    local data = net.ReadTable()
+    local records = data.records
+    local page = data.page
+    local total = data.total
+
+    UI.WRList = {}
+    for i, record in ipairs(records) do
+        table.insert(UI.WRList, {record[1], record[2]})
+    end
+
+    if Iv(ContentPanel) then
+        ContentPanel:Clear()
+        UI:CreateWRPanel(ContentPanel)
+    else
+        print("ERROR: ContentPanel missing!")
+    end
+end)
+
+-- WR List Menu
+UI.StyleLookup = {}
+UI.SelectedStyle = "n"
+
+function UI:FetchAndDisplayWR(styleID)
+    local style = styleID or "n"
+    UI.SelectedStyle = style
+    net.Start("RequestWRList")
+    net.WriteString(game.GetMap())
+    net.WriteString(style)
+    net.WriteInt(1, 32)
+    net.SendToServer()
+end
+
+net.Receive("WRList", function()
+    local data = net.ReadTable()
+    local records = data.records
+    local page = data.page
+    local total = data.total
+
+    UI.WRList = {}
+    for i, record in ipairs(records) do
+        table.insert(UI.WRList, {record[1], record[2]})
+    end
+
+    if Iv(ContentPanel) then
+        ContentPanel:Clear()
+        UI:CreateWRPanel(ContentPanel)
+    else
+        print("ERROR: ContentPanel missing!")
+    end
+end)
+
 function UI:CreateWRPanel(parent)
     if not Iv(parent) then return end
 
@@ -921,6 +1032,46 @@ function UI:CreateWRPanel(parent)
 
     local pnl = vgui.Create("DPanel", parent)
     pnl:Dock(FILL)
+
+    local combo = vgui.Create("DComboBox", pnl)
+    combo:SetPos(panelWidth - 200, 45)
+    combo:SetSize(180, 22)
+
+    UI.StyleLookup = {}
+    local selectedIndex = 0
+
+    for index, data in ipairs(TIMER.Styles) do
+        local styleName = data[1]
+        local command = data[3][1]
+        UI.StyleLookup[command] = index
+
+        combo:AddChoice(styleName, { id = index, cmd = command })
+
+        if command == UI.SelectedStyle then
+            selectedIndex = index
+        end
+    end
+
+    if selectedIndex > 0 then
+        combo:ChooseOptionID(selectedIndex)
+    else
+        combo:SetValue("Select Style")
+    end
+
+    combo.OnSelect = function(panel, index, value, data)
+        UI.SelectedStyle = data.cmd
+        UI:FetchAndDisplayWR(data.cmd)
+    end
+
+    local styleNameForMsg = "Unknown Style"
+    for index, data in ipairs(TIMER.Styles) do
+        local command = data[3][1]
+        if command == UI.SelectedStyle then
+            styleNameForMsg = data[1]
+            break
+        end
+    end
+
     pnl.Paint = function(self, w, h)
         local y = 10
 
@@ -934,10 +1085,11 @@ function UI:CreateWRPanel(parent)
 
         local tableMargin = 20
         local tableX, tableY = tableMargin, y
-        local tableWidth, tableHeight = w - (tableMargin * 2), 40 + (recordCount * 25)
+        local tableWidth = w - (tableMargin * 2)
+        local boxHeight = (recordCount == 0) and (30 + 40) or (40 + (recordCount * 25))
 
         surface.SetDrawColor(38, 38, 38)
-        surface.DrawRect(tableX, tableY, tableWidth, tableHeight)
+        surface.DrawRect(tableX, tableY, tableWidth, boxHeight)
 
         local titleHeight = 30
         surface.SetDrawColor(32, 32, 32)
@@ -952,7 +1104,7 @@ function UI:CreateWRPanel(parent)
         tableY = tableY + titleHeight + 10
 
         if recordCount == 0 then
-            Text("No Records Found", "ui.mainmenu.button", tableX + 10, tableY, Color(255, 0, 0), TEXT_ALIGN_LEFT)
+            Text("No records found for '" .. styleNameForMsg .. "' style", "ui.mainmenu.button", tableX + 10, tableY, Color(255, 0, 0), TEXT_ALIGN_LEFT)
         else
             for i, record in ipairs(UI.WRList or {}) do
                 local recordName = record[1]

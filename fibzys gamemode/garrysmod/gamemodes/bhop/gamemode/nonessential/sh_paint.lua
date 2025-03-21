@@ -47,6 +47,7 @@ function Paint:InitDecals()
             if SERVER then
                 resource.AddFile("materials/" .. mat .. ".vmt")
                 resource.AddFile("materials/" .. mat .. ".vtf")
+                resource.AddFile("materials/decals/paint/paint_decal.vtf")
             end
             self.Sprites[col - 1][sz - 1] = "paint_" .. self.Colors[col][2] .. self.Sizes[sz][2]
         end

@@ -1820,9 +1820,224 @@ function CreateScoreboardFlow(close)
 	end
 end
 
+hook.Add("CreateMove", "ClickableScoreBoard", function(cmd)
+    local scoreboardType = GetConVar("bhop_scoreboard"):GetString():lower()
+
+    local board
+    if scoreboardType == "flow" then
+        board = menu
+    else
+        board = scoreboard
+    end
+
+    if not (IsValid(board) and board:IsVisible()) then return end
+    if not (cmd:KeyDown(IN_ATTACK) or cmd:KeyDown(IN_ATTACK2)) then return end
+
+    if not board.IsClickable then 
+        board.IsClickable = true
+        gui.EnableScreenClicker(true)
+    end
+
+    cmd:RemoveKey(IN_ATTACK)
+    cmd:RemoveKey(IN_ATTACK2)
+end)
+
 function GM:DoScoreboardActionPopup(ply)
-    -- DO TO:
+	if not IsValid(ply) then return end
+	local actions, open = vgui.Create("DarkMenu"), true
+
+	if ply != LocalPlayer() then	
+		if not ply:IsBot() then
+			local nAccess = ply:GetNWInt("AccessIcon", 0)
+			if nAccess > 0 then
+				local admin = actions:AddOption("User is a " .. rank_str[nAccess])
+				admin:SetMaterial(icon.access[nAccess])
+				actions:AddSpacer()
+			end
+		
+			local mute = actions:AddOption(ply:IsMuted() and "Unmute" or "Mute")
+			mute:SetIcon("icon16/sound_mute.png")
+			function mute:DoClick()
+				if IsValid(ply) then
+					ply:SetMuted(!ply:IsMuted())
+				end
+			end
+			
+			local chatmute = actions:AddOption(ply.ChatMuted and "Unmute chat" or "Mute chat")
+			chatmute:SetIcon("icon16/keyboard_delete.png")
+			function chatmute:DoClick()
+				if IsValid(ply) then
+					ply.ChatMuted = not ply.ChatMuted
+					Link:Print( "General", ply:Name() .. " has been " .. (ply.ChatMuted and "chat muted" or "chat unmuted") )
+				end
+			end
+			
+			local profile = actions:AddOption("View users profile")
+			profile:SetIcon("icon16/vcard.png")
+			function profile:DoClick()
+				if IsValid(ply) then
+					ply:ShowProfile()
+				end
+			end
+		else
+			local Replay = actions:AddOption("This is a replay")
+			Replay:SetIcon("icon16/control_end.png")
+			actions:AddSpacer()
+			
+			local szURI = ply:GetNWString( "ProfileURI", "None" )
+			if szURI != "None" then
+				local uri = actions:AddOption("Open user profile")
+				uri:SetIcon("icon16/vcard.png")
+				function uri:DoClick()
+					gui.OpenURL( "http://steamcommunity.com/profiles/" .. szURI )
+				end
+			end
+		end
+		
+		local spec = actions:AddOption("View Player")
+		spec:SetIcon("icon16/eye.png")
+		function spec:DoClick()
+			if IsValid(ply) then
+				RunConsoleCommand( "spectate", ply:SteamID(), ply:Name() )
+			end
+		end
+		
+		if IsValid( LocalPlayer() ) and LocalPlayer().Style and LocalPlayer().Style == _C.Style.Practice then
+			local tpto = actions:AddOption("Teleport to a player")
+			tpto:SetIcon("icon16/lightning_go.png")
+			function tpto:DoClick()
+				if IsValid(ply) then
+					RunConsoleCommand( "say", "!tp " .. ply:Name() )
+				end
+			end
+		end
+	else
+		open = false
+	end
+	
+	if open and IsValid( LocalPlayer() ) and LocalPlayer():IsAdmin() then
+		actions:AddSpacer()
+
+		local Option1 = actions:AddOption("Copy Name")
+		Option1:SetIcon("icon16/page_copy.png")
+		function Option1:DoClick()
+			local name = ply:IsBot() and ply:GetNWString("BotName", "Inconnu") or ply:Name()
+			SetClipboardText( name )
+		end
+		
+		local Option3 = actions:AddOption("Copy SteamID")
+		Option3:SetIcon("icon16/page_copy.png")
+		function Option3:DoClick()
+			local steamID = ply:IsBot() and ply:GetNWString("NSteamID", "NONE") or ply:SteamID()
+			SetClipboardText( steamID )
+		end
+
+		actions:AddSpacer()
+		
+		local Option4 = actions:AddOption("Specate the player")
+		Option4:SetIcon("icon16/eye.png")
+		function Option4:DoClick()
+			_AA( "spectator", ply:SteamID() )
+		end
+		
+		local Option4a = actions:AddOption("Remove weapons from user")
+		Option4a:SetIcon("icon16/delete.png")
+		function Option4a:DoClick()
+			_AA( "strip", ply:SteamID() )
+		end
+		
+		local Option4b = actions:AddOption("Monitor sync")
+		Option4b:SetIcon("icon16/eye.png")
+		function Option4b:DoClick()
+			_AA( "monitor", ply:SteamID() )
+		end
+		
+		local Option5 = actions:AddOption((ply.ChatMuted and "Un" or "M") .. "ute the player")
+		Option5:SetIcon("icon16/keyboard_" .. (not ply.ChatMuted and "delete" or "add") .. ".png")
+		function Option5:DoClick()
+			_AA( "mute", ply:SteamID() )
+		end
+		
+		local muted = ply:GetNWBool( "AdminGag", false )
+		local Option6 = actions:AddOption((muted and "Ung" or "G") .. "ag the player")
+		Option6:SetIcon("icon16/sound" .. (not muted and "_mute" or "") .. ".png")
+		function Option6:DoClick()
+			_AA( "gag", ply:SteamID() )
+		end
+		
+		local Option7 = actions:AddOption("Kick player")
+		Option7:SetIcon("icon16/door_out.png")
+		function Option7:DoClick()
+			_AA( "kick", ply:SteamID() )
+		end
+		
+		local Option8 = actions:AddOption("Ban user")
+		Option8:SetIcon("icon16/report_user.png")
+		function Option8:DoClick()
+			_AA( "ban", ply:SteamID() )
+		end
+	end
+
+	if open then
+		actions:Open()
+	end
 end
+
+local DarkMenu = {
+	AddOption = function(self, strText, funcFunction)
+		local pnl = vgui.Create( "DMenuOption", self )
+		pnl:SetMenu( self )
+		pnl:SetText( strText )
+		pnl:SetTextColor( Color(255, 255, 255) )
+		pnl.Paint = self.OptionPaint
+		if ( funcFunction ) then pnl.DoClick = funcFunction end
+	
+		self:AddPanel( pnl )
+	
+		return pnl
+	end,
+
+	OptionPaint = function(panel, w, h)
+		if ( panel.m_bBackground && ( panel.Hovered || panel.Highlight) ) then
+			local margin, outline = 2, 1
+			surface.SetDrawColor(Color( 255, 255, 0))
+			surface.DrawRect(margin, margin, w - margin * 2, h - margin * 2)
+
+			surface.SetDrawColor(255, 255, 255, 100)
+			surface.DrawRect(margin, margin, w - margin * 2, outline)
+			surface.DrawRect(margin, h - margin - outline, w - margin * 2, outline)
+			surface.DrawRect(margin, margin + outline, outline, h - 2 * margin - 2 * outline)
+			surface.DrawRect(w - margin - outline, margin + outline, outline, h - 2 * margin - 2 * outline)
+		end
+	end,
+
+	AddSpacer = function(self, strText, funcFunction)
+		local pnl = vgui.Create( "DPanel", self )
+		pnl.Paint = function( p, w, h )
+			surface.SetDrawColor(255, 255, 255, 100)
+			surface.DrawRect( 0, 0, w, h )
+		end
+	
+		pnl:SetTall( 1 )
+		self:AddPanel( pnl )
+	
+		return pnl
+	end,
+
+	Paint = function(self, w, h)
+		surface.SetDrawColor(Color(32, 32, 32)) 
+		surface.DrawRect(0, 0, w, h)
+
+		local outline = 1
+		surface.SetDrawColor(255, 255, 255, 100)
+		surface.DrawRect(0, 0, w, outline)
+		surface.DrawRect(0, h - outline, w, outline)
+		surface.DrawRect(0, outline, outline, h - 2 * outline)
+		surface.DrawRect(w - outline, outline, outline, h - 2 * outline)
+	end
+}
+
+vgui.Register("DarkMenu", DarkMenu, "DMenu")
 
 local scoreboardpicker = CreateClientConVar("bhop_scoreboard", "default", true, false, "Choose scoreboard style: default, kawaii or flow")
 

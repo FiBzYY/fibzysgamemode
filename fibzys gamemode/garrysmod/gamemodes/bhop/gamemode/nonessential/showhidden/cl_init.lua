@@ -555,6 +555,10 @@ local function sanitizeColor(col, default)
 	}
 end
 
+for k, v in pairs(DEFAULT_TRIGGERS_COLORS) do
+    v.color = Color(0, 255, 0, 255)
+end
+
 function ShowHidden.LoadConfig()
 	local cfg = util.JSONToTable(file.Read("showhidden.json", "DATA") or "") or {}
 

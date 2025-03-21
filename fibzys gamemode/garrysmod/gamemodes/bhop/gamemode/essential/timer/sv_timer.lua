@@ -625,7 +625,7 @@ function TIMER:Finish(ply, time)
                 -- Didn't improve Bad Sounds
                 if record ~= 0 and time >= record then
                     net.Start("BadImprovement")
-                    net.Broadcast()
+                    net.Send(ply)
                     return
                 end
 
@@ -890,9 +890,10 @@ function TIMER:LoadSounds()
     for _, snd in ipairs(foundSounds) do
         local fullPath = "wrsfx/" .. snd
 
+        resource.AddFile("sound/" .. fullPath)
+
         if not table.HasValue(BHOP.ExcludeWRSounds, fullPath) then
             table.insert(timer_sounds, snd)
-            resource.AddFile("sound/" .. fullPath)
             util.PrecacheSound(fullPath)
         end
     end
@@ -1224,7 +1225,9 @@ function TIMER:SendWRList(ply, page, style, map)
     if map then
         self:SendRemoteWRList(ply, map, style, page, true)
     else
-        UI:SendToClient(ply, "wr", self:GetRecordList(style, page), map, style, page, true)
+        self:GetRecordList(style, page, function(records)
+            UI:SendToClient(ply, "wr", records, map, style, page, true)
+        end)
     end
 end
 
@@ -1298,16 +1301,31 @@ util.AddNetworkString("WRList")
 -- For New UI
 net.Receive("RequestWRList", function(len, ply)
     local mapName = net.ReadString()
-    local style = TIMER:GetStyleID("Normal")
+    local styleArg = net.ReadString():lower()
     local page = net.ReadInt(32)
-    local wrList = TIMER:GetRecordListForNewUI(style, page)
 
-    if not TIMER:IsValidStyle(style) then
-        return
+    local foundStyleID = nil
+
+    for index, data in ipairs(TIMER.Styles) do
+        local command = data[3] and data[3][1]:lower()
+        if command == styleArg then
+            foundStyleID = index
+            break
+        end
     end
 
+    local styleID = foundStyleID or TIMER:GetStyleID("Normal")
+
+    if not TIMER:IsValidStyle(styleID) then return end
+
+    local wrList = TIMER:GetRecordListForNewUI(styleID, page)
+
     net.Start("WRList")
-    net.WriteTable({ records = wrList, page = page, total = TIMER:GetRecordCountForNewUI(style) })
+    net.WriteTable({
+        records = wrList,
+        page = page,
+        total = TIMER:GetRecordCountForNewUI(styleID)
+    })
     net.Send(ply)
 end)
 

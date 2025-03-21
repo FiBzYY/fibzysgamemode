@@ -1,5 +1,6 @@
-﻿-- Cache
-local hook_Add, Iv, lp = hook.Add, IsValid, LocalPlayer
+﻿local hook_Add = hook.Add
+local Iv = IsValid
+local lp = LocalPlayer
 
 -- Gravity fixes
 local GravitySyncNetwork = "sync_gravity_fix"

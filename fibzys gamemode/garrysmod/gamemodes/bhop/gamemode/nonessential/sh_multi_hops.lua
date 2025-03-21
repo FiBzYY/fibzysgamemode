@@ -124,6 +124,7 @@ local duckedHull = Vector(16, 16, 45)
 
 local function MPHops(ply)
     if not IsValid(ply) then return end
+    if game.GetMap() == "bhop_badges" then return end
 
     local ent = ply:GetGroundEntity()
     if not IsValid(ent) then return end

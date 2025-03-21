@@ -62,22 +62,36 @@ TIMER.Styles = {
     {"Segment", "Segment", {"segment"}},
     {"Practice", "Practice", {"practice"}},
     {"Auto-Strafe", "AutoStrafe", {"as", "autostrafer"}},
-    {"TAS", "TAS", {"tas", "assistedtool"}}
+    {"TAS", "TAS", {"tas", "assistedtool"}},
+	{"Prespeed", "pre", {"pre", "prespeed"}}
 }
 
 -- Info for up list styles
 TIMER.StyleInfo = {
     "All movement keys are allowed.",
-    "You can only use the W and S keys.",
-    "You can only strafe with A and D while holding W. S key is disabled.",
+    "You can only use the A and D keys (sideways bhop).",
+    "You can only strafe with A and D while holding W.",
     "You can only move forward using the W key.",
     "You can only strafe left with the A key.",
+    "You can only strafe right with the D key.",
+    "A variant of Half-Sideways but surf optimized.",
     "Auto bunnyhopping is off, and stamina is active.",
-    "Auto bunnyhopping is off, and stamina is inactive.",
+    "Auto bunnyhopping is off, stamina inactive, easier scroll.",
+    "You have extreme air acceleration (50000 AA) with Boost click.",
+    "Movement speed is boosted significantly.",
+    "Bonus maps style (may vary depending on map).",
+    "Everything is chaotic and unpredictable. With Boost click",
     "Your gravity is reduced to half.",
-    "Your movement speed is increased by 60%.",
     "Gravity is increased by 60%.",
-    "You can bunnyhop in the start zone without starting the timer."
+    "Low gravity but also reduced movement speed.",
+    "Timer runs faster, ideal for speedrun maps.",
+    "You can only move backwards.",
+    "Limited stamina, slows you down when exhausted.",
+    "Segmented style for checkpoint splits.",
+    "Practice mode, timer disabled.",
+    "Auto-strafe enabled, automatically strafes for you.",
+    "Tool-Assisted Speedrun style, intended for TAS runs.",
+    "You can prespeed in the zone with noclip.",
 }
 
 -- Fun ranks
@@ -177,6 +191,10 @@ end
 TIMER.TickInterval = engine.TickInterval()
 TIMER.TickCount = engine.TickCount()
 
+function TIMER:GetMode(client)
+	return (client.mode and client.mode or 1)
+end
+
 function TIMER:GetStyle(client)
     return client.style and client.style or 1
 end
@@ -191,6 +209,16 @@ function TIMER:GetPersonalBest(client, style)
     end
 end
 
+function TIMER:TranslateMode(mode)
+	if (mode == 1) then
+		return ""
+	elseif (mode == 2) then
+		return "Bonus"
+	else
+		return "Bonus " .. (mode - 1)
+	end
+end
+
 function TIMER:SetRecord(ply, recordTime, style)
     ply.personalbest = ply.personalbest or {}
     ply.personalbest[style] = {recordTime, style}
@@ -201,6 +229,33 @@ function TIMER:TranslateStyle(style, _id)
         return "Unknown"
     end
     return self.Styles[style][_id or 1]
+end
+
+function TIMER:GetFullStateByStyleMode(style, mode)
+	local nmode = self:TranslateMode(math.abs(mode))
+	local style_name = self:TranslateStyle(math.abs(style))
+
+	if (mode < 0) then 
+		return nmode .. (nmode == "" and "" or " ") .. "Segmented " .. style_name
+	else 
+		return (nmode == "") and style_name or (nmode .. " " .. style_name)
+	end
+end
+
+function TIMER:GetFullState(client)
+	local style = self:GetStyle(client)
+	local mode = self:TranslateMode(math.abs(self:GetMode(client)))
+	local style_name = self:TranslateStyle(math.abs(style))
+
+	if (self:GetMode(client) < 0) then 
+		return mode .. (mode ~= "" and " " or "")  .. "Segmented " .. style_name
+	else 
+		return (mode == "") and style_name or (mode .. " " .. style_name)
+	end
+end
+
+function TIMER:IsTAS(style)
+	return (style < 0)
 end
 
 function TIMER:StyleName(nID)

@@ -205,7 +205,7 @@ function GM:SetupMove(client, data, cmd)
     data:SetForwardSpeed((moveForward and speedModifier) or (moveBack and -speedModifier) or 0)
 
     -- Zone
-    if currentMap ~= "bhop_coast" and client.InStartZone and not client:GetNWInt("inPractice", false) and style ~= TIMER:GetStyleID("SPEED") then
+    if client.InStartZone and not client:GetNWInt("inPractice", false) and style ~= TIMER:GetStyleID("SPEED") and style ~= TIMER:GetStyleID("Prespeed") then
         local speedcap = StyleSpeeds[style] or zonecap:GetFloat()
 
         if velocity2d > speedcap and not client.Teleporting then
@@ -330,7 +330,8 @@ function GM:SetupMove(client, data, cmd)
            style == TIMER:GetStyleID("WTF") or style == TIMER:GetStyleID("Legit") or 
            style == TIMER:GetStyleID("Bonus") or style == TIMER:GetStyleID("Segment") or style == TIMER:GetStyleID("LG") or 
            style == TIMER:GetStyleID("HG") or style == TIMER:GetStyleID("MM") or 
-           style == TIMER:GetStyleID("SPEED") or style == TIMER:GetStyleID("E") or style == TIMER:GetStyleID("Stamina") then
+           style == TIMER:GetStyleID("SPEED") or style == TIMER:GetStyleID("E") or 
+           style == TIMER:GetStyleID("Stamina") or style == TIMER:GetStyleID("Prespeed") then
         forwardInput = (forwardPressed and 3 or 0) - (backPressed and 3 or 0)
         sideInput = (rightPressed and 3 or 0) - (leftPressed and 3 or 0)
     end
@@ -533,7 +534,7 @@ end
 function GM:OnPlayerHitGround(client, isWater, onFloater, Speed)
     local style = TIMER:GetStyle(client)
 
-    if style == 6 or style == 7 then 
+    if style == TIMER:GetStyleID("L") or style == TIMER:GetStyleID("E") or style == TIMER:GetStyleID("Stamina") then 
         client:SetJumpPower(scrollpower)
         timer.Simple(0.333333333, function() 
             if not IsValid(client) or not client.SetJumpPower or not normpower then return end 
