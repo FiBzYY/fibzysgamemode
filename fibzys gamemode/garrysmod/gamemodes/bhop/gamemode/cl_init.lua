@@ -24,8 +24,8 @@ local files = {
     movementFixes = {
         "nonessential/movementfixes/sh_rngfix.lua",
         -- "nonessential/movementfixes/sh_rampfix.lua",
-        -- "nonessential/movementfixes/sh_boosterfix.lua",
-        -- "nonessential/movementfixes/sh_headbugfix.lua",
+        "nonessential/movementfixes/sh_boosterfix.lua",
+        "nonessential/movementfixes/sh_headbugfix.lua",
         -- "nonessential/movementfixes/sh_eventqueuefix.lua"
     },
     ui = {
