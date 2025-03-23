@@ -102,3 +102,5 @@ If you fork this, please keep the About section intact to respect all contributo
 Ignore: Niflheimrx's fork. There is no AI-written code everywhere – the project is 99% handcrafted with love, only assisted occasionally by AI for polishing.
 
 All core systems were developed and refined by FiBzY using input from community contributors.
+
+PM me on discord if you need help setting it up at fibzyy 1122656915781066782
