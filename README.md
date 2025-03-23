@@ -69,35 +69,36 @@ I'm here to support you! Feel free to reach out:
 ![Bhop Image 1](https://github.com/user-attachments/assets/f77d7c93-d4f4-4f6b-a7e8-fc77c3a84bb7)
 ![Bhop Image 2](https://github.com/user-attachments/assets/c8bc321c-b1c6-4229-a1f1-26d88f0237d9)
 
----
-
-## Special Thanks
+Special Thanks
 Huge shoutout to these amazing contributors and inspirations:
 
-- **justa** – [Steam Profile](https://steamcommunity.com/id/just_adam)  
-*Provided UI layouts, scoreboard, and menu ideas.*
+justa – Steam Profile  
+Provided UI layouts, scoreboard, and menu ideas.
 
-- **ClazStudio** – [GitHub](https://github.com/ClazStudio)  
-*Contributions include bash2, RNGFix, Showtriggers, and various code improvements.*
+ClazStudio – GitHub  
+Contributions include bash2, RNGFix, Showtriggers, and other code improvements.
 
-- **Shavit** – [Steam Profile](https://steamcommunity.com/id/shavit/)  
-*Inspired ideas for porting to Lua.*
+Shavit – Steam Profile  
+Inspired concepts for porting to Lua.
 
-- **Gravious** – [Steam Profile](https://steamcommunity.com/id/Graviousdev/)  
-*Base Flow Gamemode creator, helping clarify structure.*
+Gravious – Steam Profile  
+Base Flow Gamemode creator, helped clarify structure.
 
-- **Geroge** – [Steam Profile](https://steamcommunity.com/id/Gerogeri/)  
-*Default bhop movement code and assistance with Long Jump.*
+Geroge – Steam Profile  
+Provided default bhop movement base and long jump assistance.
 
-- **OpenAI** – [Website](https://openai.com/)  
-*Helped squash countless Lua syntax bugs with custom AI insights. Note: Only helped with syntax bugs and insights thats it*
+OpenAI – Website  
+Helped squash Lua syntax bugs & provided AI-driven code insights.
 
 ---
 
-## Thank You for Choosing Bunny Hop by FiBzY!
-Every player matters greatly to me. Hope you enjoy the smooth and refined Bhop experience—happy hopping!
+Thank You for Choosing Bunny Hop by FiBzY!  
+This gamemode is primarily authored and maintained by me (FiBzY) with help from the community. While I take great pride in developing and optimizing the core systems, Bunny Hop wouldn’t be what it is today without these contributors' awesome input!
 
-Note: if you fork this keep the About: the same its disrespectful to change my README or About:
+**Note:** AI (OpenAI) was used only for fixing syntax bugs, reviewing code, and brainstorming ideas—not full code generation.
 
-Ingore: Niflheimrx's fork there is no artificial intelligence splattered throughout **
-All code is mine and deved by me, artificial intelligence was only used for syntax bugs and insights and ideas. 
+If you fork this, please keep the About section intact to respect all contributors and myself.
+
+Ignore: Niflheimrx's fork. There is no AI-written code everywhere – the project is 99% handcrafted with love, only assisted occasionally by AI for polishing.
+
+All core systems were developed and refined by FiBzY using input from community contributors.
