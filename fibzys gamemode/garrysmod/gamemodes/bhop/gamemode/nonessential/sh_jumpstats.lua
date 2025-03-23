@@ -613,6 +613,19 @@ local function Player_Jump(ply)
     local jumpTimeDiff = (g_fJumpTime[ply] and g_fJumpTime[ply] > 0) and (currentTime - g_fJumpTime[ply]) or 0
     g_fJumpTime[ply] = currentTime
 
+    -- Notify spectators about jump count update immediately
+    local specs = {ply}
+
+    for _, v in ipairs(player.GetAll()) do
+        if v.Spectating and IsValid(v:GetObserverTarget()) and v:GetObserverTarget() == ply then
+            table.insert(specs, v)
+        end
+    end
+
+    for _, v in ipairs(specs) do
+        NETWORK:StartNetworkMessage(v, "jump_update", {ply, jumpCount})
+    end
+
     -- Print stats & update stats
     SSJ_PrintStats(ply, lastSpeed, jumpTimeDiff)
     UpdateStats(ply)

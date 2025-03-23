@@ -1,7 +1,7 @@
 ﻿-- Edited BoosterFix by DotShark
 -- Works good just needs to be networked for client boosters no ping lag
 
--- DO TO: Make this work for client boosters recode it so when networked OnStartTouch is called then apply the Fix
+-- DO TO: Added comments to make it easier, Make this work for client boosters recode it so when networked OnStartTouch is called then apply the Fix
 
 local TickRate = 1 / engine.TickInterval()
 local Boosters = {}
@@ -30,7 +30,6 @@ function meta:UseBoosterfix()
     return self.Boosterfix and self.Boosterfix.Enabled
         and not self.Spectating
         and not self.Boosterfix.NoClip
-        and not (self.style == 6 or self.style == 7)
         and not self:IsBot()
 end
 
@@ -90,8 +89,8 @@ hook.Add("AcceptInput", "DisableBoosters", function(ent, input, activator, calle
     end
 end)
 
--- Main Fix
-hook.Add("SetupMove", "BoosterFix", function(ply, mv)
+-- Main Fix, SetupMove has issuses
+hook.Add("Move", "BoosterFix", function(ply, mv)
     if not ply.Boosterfix then
         SetupPlayerData(ply)
     end
@@ -130,7 +129,7 @@ hook.Add("SetupMove", "BoosterFix", function(ply, mv)
         maxs = ply:OBBMaxs(),
         mask = MASK_ALL,
         filter = player.GetAll(), -- Ignore other players
-        ignoreworld = true, -- Only checking for boosters/entities
+        ignoreworld = true, -- Only checking for boosters
     }
         
     -- Validate entity hit
@@ -140,10 +139,8 @@ hook.Add("SetupMove", "BoosterFix", function(ply, mv)
         tr.Entity = false
     end
 
-    local cOutput -- Output event to fire (OnStartTouch or OnEndTouch)
-    if ent and not pFix.InBooster then
-        cOutput = "OnStartTouch" -- Maybe network OnStartTouch
-    elseif pFix.InBooster and not ent then
+    local cOutput -- Output event to fire OnEndTouch
+    if pFix.InBooster and not ent then
         ent = pFix.InBooster
         cOutput = "OnEndTouch"
     end
