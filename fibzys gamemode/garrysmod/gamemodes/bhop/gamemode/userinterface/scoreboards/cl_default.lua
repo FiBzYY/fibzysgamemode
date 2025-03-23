@@ -1555,7 +1555,10 @@ local function PutPlayerItem(self, pList, ply, mw)
 			end
 
 			draw.DrawText(PlayerName, "ScoreboardPlayer", s + 11, 9, Color(0, 0, 0), TEXT_ALIGN_LEFT)
-			draw.DrawText(PlayerName, "ScoreboardPlayer", s + 10, 8, Color(200, 200, 200), TEXT_ALIGN_LEFT)
+
+			local ColorSpec = ply:GetNWInt("Spectating", 0) == 1 and Color(180, 180, 180) or Color(255, 255, 255)
+
+			draw.DrawText(PlayerName, "ScoreboardPlayer", s + 10, 8, ColorSpec, TEXT_ALIGN_LEFT)
 			
 			surface.SetFont("ScoreboardPlayer")
 			local wt, ht = surface.GetTextSize("TimerText")
@@ -1868,7 +1871,7 @@ function GM:DoScoreboardActionPopup(ply)
 			function chatmute:DoClick()
 				if IsValid(ply) then
 					ply.ChatMuted = not ply.ChatMuted
-					Link:Print( "General", ply:Name() .. " has been " .. (ply.ChatMuted and "chat muted" or "chat unmuted") )
+					UTIL:AddMessage("Server", ply:Name() .. " has been " .. (ply.ChatMuted and "chat muted" or "chat unmuted"))
 				end
 			end
 			

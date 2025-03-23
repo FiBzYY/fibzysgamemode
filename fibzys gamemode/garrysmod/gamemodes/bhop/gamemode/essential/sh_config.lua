@@ -46,9 +46,9 @@ if not CONFIG_LOADED then
     -- Gamemode version
     BHOP.Version = {
         Engine = "9594",
-        GM = "13.17",
-        ReleaseDate = "03/21/25",
-        LastUpdated = "03/21/25"
+        GM = "13.18",
+        ReleaseDate = "03/23/25",
+        LastUpdated = "03/23/25"
     }
 
     -- Main movement settings

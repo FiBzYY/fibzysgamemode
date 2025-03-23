@@ -9,8 +9,12 @@ local function DoUnrealBoost(ply, nForce)
         ply.BoostTimer = nil
     end
 
+    if ply.InStartZone then
+        return
+    end
+
     local currentTime = sys()
-    if not ply.Practice and ply.BoostTimer and currentTime < ply.BoostTimer then return end
+    if not ply.InStartZone and ply.BoostTimer and currentTime < ply.BoostTimer then return end
 
     local nType = 1
     local vel = ply:GetVelocity()

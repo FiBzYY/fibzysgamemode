@@ -40,12 +40,16 @@ hook.Add("PreDrawEffects", "Bhop_Fullbright_EffectFix", function()
     end
 end)
 
-hook.Add("SetupWorldFog", "Bhop_NoFog", function()
-    if not BhopCheats.RemoveFog:GetBool() then return true end
-end)
+hook.Add("SetupSkyboxFog", "Bhop_NoFog", function()
+   if render.GetRenderTarget() ~= nil then return end
 
-hook.Add("SetupSkyboxFog", "Bhop_NoFog_Skybox", function()
-    if not BhopCheats.RemoveFog:GetBool() then return true end
+    if not BhopCheats.RemoveFog:GetBool() then return end
+
+    render.FogMode(MATERIAL_FOG_NONE)
+    render.FogStart(99999)
+    render.FogEnd(99999)
+    render.FogMaxDensity(0)
+    return true
 end)
 
 hook.Add("RenderScreenspaceEffects", "Bhop_NoFog_Render", function()

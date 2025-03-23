@@ -1039,6 +1039,51 @@ function Command:Init()
         "[subcommand]"
         },
 
+        {
+        {"runs", "setrun", "replay", "replayset"},
+        function(pl, args)
+            local list = Replay:GetMultiBots()
+
+            if not args[1] then
+                if #list > 0 then
+                    return NETWORK:StartNetworkMessageTimer(pl, "Print", { "Notification", "Runs on these styles are recorded and playable: " .. string.Implode(", ", list) .. " (Use !replay Style to start a playback.)" })
+                else
+                    return NETWORK:StartNetworkMessageTimer(pl, "Print", { "Notification", "There are no other replays available for playback." })
+                end
+            end
+
+            local style = tonumber(args[1])
+            if not style then
+                local stylename = string.Implode(" ", args):lower()
+                stylename = string.Trim(stylename)
+    
+                local styleID = nil
+
+                for id, _ in pairs(TIMER.Styles) do
+                    if string.lower(TIMER:StyleName(id)) == stylename then
+                        styleID = id
+                        break
+                    end
+                end
+
+                if not styleID or not TIMER:IsValidStyle(styleID) then
+                    return NETWORK:StartNetworkMessageTimer(pl, "Print", { "Notification", "You have entered an invalid style name. Use the exact name shown on !styles or use their ID." })
+                end
+
+                style = styleID
+            end
+
+            local Change = Replay:ChangeMultiBot(style)
+            if string.len(Change) > 10 then
+                NETWORK:StartNetworkMessageTimer(pl, "Print", { "Notification", Change })
+            else
+                NETWORK:StartNetworkMessageTimer(pl, "Print", { "Notification", Lang:Get("BotMulti" .. Change) })
+            end
+        end,
+        "Replay commands",
+        "[subcommand]"
+        },
+
         -- Map/Points
         {
             {"map", "points"}, 

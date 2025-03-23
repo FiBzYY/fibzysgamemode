@@ -2,7 +2,7 @@
 CreateConVar("bhop_replay_simplenames", "1", {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Enable or disable simplified Replay replay names")
 
 -- Cache
-local hook_Add, sq, st = hook.Add, sql.Query, SysTime
+local hook_Add, sq, st, Iv = hook.Add, sql.Query, SysTime, IsValid
 
 Replay = Replay or {
     RecordAll = true,
@@ -402,6 +402,7 @@ function Replay:CheckStatus()
 
     self.IsStatusCheck = nil
 end
+
 function Replay:Save(replay)
     if not replay and #player.GetHumans() > 0 then
         self:Save(true)
@@ -505,51 +506,86 @@ function Replay:ShowStatus(ply)
 end
 
 function Replay:GetMultiStyle()
-    for _, Replay in pairs(player.GetAll()) do
-        if Replay:IsBot() and Replay.Style != TIMER:GetStyleID("Normal") then
-            return Replay.Style
-        end
-    end
+	for _, bot in pairs(player.GetAll()) do
+		if bot:IsBot() then
+			print("Found replay with Style: ", bot.Style)
+			if bot.Style ~= TIMER:GetStyleID("Normal") then
+				print("Returning replay style: ", bot.Style)
+				return bot.Style
+			end
+		end
+	end
 
-    return 0
+	print("No non-normal replay style found, returning 0")
+	return 0
 end
 
-function Replay:ChangeMultiBot(replay)
-    local current = self:GetMultiStyle()
-    if not TIMER:IsValidStyle(current) then return "None" end
-    if not TIMER:IsValidStyle(replay) then return "Invalid" end
-    if replay == TIMER:GetStyleID("Normal") then return "Exclude" end
-    if current == replay then return "Same" end
+function Replay:ChangeMultiBot(style)
+	print("Requested style to change to: ", style)
+	local current = self:GetMultiStyle()
+	print("Current Multi Style: ", current)
 
-    if self.BotInfo[replay] and self.BotData[replay] then
+	if not TIMER:IsValidStyle(current) then 
+		print("Current style invalid!")
+		return "None" 
+	end
+
+	if not TIMER:IsValidStyle(style) then 
+		print("Target style invalid!")
+		return "Invalid" 
+	end
+
+	if style == TIMER:GetStyleID("Normal") then 
+		print("Trying to switch to Normal - blocked")
+		return "Exclude" 
+	end
+
+	if current == style then 
+		print("Same style requested as current")
+		return "Same" 
+	end
+
+    if self.BotInfo[style] and self.BotData[style] then
         if self.BotInfo[current].CompletedRun then
-            local ply = self:GetPlayer(current)
-            ply.style = replay
-            self:SetInfo(ply, replay, true)
-            self.BotFrame[replay] = 1
-            self.BotInfo[replay].CompletedRun = nil
-            self.BotPlayer[ply] = replay
-            self:NotifyRestart(replay)
+            print("Changing bot from style ", current, " to ", style)
+            local ply = Replay:GetPlayer(current)
+            if not ply then 
+                print("Could not find bot player for style ", current)
+                return "NoBot"
+            end
+            print("Replay player found: ", ply)
 
-            return "The replay is now displaying " .. self.BotInfo[replay].Name .. "'s " .. TIMER:StyleName(self.BotInfo[replay].Style) .. " run!"
-        else
-            return "Wait"
-        end
-    else
-        return "Error"
-    end
+            ply.style = style
+            Replay:SetInfo(ply, style, true)
+            self.BotFrame[style] = 1
+            self.BotInfo[style].CompletedRun = nil
+            self.BotInfo[style].Start = CurTime()
+            self.BotPlayer[ply] = style
+            Replay:NotifyRestart(style)
+
+			return "The replay is now displaying " .. self.BotInfo[style].Name .. "'s " .. TIMER:StyleName(self.BotInfo[style].Style) .. " run!"
+		else
+			print("CompletedRun missing for current style")
+			return "Wait"
+		end
+	else
+		print("BotInfo or BotData missing for style: ", style)
+		return "Error"
+	end
 end
 
 function Replay:GetMultiBots()
-    local tabStyles = {}
-
-    for styleID, styleInfo in pairs(TIMER.Styles) do
-        if styleID ~= TIMER:GetStyleID("Normal") then
-            table.insert(tabStyles, TIMER:StyleName(styleID))
-        end
-    end
-
-    return tabStyles
+	local tabStyles = {}
+	for style, data in pairs(self.BotData) do
+		print("Checking BotData for style: ", style)
+		if style != TIMER:GetStyleID("Normal") then
+			local styleName = TIMER:StyleName(style)
+			print("Adding style to MultiBots list: ", styleName)
+			table.insert(tabStyles, styleName)
+		end
+	end
+	print("Final list of MultiBots: ", table.concat(tabStyles, ", "))
+	return tabStyles
 end
 
 function Replay:SaveBot(ply)
@@ -580,7 +616,6 @@ function Replay:Exists(replay)
     return self.BotFrame[replay] and self.BotFrames[replay] and self.BotInfo[replay].Start
 end
 
-local Iv = IsValid
 function Replay:NotifyRestart(replay)
     local ply = self:GetPlayer(replay)
     local info = self.BotInfo[replay]
@@ -614,11 +649,12 @@ function Replay:GenerateNotify(replay, varList)
 end
 
 function Replay:GetPlayer(replay)
-    for _, ply in pairs(player.GetBots()) do
-        if ply.style == replay and Iv(ply) then
-            return ply
-        end
-    end
+	for _, ply in pairs(player.GetBots()) do
+		if ply.Style == replay and IsValid(ply) then
+			return ply
+		end
+	end
+	return nil
 end
 
 function Replay:SIDToProfile(sid)

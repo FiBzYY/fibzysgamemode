@@ -904,7 +904,7 @@ HUD.Themes = {
         DrawText("00:00", "HUDSpecHud", screenWidth - 184, (screenHeight / 17) - 1, Color(241, 176, 13), text, TEXT_ALIGN_RIGHT)
     end
 
-     local velocity = math.floor(data.velocity) or math.floor(pl:GetVelocity():Length2D())
+     local velocity = math.floor(tonumber(data.velocity) or (IsValid(pl) and pl:GetVelocity():Length2D()) or 0)
      local time = "Time: "
      local pb = "Best: "
      local style = pl:GetNWInt("Style", 1)
