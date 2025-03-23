@@ -524,6 +524,10 @@ function GM:EntityEmitSound(data)
     if GetConVar("bhop_gunsounds"):GetInt() == 0 then
         local snd = string.lower(data.OriginalSoundName or "")
 
+        if string.find(snd, "wrsfx/") or string.find(snd, "timer/") then
+            return
+        end
+
         if string.find(snd, "footstep") or 
            string.find(snd, "step") or 
            string.find(snd, "run") or 

@@ -94,7 +94,7 @@ function RTV:StartVote()
         for _, index in ipairs(indices) do
             if Added >= 5 then break end
             local data = MapList[index]
-            if not table.HasValue(RTV.Selections, data[1]) and data[1] ~= game.GetMap() then
+            if (data[2] or 0) > 0 and not table.HasValue(RTV.Selections, data[1]) and data[1] ~= game.GetMap() then
                 table.insert(RTV.Selections, data[1])
                 Added = Added + 1
             end
@@ -456,13 +456,14 @@ function RTV:SendMapList(client)
 
     for _, data in ipairs(MapList) do
         local mapName = tostring(data[1])
+        local points = tonumber(data[2]) or 0
 
-        if not seenMaps[mapName] then
+        if not seenMaps[mapName] and points > 0 then
             seenMaps[mapName] = true
 
             table.insert(mapList, { 
                 name = mapName, 
-                points = tonumber(data[2]) or 0
+                points = points
             })
         end
     end

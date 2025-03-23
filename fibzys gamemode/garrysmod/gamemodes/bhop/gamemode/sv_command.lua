@@ -513,6 +513,18 @@ function Command:Init()
             "<arguments>"
         },
 
+        -- Booster Fix
+        {
+            {"boosterfix", "bfix"},
+            function(pl, args)
+	        local pFix = pl.Boosterfix
+	        pFix.Enabled = not pFix.Enabled
+                TIMER:Print(pl, "You have " .. (pFix.Enabled and "enabled" or "disabled") .. " Consistent Boosterfix.") 
+            end,
+            "Booster Fix command",
+            "<arguments>"
+        },
+
         -- Show or Hide Players
         {
         {"show", "hide", "showplayers", "hideplayers"},

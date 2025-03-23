@@ -347,6 +347,8 @@ end
 
 -- Print the stats
 local function SSJ_PrintStats(ply, lastSpeed, jumpTimeDiff)
+    if not IsValid(ply) then return end
+
     local coeffsum = g_iStrafeTick[ply] > 0 and (g_fRawGain[ply] / g_iStrafeTick[ply]) * 100 or 0
     local strafes = g_iStrafeCount[ply] or 0
     local strafeTicks = g_iStrafeTick[ply]
