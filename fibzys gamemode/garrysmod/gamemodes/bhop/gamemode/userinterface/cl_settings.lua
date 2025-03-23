@@ -25,14 +25,14 @@ end
 function Settings:Load()
 	self.loaded = true 
 	-- Does file exist
-	if file.Exists("timer", "DATA") and file.Exists("timer/settings.txt", "DATA") then 
-		local settings = file.Read("timer/settings.txt", "DATA")
+	if file.Exists("fibtimer", "DATA") and file.Exists("fibtimer/fibsettings.txt", "DATA") then 
+		local settings = file.Read("fibtimer/fibsettings.txt", "DATA")
 		lst = util.JSONToTable(settings)
 
 		return
 	end
 
-	file.CreateDir("timer")
+	file.CreateDir("fibtimer")
 end
 hook.Add("Initialize", "Settings_Load", function()
 	if Settings.loaded then return end
@@ -41,7 +41,7 @@ end)
 
 function Settings:Save()
 	local settings = util.TableToJSON(lst, true)
-	file.Write("timer/settings.txt", settings)
+	file.Write("fibtimer/settings.txt", settings)
 end
 
 function Settings:GetValue(settingId)
