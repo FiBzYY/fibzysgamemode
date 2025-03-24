@@ -118,6 +118,7 @@ if not FONT_CACHE then
 
     -- Chat box
     MakeFont("chatbox.font", { size = 19, weight = 500, font = "Roboto", antialias = true })
+    MakeFont("chatbox.emoji", { size = 19, weight = 500, font = "Segoe UI Emoji", antialias = true })
 
     -- Older
     MakeFont("CustomHeaderBig", { size = 44, font = "Coolvetica" })

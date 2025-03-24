@@ -482,55 +482,59 @@ local function CreateScoreboard(shouldHide)
             local pRank = ""
             DrawText("#" .. ply:GetNWInt("Placement", 0) .. " | ", "ui.mainmenu.button", x, ph / 2, TEXT, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
             local lw, lh = surface.GetTextSize("#" .. ply:GetNWInt("WRCount", 0) .. " | ")
-            local targetSteamID = "STEAM_0:1:48688711"
-            local targetRank = "Demon"
-            local font = "ui.mainmenu.button"
+			local adminList = BHOP.Server.AdminList
+			local font = "ui.mainmenu.button"
+			local placementText = "#" .. ply:GetNWInt("Placement", 0) .. " | "
+			local placementW, _ = surface.GetTextSize(placementText)
 
-            if ply:SteamID() == targetSteamID then
-                DrawText(targetRank, font, x + lw - 10, ph / 2, Color(255, 0, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-            else
-                local rankID = ply:GetNWInt("Rank", -1)
-                local rankInfo = TIMER.Ranks[rankID]
-                if rankInfo then
-                    DrawText(rankInfo[1], font, x + lw, ph / 2, rankInfo[2], TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-                else
-                    DrawText("Unknown Rank", font, x + lw, ph / 2, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-                end
-            end
+			DrawText(placementText, font, x, ph / 2, TEXT, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
-            local rainbowColors = {
-                Color(255, 0, 0), Color(255, 165, 0),
-                Color(255, 255, 0), Color(0, 255, 0),
-                Color(0, 0, 255), Color(75, 0, 130),
-                Color(148, 0, 211)
-            }
-            
-            if ply:SteamID() == targetSteamID then
-                local name = "FiBzY"
-                local textWidth, textHeight = surface.GetTextSize(name)
-                local charColors = {}
+			if adminList[ply:SteamID()] then
+				DrawText(BHOP.OwnerRank or "Owner", font, x + placementW, ph / 2, Color(255, 0, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			else
+				local rankID = ply:GetNWInt("Rank", -1)
+				local rankInfo = TIMER.Ranks[rankID]
+				if rankInfo then
+					DrawText(rankInfo[1], font, x + placementW, ph / 2, rankInfo[2], TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+				else
+					DrawText("Unknown Rank", font, x + placementW, ph / 2, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+				end
+			end
 
-                for i = 1, #name do
-                    charColors[i] = rainbowColors[i % #rainbowColors + 1]
-                end
+			local rainbowColors = {
+				Color(255, 0, 0), Color(255, 165, 0),
+				Color(255, 255, 0), Color(0, 255, 0),
+				Color(0, 0, 255), Color(75, 0, 130),
+				Color(148, 0, 211)
+			}
 
-                local function DrawRainbowText(text, posX, posY, colors, font)
-                    local offset = 0
-                    for i = 1, #text do
-                        surface.SetFont(font)
-                        local char = text:sub(i, i)
-                        local charWidth, _ = surface.GetTextSize(char)
-                        surface.SetTextColor(colors[i]:Unpack())
-                        surface.SetTextPos(posX + offset, posY)
-                        surface.DrawText(char)
-                        offset = offset + charWidth
-                    end
-                end
+			local adminList = BHOP.Server.AdminList
 
-                DrawRainbowText(name, x + (w * 0.25), ph / 3.3, charColors, font)
-            else
-                DrawText(ply:Nick(), font, x + (w * 0.25), ph / 2, TEXT, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-            end
+			if adminList[ply:SteamID()] then
+				local name = ply:Nick()
+				local charColors = {}
+
+				for i = 1, #name do
+					charColors[i] = rainbowColors[i % #rainbowColors + 1]
+				end
+
+				local function DrawRainbowText(text, posX, posY, colors, font)
+					local offset = 0
+					for i = 1, #text do
+						surface.SetFont(font)
+						local char = text:sub(i, i)
+						local charWidth = surface.GetTextSize(char)
+						surface.SetTextColor(colors[i]:Unpack())
+						surface.SetTextPos(posX + offset, posY)
+						surface.DrawText(char)
+						offset = offset + charWidth
+					end
+				end
+
+				DrawRainbowText(name, x + (w * 0.25), ph / 3.3, charColors, font)
+			else
+				DrawText(ply:Nick(), font, x + (w * 0.25), ph / 2, TEXT, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			end
 
             local currentstyle = ply:GetNWInt("style", TIMER:GetStyleID("Normal"))
             local styles = TIMER:StyleName(currentstyle)
@@ -798,48 +802,30 @@ local insert = table.insert
 function ScoreboardRefresh()
     if not scoreboard then return end 
 
-    for k, v in pairs(scoreboard.players.bonus.list) do 
-        v:Remove()
-    end 
-    for k, v in pairs(scoreboard.players.normal.list) do 
-        v:Remove()
-    end 
+    for k, v in pairs(scoreboard.players.bonus.list) do v:Remove() end 
+    for k, v in pairs(scoreboard.players.normal.list) do v:Remove() end 
     scoreboard.players.bonus.list, scoreboard.players.normal.list = {}, {}
 
-    local normal, bonus = {}, {}
-    for i, v in ipairs(player.GetAll()) do
-        if v:Team() == TEAM_SPECTATOR then 
-            insert(scoreboard.spectators, v)
-        else 
-            insert(normal, v)
-        end
-    end
+    scoreboard.spectators = {}
 
-    local function srt(a, b)
-        if not a or not b then return false end
-        local ra, rb = "", ""
-        local _a = ra[1] == 1 and 10000 or ra[2]
-        local _b = rb[1] == 1 and 10000 or rb[2]
-
-        if not _a or not _b or type(_a) ~= type(_b) then return false end
-        if _a == _b then
-            return a:GetNWInt("WRCount", 0) > b:GetNWInt("WRCount", 0)
+    for i, ply in ipairs(player.GetAll()) do
+        if ply:Team() == TEAM_SPECTATOR then 
+            table.insert(scoreboard.spectators, ply)
         else
-            return _a > _b
+            local currentstyle = ply:GetNWInt("style", TIMER:GetStyleID("Normal"))
+
+            if currentstyle == TIMER:GetStyleID("Normal") then
+                local p = CreatePlayerInfo(scoreboard.players.normal, ply)
+                table.insert(scoreboard.players.normal.list, p)
+
+            elseif currentstyle == TIMER:GetStyleID("Bonus") then
+                local p = CreatePlayerInfo(scoreboard.players.bonus, ply)
+                table.insert(scoreboard.players.bonus.list, p)
+            else
+                local p = CreatePlayerInfo(scoreboard.players.normal, ply)
+                table.insert(scoreboard.players.normal.list, p)
+            end
         end
-    end
-
-    table.sort(normal, srt)
-    table.sort(bonus, srt)
-
-    for k, v in pairs(normal) do 
-        local p = CreatePlayerInfo(scoreboard.players.normal, v)
-        insert(scoreboard.players.normal.list, p)
-    end
-
-    for k, v in pairs(bonus) do 
-        local p = CreatePlayerInfo(scoreboard.players.bonus, v)
-        insert(scoreboard.players.bonus.list, p)
     end
 end
 
@@ -1024,11 +1010,15 @@ local function CreateScoreboardKawaii()
 				draw.SimpleText(string.upper(playerRank), "hud.subinfo2", (distance * 1.5) + namewidth + 2, 19 + nameheight / 2, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM)
 			end
 
+			local adminColors = {
+				["Owner"] = function() return HSVToColor(RealTime() * 40 % 360, 1, 1) end, -- rainbow
+				["Manager"] = function() return Color(255, 100, 100) end,
+				["Admin"] = function() return Color(100, 200, 255) end
+			}
+
 			local nameColor = text_colour
 
-			if pl:SteamID() == "STEAM_0:0:87749794" then -- obvixus
-				nameColor = Color(0, 220 * abs(sin(CurTime())), 255)
-			elseif pl:SteamID() == "STEAM_0:1:48688711" then -- FiBzY
+			if BHOP.Server.AdminList[pl:SteamID()] then
 				nameColor = HSVToColor(RealTime() * 40 % 360, 1, 1)
 			elseif pl:GetObserverMode() ~= OBS_MODE_NONE then
 				nameColor = Color(150, 150, 150, 255)

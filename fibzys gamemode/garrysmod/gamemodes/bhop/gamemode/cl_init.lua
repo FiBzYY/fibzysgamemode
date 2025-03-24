@@ -40,7 +40,8 @@ local files = {
         "userinterface/numbered/ui_mapvote.lua",
         "essential/cl_network.lua",
         "userinterface/scoreboards/cl_default.lua",
-        "userinterface/chatbox/cl_chatbox.lua"
+        "userinterface/chatbox/cl_chatbox.lua",
+        "userinterface/cl_voice.lua"
     },
     clientModules = {
         "nonessential/admin/cl_admin.lua",
@@ -52,7 +53,6 @@ local files = {
         "nonessential/strafe/cl_synchronizer.lua",
         "nonessential/cl_soundstopper.lua",
         "nonessential/cl_cheats.lua",
-        -- "nonessential/cl_voice.lua",
         -- "nonessential/cl_mapcolor.lua",
         -- "nonessential/cl_netgraph.lua",
         -- "nonessential/bash/cl_bash.lua",

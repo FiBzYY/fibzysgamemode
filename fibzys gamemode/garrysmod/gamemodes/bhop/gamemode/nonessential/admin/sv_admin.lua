@@ -2,8 +2,6 @@
 
 Admin = {
     Protocol = "Admin",
-    DefaultSID = "STEAM_0:1:48688711",
-    GamemodeKey = "2",
     
     Level = {
         None = 0,
@@ -19,7 +17,7 @@ Admin = {
         Owner = 64
     },
     
-    Icons = {
+    AdminIDs = {
         [1] = 1,   -- Base
         [2] = 2,    -- Elevated
         [4] = 3,     -- Moderator
@@ -39,8 +37,6 @@ for key,id in pairs( Admin.Level ) do
 	Admin.LevelNames[ id ] = key
 end
 
-Admin.NotificationDelay = 60
-
 local hook_Add = hook.Add
 local sq = sql.Query
 local AdminLoad = {}
@@ -54,14 +50,6 @@ local Bans = {
 }
 
 util.AddNetworkString("SendServerLogs")
-
-hook_Add("PlayerSay", "LogPlayerChat", function(ply, text)
-    local logMessage = "[" .. ply:Nick() .. "]: " .. text
-
-    net.Start("SendServerLogs")
-    net.WriteString(logMessage)
-    net.Broadcast()
-end)
 
 if SERVER then
     util.AddNetworkString("AdminChangeMovementSetting")
@@ -115,31 +103,30 @@ local ti, tr = table.insert, table.remove
 -- Loads all admins from the master server and saves their access levels in a AdminLoad table
 function Admin:LoadAdmins(operator)
     if not self.Loaded then
-	SQL:Prepare(
-		"SELECT steam, level FROM timer_admins WHERE type = {0} or type = 0 ORDER BY level DESC",
-		{ Admin.GamemodeKey }
-	):Execute( function(data, varArg, szError)
-		AdminLoad.Levels = {}
-		
-		if data then
-			for _,item in pairs(data) do
-				AdminLoad.Levels[ item["steam"] ] = item["level"]
-			end
-		end
-		
-		if varArg then
-			if operator and operator != "" then
-				AdminLoad.Levels[operator] = Admin.Level.Owner
-			end
-		end
-		
-		for _,p in pairs(player.GetHumans()) do
-			Admin:CheckPlayerStatus(p, true)
-		end
-		
-		Admin.Loaded = true
-	end, operator)
-	end
+        SQL:Prepare(
+            "SELECT steam, level FROM timer_admins ORDER BY level DESC"
+        ):Execute(function(data, varArg, szError)
+            AdminLoad.Levels = {}
+            
+            if data then
+                for _, item in pairs(data) do
+                    AdminLoad.Levels[item["steam"]] = item["level"]
+                end
+            end
+
+            if varArg then
+                if operator and operator ~= "" then
+                    AdminLoad.Levels[operator] = Admin.Level.Owner
+                end
+            end
+
+            for _, p in pairs(player.GetHumans()) do
+                Admin:CheckPlayerStatus(p, true)
+            end
+
+            Admin.Loaded = true
+        end, operator)
+    end
 end
 
 function Admin:GetAccess(ply)
@@ -173,9 +160,9 @@ function Admin:IsHigherThan(a, b, eq, by)
 	return eq and ac >= bc or ac > bc
 end
 
-function Admin:SetAccessIcon( ply, nLevel )
-	if Admin.Icons[ nLevel ] then
-		ply:SetNWInt("AccessIcon", Admin.Icons[nLevel])
+function Admin:SetAccessIcon(ply, level)
+	if Admin.AdminIDs[level] then
+		ply:SetNWInt("AccessIcon", Admin.AdminIDs[level])
 	end
 end
 

@@ -21,6 +21,7 @@ if not CONFIG_LOADED then
     BHOP.EnableCycle = false
 
     BHOP.DicordLink = "https://discord.com/invite/mGh2KE9FzD"
+    BHOP.OwnerRank = "Demon"
 
     -- Cycle text
     BHOP.Nametime = 10
