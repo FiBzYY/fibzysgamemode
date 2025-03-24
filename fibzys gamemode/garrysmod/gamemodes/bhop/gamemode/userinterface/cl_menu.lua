@@ -473,7 +473,7 @@ function UI:CreateMenu()
         UI:MenuScrollbar(vBar)
 
         local container = vgui.Create("DPanel", scrollPanel)
-        container:SetSize(parent:GetWide() - 20, 700)
+        container:SetSize(parent:GetWide() - 20, 830)
         container:SetPos(0, 0)
         container.Paint = function(self, w, h)
             surface.SetDrawColor(colors.content)
@@ -503,6 +503,41 @@ function UI:CreateMenu()
         self:CreateToggle(container, y, "bhop_autoshoot", "Auto Shoot", "Enables or disables weapon auto spammer.")
         y = y + 60
         self:CreateToggle(container, y, "bhop_alwaysshowtriggers", "Always Show Triggers", "Enables or disables showtriggers on spawn.")
+        y = y + 60
+        self:CreateToggle(container, y, "bhop_joindetails", "Join Details", "Enables or disables joining details in chat.")
+        y = y + 60
+        self:CreateInputBox(container, y, "bhop_hints", 5, "Hints Time", "How long you want hints to display in minutes.")
+        y = y + 60
+
+        local ConvarDefaults = {
+            ["bhop_anticheats"] = "0",
+            ["bhop_gunsounds"] = "1",
+            ["bhop_hints"] = "5",
+            ["bhop_set_fov"] = "90",
+            ["bhop_wrsfx"] = "1",
+            ["bhop_wrsfx_volume"] = "0.4",
+            ["bhop_wrsfx_bad"] = "1",
+            ["bhop_chatsounds"] = "0",
+            ["bhop_zonesounds"] = "1",
+            ["bhop_showplayerslabel"] = "1",
+            ["bhop_autoshoot"] = "1",
+            ["bhop_joindetails"] = "1",
+            ["bhop_simpletextures"] = "0",
+            ["bhop_sourcesensitivity"] = "0",
+            ["bhop_absolutemousesens"] = "0",
+            ["bhop_showchatbox"] = "1",
+            ["bhop_nogun"] = "0",
+            ["bhop_nosway"] = "1",
+            ["bhop_showplayers"] = "1",
+            ["bhop_viewtransfrom"] = "0",
+            ["bhop_thirdperson"] = "0",
+            ["bhop_viewpunch"] = "1",
+            ["bhop_weaponpickup"] = "1",
+            ["bhop_viewinterp"] = "0",
+            ["bhop_water_toggle"] = "0"
+        }
+
+        self:CreateResetAllButton(container, y, ConvarDefaults, "Reset All Settings", "This will restore all your bhop settings to default.")
     end, isActive = true },
 
     -- Graphics Tab

@@ -89,15 +89,16 @@ includeFiles(files.showHidden)
 --- end of include
 local setting_anticheats = CreateClientConVar("bhop_anticheats", "0", true, false)
 local setting_gunsounds = CreateClientConVar("bhop_gunsounds", "1", true, false, "Toggle Gun Sounds", 0, 1)
-local setting_hints = CreateClientConVar("bhop_hints", "180", true, false)
+local setting_hints = CreateClientConVar("bhop_hints", "5", true, false)
 local customFOV = CreateClientConVar("bhop_set_fov", "90", true, true, "Set custom FOV", 1, 180)
 local sounds_enabled = CreateClientConVar("bhop_wrsfx", "1", true, true, "WR sounds enabled state", 0, 1)
 local sounds_volume = CreateClientConVar("bhop_wrsfx_volume", "0.4", true, false, "WR sounds volume", 0, 1)
 local sounds_enabledbad = CreateClientConVar("bhop_wrsfx_bad", "1", true, false, "Bad improvement sounds", 0, 1)
 local chat_sounds = CreateClientConVar("bhop_chatsounds", "0", true, false, "Play chat sounds", 0, 1)
 local zone_sounds = CreateClientConVar("bhop_zonesounds", "1", true, false, "Play sound on zone left", 0, 1)
-local bhop_showplayers = CreateConVar("bhop_showplayerslabel", "1", FCVAR_ARCHIVE, "Show or hide player names when looking at them")
-local bhop_wepspammer = CreateConVar("bhop_autoshoot", "1", FCVAR_ARCHIVE, "Show or disable weapon auto shoot")
+local bhop_showplayers = CreateClientConVar("bhop_showplayerslabel", "1", true, false, "Show or hide player names when looking at them")
+local bhop_wepspammer = CreateClientConVar("bhop_autoshoot", "1", true, false, "Enable or disable weapon auto shoot")
+local bhop_joindetails = CreateClientConVar("bhop_joindetails", "1", true, false, "Show or disable join details")
 
 -- Cvars
 CreateClientConVar("bhop_simpletextures", 0, true, false, "Toggle simple solid textures", 0, 1)
@@ -164,17 +165,11 @@ local function ShowNextHint()
     if setting_hints:GetInt() == 0 then return end
 
     UTIL:AddMessage("Hint", unpack(hints[hintIndex]))
-
-    hintIndex = (hintIndex % totalHints) + 1 -- Circular index increment
-
-    local hintDelay = setting_hints:GetInt()
-    if hintDelay > 0 then
-        timer.Adjust("HintTimer", hintDelay)
-    end
+    hintIndex = (hintIndex % totalHints) + 1
 end
 
 local function UpdateHintTimer()
-    local hintDelay = setting_hints:GetInt()
+    local hintDelay = setting_hints:GetInt() * 60
     
     if hintDelay > 0 then
         if not timer.Exists("HintTimer") then
@@ -190,6 +185,31 @@ end
 cvars.AddChangeCallback("bhop_hints", function()
     UpdateHintTimer()
 end)
+
+hook_Add("InitPostEntity", "AutoStartHintTimer", function()
+    UpdateHintTimer()
+end)
+
+net.Receive("SendConnectionCount", function()
+    if bhop_joindetails:GetBool() then
+        local nick = net.ReadString()
+        local connectionCount = net.ReadInt(32)
+        UTIL:AddMessage("Server", nick .. " has connected " .. connectionCount .. " times!")
+    end
+end)
+
+local function JoinDetails()
+    if bhop_joindetails:GetBool() then
+        local currentMonth = os.date("%b")
+
+        if currentMonth == "Oct" then
+            UTIL:AddMessage("Server", "Happy Halloween from fibzy!")
+        end
+
+        UTIL:AddMessage("Server", "Gamemode loaded (" .. BHOP.Version.GM .. ").")
+    end
+end
+hook_Add("InitPostEntity", "JoinDetails", JoinDetails)
 
 -- Apply settings dynamically
 local function ApplySettings()
@@ -215,6 +235,11 @@ end
 
 cvars.AddChangeCallback("bhop_showchatbox", UpdateChatboxVisibility)
 hook.Add("PlayerInitialSpawn", "SetChatboxVisibility", UpdateChatboxVisibility)
+
+-- Discord
+net.Receive("OpenDiscordLink", function()
+    gui.OpenURL(BHOP.DicordLink)
+end)
 
 -- Interp switcher with easy toggling
 concommand.Add("bhop_interp", function()

@@ -22,6 +22,7 @@ util.AddNetworkString("PAINT_SendData")
 util.AddNetworkString("TRAINER_SendData")
 util.AddNetworkString("bhop_set_showplayers")
 util.AddNetworkString("bhop_set_water_toggle")
+util.AddNetworkString("OpenDiscordLink")
 
 function SendSSJTopToClient(ply)
     if not IsValid(ply) then return end
@@ -869,6 +870,16 @@ function Command:Init()
             "<style> [page]"
         },
 
+        -- Discord Link
+        {
+            {"discord", "opendiscord"},
+            function(ply, args)
+                net.Start("OpenDiscordLink")
+                net.Send(ply)
+            end,
+            "Displays world records or record list",
+            "<style> [page]"
+        },
         -- Normal WR
         --[[{
             {"nwr", "normalwr", "wrnormal"},

@@ -358,8 +358,6 @@ hook.Add("PlayerInitialSpawn", "Paint_LoadSettings", function(ply)
 
     Paint.PlayerPaintColour[ply] = tonumber(colorID) or 1
     Paint.PlayerPaintSize[ply] = tonumber(sizeID) - 1 or 0
-
-    NETWORK:StartNetworkMessageTimer(ply, "Print", {"Paint", "Loaded color & size preferences!"})
 end)
 
 hook.Add("PlayerDisconnected", "Paint_SaveSettings", function(ply)

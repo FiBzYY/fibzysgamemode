@@ -12,18 +12,14 @@ function TIMER:Initialize()
 end
 
 -- Cache
-local lp = LocalPlayer
-local Iv = IsValid
-local ct = CurTime
-local hook_Add = hook.Add
-local string_sub = string.sub
-local math_floor = math.floor
+local lp, Iv, ct, hook_Add, string_sub, math_floor = LocalPlayer, IsValid, CurTime, hook.Add, string.sub, math.floor
 
 -- Network
 util.AddNetworkString("SyncPlayerData")
 util.AddNetworkString("SyncFOV")
 util.AddNetworkString("FOVStateChanged")
 util.AddNetworkString("UpdatePointsSum")
+util.AddNetworkString("SendConnectionCount")
 
 PlayerJumps = PlayerJumps or {}
 playerTimescales = playerTimescales or {}
@@ -184,19 +180,14 @@ function TIMER:Load(ply)
     TIMER:UpdateWRs(ply)
     UTIL:GetPlayerCountryByIP(ply)
 
-    local currentMonth = os.date("%b")
-
-    if currentMonth == "Oct" then
-        BHDATA:Broadcast("Print", { "Server", TIMER:RedToBlackFade("Happy Halloween!") })
-    end
-
-    BHDATA:Broadcast("Print", { "Server", Lang:Get("GMLoaded", {BHOP.Version.GM})})
-
     local connectionCount = ply:GetPData("connectionv2", 0)
     connectionCount = connectionCount + 1
     ply:SetPData("connectionv2", connectionCount)
 
-    BHDATA:Broadcast("Print", { "Server", Lang:Get("DetailsCount", { ply:Nick(), connectionCount})})
+    net.Start("SendConnectionCount")
+    net.WriteString(ply:Nick())
+    net.WriteInt(connectionCount, 32)
+    net.Broadcast()
 end
 
 -- Load the style

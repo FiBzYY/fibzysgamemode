@@ -1268,3 +1268,117 @@ function DrawRainbowText(text, font, x, y)
         x = x + surface.GetTextSize(letter)
     end
 end
+
+function UI:CreateResetAllButton(parent, y, convarTable, labelText, infoText)
+    local pnl = vgui.Create("DPanel", parent)
+    pnl:SetSize(parent:GetWide(), 90)
+    pnl:SetPos(0, y)
+    pnl.Paint = function(self, w, h)
+        surface.SetDrawColor(0, 0, 0, 0)
+        surface.DrawRect(0, 0, w, h)
+    end
+
+    -- Text
+    local lbl = vgui.Create("DLabel", parent)
+    lbl:SetPos(10, y + 10)
+    lbl:SetText(labelText or "Reset All Settings")
+    lbl:SetTextColor(colors.text)
+    lbl:SetFont("ui.mainmenu.button")
+    lbl:SizeToContents()
+
+    -- Info Text
+    local infoLbl = vgui.Create("DLabel", parent)
+    infoLbl:SetPos(10, y + 34)
+    infoLbl:SetText(infoText or "This will reset all settings to their default values.")
+    infoLbl:SetTextColor(colors.infoText)
+    infoLbl:SetFont("ui.mainmenu.button")
+    infoLbl:SizeToContents()
+
+    -- Reset All Button
+    local resetBtn = vgui.Create("DButton", pnl)
+    resetBtn:SetText("")
+    resetBtn:SetSize(120, 36)
+    resetBtn:SetPos(pnl:GetWide() - 140, 15)
+    resetBtn:SetFont("ui.mainmenu.button")
+    resetBtn.Paint = function(self, w, h)
+        surface.SetDrawColor(colors.box)
+        surface.DrawOutlinedRect(0, 0, w, h, 2)
+
+        if self:IsHovered() then
+            surface.SetDrawColor(200, 50, 50, 255)
+        else
+            surface.SetDrawColor(colors.toggleButton)
+        end
+
+        surface.DrawRect(2, 2, w - 4, h - 4)
+        draw.SimpleText("Reset All", "ui.mainmenu.button", w / 2, h / 2, Color(255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+    end
+
+    resetBtn.DoClick = function()
+        local confirm = vgui.Create("DFrame")
+        confirm:SetSize(300, 140)
+        confirm:Center()
+        confirm:SetTitle("")
+        confirm:MakePopup()
+        confirm:ShowCloseButton(false)
+        confirm.Paint = function(self, w, h)
+            surface.SetDrawColor(colors.box)
+            surface.DrawOutlinedRect(0, 0, w, h, 2)
+            surface.SetDrawColor(colors.toggleButton)
+            surface.DrawRect(2, 2, w - 4, h - 4)
+            draw.SimpleText("Reset ALL settings to defaults?", "ui.mainmenu.button", w / 2, 30, Color(255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+        end
+
+        -- Confirm
+        local yesBtn = vgui.Create("DButton", confirm)
+        yesBtn:SetText("")
+        yesBtn:SetSize(120, 30)
+        yesBtn:SetPos(30, 80)
+        yesBtn.Paint = function(self, w, h)
+            surface.SetDrawColor(colors.box)
+            surface.DrawOutlinedRect(0, 0, w, h, 2)
+
+            if self:IsHovered() then
+                surface.SetDrawColor(0, 255, 0, 255)
+            else
+                surface.SetDrawColor(colors.toggleButton)
+            end
+
+            surface.DrawRect(2, 2, w - 4, h - 4)
+            draw.SimpleText("Yes", "ui.mainmenu.button", w / 2, h / 2, Color(255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+        end
+        yesBtn.DoClick = function()
+            for convar, default in pairs(convarTable) do
+                RunConsoleCommand(convar, default)
+            end
+
+            UTIL:AddMessage("Settings", color_white, "All ", Color(255 ,0, 0), "settings" , color_white, " reset to defaults!")
+            confirm:Close()
+        end
+
+        -- Cancel
+        local noBtn = vgui.Create("DButton", confirm)
+        noBtn:SetText("")
+        noBtn:SetSize(120, 30)
+        noBtn:SetPos(150, 80)
+        noBtn.Paint = function(self, w, h)
+            surface.SetDrawColor(colors.box)
+            surface.DrawOutlinedRect(0, 0, w, h, 2)
+
+            if self:IsHovered() then
+                surface.SetDrawColor(80, 80, 80, 255)
+            else
+                surface.SetDrawColor(colors.toggleButton)
+            end
+
+            surface.DrawRect(2, 2, w - 4, h - 4)
+            draw.SimpleText("Cancel", "ui.mainmenu.button", w / 2, h / 2, Color(255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+        end
+
+        noBtn.DoClick = function()
+            confirm:Close()
+        end
+    end
+
+    return pnl, lbl, infoLbl, resetBtn
+end

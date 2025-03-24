@@ -20,6 +20,8 @@ if not CONFIG_LOADED then
     -- Enable live cycling host name
     BHOP.EnableCycle = false
 
+    BHOP.DicordLink = "https://discord.com/invite/mGh2KE9FzD"
+
     -- Cycle text
     BHOP.Nametime = 10
     BHOP.ServerNames = {
@@ -46,9 +48,9 @@ if not CONFIG_LOADED then
     -- Gamemode version
     BHOP.Version = {
         Engine = "9594",
-        GM = "13.18",
-        ReleaseDate = "03/23/25",
-        LastUpdated = "03/23/25"
+        GM = "13.19",
+        ReleaseDate = "03/24/25",
+        LastUpdated = "03/24/25"
     }
 
     -- Main movement settings
