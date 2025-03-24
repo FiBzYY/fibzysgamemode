@@ -14,6 +14,28 @@ playerDuckStatus = {}
 if SERVER then
     util.AddNetworkString("SSJTOP_SendData")
 
+    function SaveSSJToMySQL(ply, ssjType, jumpSpeed)
+        if not IsValid(ply) then return end
+
+        local steamID = ply:SteamID()
+
+        local query = string.format([[
+            INSERT INTO ssjtop_records (steamid, type, jumpspeed)
+            VALUES ('%s', '%s', %f)
+            ON DUPLICATE KEY UPDATE jumpspeed = GREATEST(jumpspeed, %f)
+        ]],
+            steamID, ssjType, jumpSpeed, jumpSpeed
+        )
+
+        MySQL:Start(query, function(result)
+            if result then
+                print("[SSJTOP] MySQL saved for " .. steamID .. " (" .. ssjType .. ")")
+            else
+                print("[SSJTOP] Failed MySQL save for " .. steamID)
+            end
+        end)
+    end
+
     local function LoadSSJTopFromFile()
         if file_Exists(ssjFileName, "DATA") then
             local ssjData = util_JSONToTable(file_Read(ssjFileName, "DATA"))
@@ -36,21 +58,6 @@ if SERVER then
     hook_Add("ShutDown", "SSJTOP_SaveOnShutdown", function()
         file_Write(ssjFileName, util_TableToJSON(SSJTOP, true))
     end)
-end
-
--- Update SSJ Records
-function UpdateSSJTop(ply, jumpSpeed)
-    if not IsValid(ply) then return end
-
-    local steamID = ply:SteamID()
-    local wasDucking = playerDuckStatus[steamID] or false
-    local ssjType = wasDucking and "duck" or "normal"
-
-    SSJTOP[steamID] = SSJTOP[steamID] or { duck = 0, normal = 0 }
-
-    if jumpSpeed > SSJTOP[steamID][ssjType] then
-        SSJTOP[steamID][ssjType] = jumpSpeed
-    end
 end
 
 -- Crouch Status Before Jump
