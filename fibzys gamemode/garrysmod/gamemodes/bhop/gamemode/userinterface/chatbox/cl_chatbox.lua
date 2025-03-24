@@ -63,20 +63,25 @@ function InitChatbox()
         self:GotoTextEnd()
     end
 
-    function chatbox.entry:Paint(width, height)
-        surface.SetDrawColor(32, 32, 32, 255)
-        surface.DrawRect(0, 0, width, height)
-        derma.SkinHook("Paint", "TextEntry", self, width, height)
+    function chatbox.entry:Paint(w, h)
+        surface.SetDrawColor(colors.box)
+        surface.DrawOutlinedRect(0, 0, w, h, 2)
+    
+        surface.SetDrawColor(colors.toggleButton)
+        surface.DrawRect(2, 2, w - 4, h - 4)
+    
+        self:DrawTextEntryText(Color(255, 255, 255), Color(30, 130, 255), Color(255, 255, 255))
     end
     chatboxEntryPaint = chatbox.entry.Paint
 
-    function chatbox:Paint(width, height)
-        surface.SetDrawColor(32, 32, 32, 255)
-        surface.DrawRect(0, 0, width, height)
+    function chatbox:Paint(w, h)
+        surface.SetDrawColor(colors.box)
+        surface.DrawOutlinedRect(0, 0, w, h, 2)
 
         surface.SetDrawColor(42, 42, 42, 255)
-        surface.DrawRect(10, 10, width - 20, height - 20)
+        surface.DrawRect(2, 2, w - 4, h - 4)
     end
+
     chatboxPaint = chatbox.Paint
 
     HideChatbox()
