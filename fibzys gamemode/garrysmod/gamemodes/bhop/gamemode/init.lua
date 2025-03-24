@@ -27,16 +27,15 @@ local files = {
         "nonessential/sh_ssjtop.lua",
         "nonessential/sh_jumpstats.lua",
         "nonessential/sh_fjt.lua",
-        -- "nonessential/sh_edgehelper.lua",
-        -- "nonessential/sh_rampometer.lua",
+        "nonessential/sh_edgehelper.lua",
+        "nonessential/sh_rampometer.lua",
         "nonessential/sh_unreal.lua"
     },
     movementFixes = {
         "nonessential/movementfixes/sh_rngfix.lua",
-        -- "nonessential/movementfixes/sh_rampfix.lua",
+        "nonessential/movementfixes/sh_rampfix.lua",
         "nonessential/movementfixes/sh_boosterfix.lua",
-        "nonessential/movementfixes/sh_headbugfix.lua",
-        -- "nonessential/movementfixes/sh_eventqueuefix.lua"
+        "nonessential/movementfixes/sh_headbugfix.lua"
     },
     clientModules = {
         "userinterface/cl_fonts.lua",
@@ -52,6 +51,8 @@ local files = {
         "essential/cl_network.lua",
         "userinterface/scoreboards/cl_default.lua",
         "userinterface/chatbox/cl_chatbox.lua",
+        "userinterface/cl_mapcolor.lua",
+        "userinterface/cl_netgraph.lua",
         "essential/zones/cl_zoneeditor.lua",
         "nonessential/admin/cl_admin.lua",
         "nonessential/strafe/cl_strafehud.lua",
@@ -61,14 +62,12 @@ local files = {
         "nonessential/strafe/cl_synchronizer.lua",
         "nonessential/cl_soundstopper.lua",
         "nonessential/cl_cheats.lua",
-        -- "nonessential/cl_mapcolor.lua",
-        -- "nonessential/cl_netgraph.lua",
         "nonessential/fpsfixes/cl_fpsfixes.lua",
         "nonessential/fpsfixes/cl_buffthefps.lua",
         "nonessential/showhidden/cl_init.lua",
         "nonessential/showhidden/cl_lang.lua",
-        -- "nonessential/bash/cl_bash.lua",
-        -- "nonessential/bash/cl_menu.lua"
+        "nonessential/bash/cl_bash.lua",
+        "nonessential/bash/cl_menu.lua"
     },
     fpsFixesShared = {
         "nonessential/fpsfixes/sh_fpsfixes.lua",
@@ -96,9 +95,9 @@ local files = {
         "nonessential/sv_setspawn.lua",
         "nonessential/showhidden/sv_init.lua",
         "nonessential/showhidden/sh_init.lua",
-        "nonessential/movementfixes/sh_tpfix.lua"
-        -- "nonessential/bash/sv_bash.lua",
-        -- "nonessential/bash/sv_config.lua"
+        "nonessential/movementfixes/sh_tpfix.lua",
+        "nonessential/bash/sv_bash.lua",
+        "nonessential/bash/sv_config.lua"
     },
     misc = {
         "nonessential/misc/cl_centerbox.lua",
@@ -118,13 +117,13 @@ if SERVER then
         AddCSLuaFile(file)
     end
     for _, file in ipairs(files.misc) do
-        -- AddCSLuaFile(file)
+        AddCSLuaFile(file)
     end
 end
 
 if CLIENT then
     includeFiles(files.clientModules)
-    -- includeFiles(files.misc)
+    includeFiles(files.misc)
 end
 
 if SERVER then

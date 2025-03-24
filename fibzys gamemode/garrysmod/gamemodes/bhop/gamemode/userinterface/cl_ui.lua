@@ -1138,33 +1138,28 @@ end
 -- Style MENU UI
 UI:AddListener("style", function(_, data)
     data = data[1] or false
-
+    local currentStyle = LocalPlayer():GetNWInt("Style", 1)
+    
     if tonumber(data) and UI.style then
         UI.style:UpdateOptionBool(tonumber(data))
     elseif (not UI.style) or (not UI.style.title) and (not tonumber(data)) then
-        UI.style = UI:NumberedUIPanel("Choose a style",
-            {["name"] = "Normal", ["function"] = STYLE_Callback(1), ["bool"] = data[1]},
-            {["name"] = "Sideways", ["function"] = STYLE_Callback(2), ["bool"] = data[2]},
-            {["name"] = "Half-Sideways", ["function"] = STYLE_Callback(3), ["bool"] = data[3]},
-            {["name"] = "W-Only", ["function"] = STYLE_Callback(4), ["bool"] = data[4]},
-            {["name"] = "A-Only", ["function"] = STYLE_Callback(5), ["bool"] = data[5]},
-            {["name"] = "Legit", ["function"] = STYLE_Callback(6), ["bool"] = data[6]},
-            {["name"] = "Easy Scroll", ["function"] = STYLE_Callback(7), ["bool"] = data[7]},
-            {["name"] = "Unreal", ["function"] = STYLE_Callback(8), ["bool"] = data[8]},
-            {["name"] = "Swift", ["function"] = STYLE_Callback(9), ["bool"] = data[9]},
-            {["name"] = "Bonus", ["function"] = STYLE_Callback(10), ["bool"] = data[10]},
-            {["name"] = "WTF", ["function"] = STYLE_Callback(11), ["bool"] = data[11]},
-            {["name"] = "Low Gravity", ["function"] = STYLE_Callback(12), ["bool"] = data[12]},
-            {["name"] = "Backwards", ["function"] = STYLE_Callback(13), ["bool"] = data[13]},
-            {["name"] = "Stamina", ["function"] = STYLE_Callback(14), ["bool"] = data[14]},
-            {["name"] = "Segment", ["function"] = STYLE_Callback(15), ["bool"] = data[15]},
-            {["name"] = "Low Gravity", ["function"] = STYLE_Callback(16), ["bool"] = data[16]},
-            {["name"] = "Auto-Strafe", ["function"] = STYLE_Callback(17), ["bool"] = data[17]},
-            {["name"] = "Moon Man", ["function"] = STYLE_Callback(18), ["bool"] = data[18]},
-            {["name"] = "High Gravity", ["function"] = STYLE_Callback(19), ["bool"] = data[19]},
-            {["name"] = "Speedrun", ["function"] = STYLE_Callback(20), ["bool"] = data[20]},
-            {["name"] = "Prespeed", ["function"] = STYLE_Callback(21), ["bool"] = data[21]}
-        )
+        local styles = {
+            "Normal", "Sideways", "Half-Sideways", "W-Only", "A-Only", "Legit", "Easy Scroll",
+            "Unreal", "Swift", "Bonus", "WTF", "Low Gravity", "Backwards", "Stamina", 
+            "Segment", "Low Gravity", "Auto-Strafe", "Moon Man", "High Gravity", "Speedrun", "Prespeed"
+        }
+
+        local options = {}
+        for i, name in ipairs(styles) do
+            options[#options + 1] = {
+                ["name"] = name,
+                ["col"] = (currentStyle == i) and Color(0, 150, 255) or Color(255, 255, 255),
+                ["function"] = STYLE_Callback(i),
+                ["bool"] = data[i]
+            }
+        end
+
+        UI.style = UI:NumberedUIPanel("Choose a style", unpack(options))
     end
 end)
 

@@ -17,16 +17,15 @@ local files = {
         "nonessential/sh_ssjtop.lua",
         "nonessential/sh_jumpstats.lua",
         "nonessential/sh_fjt.lua",
-       -- "nonessential/sh_edgehelper.lua",
-       -- "nonessential/sh_rampometer.lua",
+        "nonessential/sh_edgehelper.lua",
+        "nonessential/sh_rampometer.lua",
         "nonessential/sh_unreal.lua"
     },
     movementFixes = {
         "nonessential/movementfixes/sh_rngfix.lua",
-        -- "nonessential/movementfixes/sh_rampfix.lua",
+        "nonessential/movementfixes/sh_rampfix.lua",
         "nonessential/movementfixes/sh_boosterfix.lua",
-        "nonessential/movementfixes/sh_headbugfix.lua",
-        -- "nonessential/movementfixes/sh_eventqueuefix.lua"
+        "nonessential/movementfixes/sh_headbugfix.lua"
     },
     ui = {
         "userinterface/cl_fonts.lua",
@@ -41,7 +40,9 @@ local files = {
         "essential/cl_network.lua",
         "userinterface/scoreboards/cl_default.lua",
         "userinterface/chatbox/cl_chatbox.lua",
-        "userinterface/cl_voice.lua"
+        "userinterface/cl_voice.lua",
+        "userinterface/cl_mapcolor.lua",
+        "userinterface/cl_netgraph.lua"
     },
     clientModules = {
         "nonessential/admin/cl_admin.lua",
@@ -53,10 +54,8 @@ local files = {
         "nonessential/strafe/cl_synchronizer.lua",
         "nonessential/cl_soundstopper.lua",
         "nonessential/cl_cheats.lua",
-        -- "nonessential/cl_mapcolor.lua",
-        -- "nonessential/cl_netgraph.lua",
-        -- "nonessential/bash/cl_bash.lua",
-        -- "nonessential/bash/cl_menu.lua"
+        "nonessential/bash/cl_bash.lua",
+        "nonessential/bash/cl_menu.lua"
 
     },
     fpsFixes = {
@@ -71,10 +70,10 @@ local files = {
          "nonessential/showhidden/cl_lang.lua"
     },
     misc = {
-        -- "nonessential/misc/cl_centerbox.lua",
-        -- "nonessential/misc/cl_perfprinter.lua",
-        -- "nonessential/misc/cl_peakheight.lua",
-        -- "nonessential/misc/cl_boxgraph.lua"
+        "nonessential/misc/cl_centerbox.lua",
+        "nonessential/misc/cl_perfprinter.lua",
+        "nonessential/misc/cl_peakheight.lua",
+        "nonessential/misc/cl_boxgraph.lua"
     }
 }
 
@@ -84,7 +83,7 @@ includeFiles(files.ui)
 includeFiles(files.clientModules)
 includeFiles(files.fpsFixes)
 includeFiles(files.showHidden)
--- includeFiles(files.misc)
+includeFiles(files.misc)
 
 --- end of include
 local setting_anticheats = CreateClientConVar("bhop_anticheats", "0", true, false)

@@ -594,6 +594,8 @@ function UI:CreateMenu()
         self:CreateToggle(container, y, "bhop_nogun", "No gun toggle", "This will allow you to use guns without seeing them.")
         y = y + 60
         self:CreateToggle(container, y, "bhop_fullbright", "Full bright toggle", "This will allow you to see the map in full bright when flashlight is pressed.")
+        y = y + 60
+        self:CreateToggle(container, y, "bhop_enable_map_colors", "Custom map colors", "Enables or disables the custom map color changes.")
     end },
 
       -- SSJ Tab
@@ -726,6 +728,12 @@ function UI:CreateMenu()
             self:CreateToggle(parent, y, "bhop_rainbowtext", "Rainbow HUD", "Enables or disables rainbow HUD text.")
             y = y + 60
             self:CreateToggle(parent, y, "bhop_chatbox", "Custom Chatbox", "Enables or disables the custom chat box.")
+            y = y + 60
+            self:CreateToggle(parent, y, "bhop_netgraph", "Net Graph", "Enables or disables the custom net graph.")
+            y = y + 60
+            self:CreateToggle(parent, y, "bhop_ramp_o_meter", "Ramp-o-Meter", "Enables or disables the ramp meter.")
+            y = y + 60
+            self:CreateToggle(parent, y, "bhop_rampometer_percent", "Ramp-o-Meter Percent", "If you want to see the meter in percentage.")
         end },
 
         { text = "Colors", panelContent = function(parent)
@@ -754,7 +762,25 @@ function UI:CreateMenu()
                 ["kawaii"] = "Kawaii",
                 ["flow"] = "Flow"
             })
-        end }
+        end },
+
+        { text = "Misc", panelContent = function(parent)
+            local x, y = 10, 0
+            self:CreatePanel(parent, {"Miscellaneous"})
+            y = y + 45
+            self:CreateToggle(parent, y, "bhop_boxgraph", "Box Graph", "Enables or disables box graph angles.")
+            y = y + 60
+            self:CreateToggle(parent, y, "bhop_graphminecraft", "Box Graph Minecaft", "Enables or disables box graph angles minecraft style.")
+            y = y + 60
+            self:CreateToggle(parent, y, "bhop_centerbox_pos", "Center Box Postion", "Enables or disables a box under the player.")
+            y = y + 60
+            self:CreateToggle(parent, y, "bhop_landing_prediction", "Landing Prediction", "Enables or disables landing prediction display.")
+            y = y + 60
+            self:CreateToggle(parent, y, "bhop_showpeakheight", "Show Peak Height", "Enables or disables the peak height display.")
+            y = y + 60
+            self:CreateToggle(parent, y, "bhop_perfprinter", "Perfect Printer", "Enables or disables the jump tracker for scrolling.")
+            y = y + 60           
+        end },
     })
 
     -- Admin Tab

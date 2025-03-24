@@ -105,6 +105,7 @@ UTIL.Colour = {
 	["Settings"] = Color(255, 200, 255),
 	["Paint"] = Color(0, 0, 255),
  	["RTV"] = Color(255, 0, 255),
+  	["EdgeHelper"] = Color(255, 105, 180),
     
 	["White"] = Color(255, 255, 255),
 	["Green"] = Color(107, 142, 35),
