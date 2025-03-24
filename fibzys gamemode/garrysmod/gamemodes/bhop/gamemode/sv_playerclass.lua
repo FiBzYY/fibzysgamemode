@@ -105,7 +105,7 @@ end
 local LastPlayerAngles = {}
 function TIMER:SpawnChecks(ply)
     self:SetJumps(ply, 0)
-   	self:ResetPlayerAttributes(ply)
+    self:ResetPlayerAttributes(ply)
 
     local steamID = ply:SteamID()
     local map = game.GetMap()
@@ -123,6 +123,9 @@ function TIMER:SpawnChecks(ply)
     end
 
     ply:SetPos(spawnPos)
+
+    local zoneType = 2 and 0
+    ply.outsideSpawn = not Zones:IsInside(ply, zoneType)
 
     if not ply:IsBot() and ply:GetMoveType() ~= MOVETYPE_WALK then
         ply:SetMoveType(MOVETYPE_WALK)

@@ -269,6 +269,11 @@ function TIMER:StartTimer(ply)
         return
     end
 
+    if ply.outsideSpawn then
+        TIMER:Disable(ply)
+        return
+    end
+
     -- Tick based
     ply.iFractionalTicks = 0
     ply.iFullTicks = 0
@@ -317,6 +322,7 @@ function TIMER:ResetTimer(ply)
     ply.iFullTicks = 0
     ply.wasInEndZone = false
     ply.InSpawn = true
+    ply.InStartZone = false
 
     -- Send Start Timer | InStartZone | ScoreBoard
     NETWORK:StartNetworkMessage(ply, "UpdateSingleVar", ply, "InStartZone", ply.InStartZone)
@@ -392,7 +398,7 @@ function TIMER:Disable(ply)
     if not IsValid(ply) then return false end
     if ply:IsBot() then return false end
 
-    ply:SetNWBool("inPractice", true)
+    -- ply:SetNWBool("inPractice", true)
 
     ply.time = nil
     ply.finished = nil
@@ -413,6 +419,11 @@ end
 -- Bonus Start
 function TIMER:BonusStart(ply)
     if not self:ValidTimer(ply, true) then
+        return
+    end
+
+    if ply.outsideSpawn then
+        TIMER:Disable(ply)
         return
     end
 

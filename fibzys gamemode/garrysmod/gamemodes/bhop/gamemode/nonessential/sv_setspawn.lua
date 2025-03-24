@@ -63,11 +63,6 @@ local function setSpawnPoint(ply)
     local modelPos, eyeAngle = ply:GetPos(), ply:EyeAngles()
     local spawnIdentifier = getSpawnIdentifier(ply)
 
-    if not Zones:IsInside(ply, spawnIdentifier) then
-        NETWORK:StartNetworkMessageTimer(ply, "Print", {"Timer", "Unable to set spawn point, make sure you are in the starting zone"})
-        return
-    end
-
     Setspawn.Points[map][steamID][spawnIdentifier] = {modelPos, eyeAngle}
 
     Setspawn.Points[map][steamID][spawnIdentifier .. "_up"] = {modelPos + Vector(0, 0, 20), eyeAngle}
