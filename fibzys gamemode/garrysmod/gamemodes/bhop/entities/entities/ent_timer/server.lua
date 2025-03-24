@@ -50,6 +50,7 @@ local function StartZoneTouch(ent, zone)
 
     if zone == ZONE.MAIN_START then
         ent.InStartZone = true
+        ent.outsideSpawn = false
 
         local isPrespeed = (style == TIMER:GetStyleID("Prespeed"))
 
@@ -69,6 +70,8 @@ local function StartZoneTouch(ent, zone)
         end
     elseif zone == ZONE.BONUS_START then
         ent.InStartZone = true
+        ent.outsideSpawn = false
+
         if ent.bonustime and not isJumping and isOnGround then
             TIMER:BonusReset(ent)
         elseif not ent.bonustime and isJumping and moveType ~= MOVETYPE_NOCLIP then
