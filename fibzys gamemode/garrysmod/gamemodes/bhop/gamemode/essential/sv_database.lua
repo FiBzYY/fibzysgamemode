@@ -60,29 +60,11 @@ function TIMER:Boot()
         RTV:Init()
     end
 
-    if BHDATA and BHDATA.StartSQL then
-        BHDATA:StartSQL()
-    end
+    self:LoadZones()
+    self:LoadRecords()
+    self:LoadTop()
+    self:AddPlays()
 
-    if Admin and Admin.LoadAdmins then
-        Admin:LoadAdmins()
-    end
-
-    TIMER:LoadZones(function(success)
-        if success then
-            if Zones and Zones.Setup then
-                Zones:Setup()
-            else
-                UTIL:Notify(Color(255, 0, 0), "Database", "Zones:Setup function does NOT exist!")
-            end
-        else
-            UTIL:Notify(Color(255, 0, 0), "Database", "LoadZones failed, No zones found for this map.")
-        end
-    end)
-
-    TIMER:LoadRecords()
-    TIMER:LoadTop()
-    TIMER:AddPlays()
     BHDATA:Optimize()
 
     MapGlobals:GetGlobalWRForMap(game.GetMap(), function(globalWR)
@@ -296,6 +278,80 @@ local function PrintLuaMemoryUsage()
 end
 
 PrintLuaMemoryUsage()
+
+function TIMER:DBRetry(retryCount)
+    retryCount = retryCount or 0
+    local maxRetries = 3
+
+    if retryCount == 0 then
+        local success, err = pcall(function()
+            if BHDATA and BHDATA.StartSQL then
+                BHDATA:StartSQL()
+            end
+        end)
+
+        if not success then
+            UTIL:Notify(Color(255, 0, 0), "Database", "[ERROR] SQL/Admin startup failed: " .. err)
+            retryCount = retryCount + 1
+            if retryCount <= maxRetries then
+                UTIL:Notify(Color(255, 0, 0), "Database", "[DEBUG] Retrying SQL/Admin load... Attempt: " .. retryCount)
+                timer.Simple(2, function() self:DBRetry(retryCount) end)
+            else
+                UTIL:Notify(Color(255, 0, 0), "Database", "[ERROR] Max retries reached for SQL/Admin load.")
+            end
+            return
+        end
+    end
+
+    if SQL and not SQL.Use then
+        UTIL:Notify(Color(255, 0, 0), "Database", "[WARNING] SQL is disabled, using fallback mode.")
+        if SQL.LoadNoMySQL then
+            SQL:LoadNoMySQL()
+        end
+        return
+    end
+
+    if Zones and Zones.Cache and #Zones.Cache > 0 then
+        local success, err = pcall(function()
+            if Zones.Setup then
+                Zones:Setup()
+                UTIL:Notify(Color(0, 255, 0), "Database", "[INFO] Zones successfully setup!")
+            end
+        end)
+        if not success then
+            retryCount = retryCount + 1
+            if retryCount <= maxRetries then
+                UTIL:Notify(Color(255, 0, 0), "Database", "[DEBUG] Retrying zone setup... Attempt: " .. retryCount)
+                timer.Simple(2, function() self:DBRetry(retryCount) end)
+            else
+                UTIL:Notify(Color(255, 0, 0), "Database", "[ERROR] Max retries reached for Zones:Setup()")
+            end
+            return
+        end
+    else
+        UTIL:Notify(Color(255, 0, 0), "Database", "[WARNING] No zones found! Attempting zone load from DB...")
+        self:LoadZones(function(success)
+            if success then
+                timer.Simple(0.5, function()
+                    self:DBRetry(retryCount)
+                end)
+            else
+                retryCount = retryCount + 1
+                if retryCount <= maxRetries then
+                    UTIL:Notify(Color(255, 0, 0), "Database", "[DEBUG] Retrying zone load... Attempt: " .. retryCount)
+                    timer.Simple(2, function() self:DBRetry(retryCount) end)
+                else
+                    UTIL:Notify(Color(255, 0, 0), "Database", "[ERROR] Max retries reached for LoadZones()")
+                end
+            end
+        end)
+        return
+    end
+
+    if BHDATA and BHDATA.Optimize then
+        BHDATA:Optimize()
+    end
+end
 
 function BHDATA:StartSQL()
     if not SQL or not SQL.Use then return end

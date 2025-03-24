@@ -88,26 +88,26 @@ end
 
 AdminLoad.Levels = {}
 AdminLoad.Setup = {
-	{ 5, "Change map", Admin.Level.Zoner, { 40, 67, 100, 25 } },
-	{ 3, "Map points", Admin.Level.Zoner, { 145, 67, 100, 25 } },
-	{ 21, "Bonus points", Admin.Level.Zoner, { 250, 67, 100, 25 } },
-	{ 11, "Map options", Admin.Level.Zoner, { 355, 67, 100, 25 } },
+	{ 5, "Change map", Admin.Level.Zoner, { 40, 47, 100, 40 } },
+	{ 3, "Map points", Admin.Level.Zoner, { 145, 47, 100, 40 } },
+	{ 21, "Bonus points", Admin.Level.Zoner, { 250, 47, 100, 40 } },
+	{ 11, "Map options", Admin.Level.Zoner, { 355, 47, 100, 40 } },
 
-	{ 1, "Set zone", Admin.Level.Zoner, { 40, 102, 100, 25 } },
-	{ 10, "Remove zone", Admin.Level.Zoner, { 145, 102, 100, 25 } },
-	{ 2, "Cancel creation", Admin.Level.Zoner, { 250, 102, 100, 25 } },
-	{ 6, "Reload zones", Admin.Level.Zoner, { 355, 102, 100, 25 } },
+	{ 1, "Set zone", Admin.Level.Zoner, { 40, 97, 100, 40 } },
+	{ 10, "Remove zone", Admin.Level.Zoner, { 145, 97, 100, 40 } },
+	{ 2, "Cancel creation", Admin.Level.Zoner, { 250, 97, 100, 40 } },
+	{ 6, "Reload zones", Admin.Level.Zoner, { 355, 97, 100, 40 } },
 
-	{ 9, "Zone height", Admin.Level.Zoner, { 40, 137, 100, 25 } },
-	{ 20, "Cancel vote", Admin.Level.Zoner, { 145, 137, 100, 25 } },
-	{ 17, "Remove time", Admin.Level.Zoner, { 40, 192, 100, 25 } },
-	{ 18, "Remove replay", Admin.Level.Zoner, { 145, 192, 100, 25 } },
-	{ 28, "Remove all times", Admin.Level.Developer, { 250, 192, 205, 25 } },
+	{ 9, "Zone height", Admin.Level.Zoner, { 40, 147, 100, 40 } },
+	{ 20, "Cancel vote", Admin.Level.Zoner, { 145, 147, 100, 40 } },
+	{ 17, "Remove time", Admin.Level.Zoner, { 40, 202, 100, 40 } },
+	{ 18, "Remove replay", Admin.Level.Zoner, { 145, 202, 100, 40 } },
+	{ 28, "Remove all times", Admin.Level.Developer, { 250, 202, 205, 40 } },
 
-	{ 24, "Reload admins", Admin.Level.Developer, { 40, 227, 100, 25 } },
-	{ 22, "Remove map", Admin.Level.Developer, { 145, 227, 100, 25 } },
-	{ 7, "Set admin", Admin.Level.Manager, { 250, 227, 100, 25, true } },
-	{ 8, "Remove admin", Admin.Level.Manager, { 355, 227, 100, 25, true } },
+	{ 24, "Reload admins", Admin.Level.Developer, { 40, 252, 100, 40 } },
+	{ 22, "Remove map", Admin.Level.Developer, { 145, 252, 100, 40 } },
+	{ 7, "Set admin", Admin.Level.Manager, { 250, 252, 100, 40, true } },
+	{ 8, "Remove admin", Admin.Level.Manager, { 355, 252, 100, 40, true } },
 }
 
 local ti, tr = table.insert, table.remove
@@ -333,7 +333,7 @@ function Admin:HandleButton( ply, args )
 		if Steam == "Extra" then ply.ZoneExtra = true end
 		
 		local tabQuery = {
-			Caption = "What kind of zone do you want to set?\n(Note: When you select one, you will immediately start placing it!)",
+			Caption = "What kind of zone do you want to set?",
 			Title = "Select zone type"
 		}
 

@@ -1,4 +1,4 @@
--- some stuff i used from flow replace soon
+﻿-- some stuff i used from flow replace soon
 Window = {}
 Window.NoClose = {"Vote"}
 Window.NoThink = {"Admin", "VIP"}
@@ -221,61 +221,51 @@ function Window:CreateTextBox(params)
     return txt
 end
 
-function Window.MakeQuery(c, t, ...)
-    local arg = { ... }
-    local numArgs = #arg
+function Window.MakeQuery(caption, title, ...)
+    local args = { ... }
+    local numArgs = #args
 
-    local qry = Derma_Query(c, t, ...)
-    
-    if numArgs < 9 then return end
+    local frame = vgui.Create("DFrame")
+    frame:SetTitle("")
+    frame:SetSize(400, 420)
+    frame:Center()
+    frame:ShowCloseButton(false)
+    frame:MakePopup()
 
-    local nTall = math.ceil(numArgs / 8) * 30
-    local nExtra = nTall - 30
-    local x, y = 5, 25
-    local buttonCounter = 1
-
-    local dPanel = nil
-    for _, panel in pairs(qry:GetChildren()) do
-        if panel:GetClassName() == "Panel" and panel:GetTall() == 30 then
-            panel:SetTall(nTall)
-            dPanel = panel
-            break
-        end
+    frame.Paint = function(self, w, h)
+        draw.RoundedBox(6, 0, 0, w, h, Color(50, 50, 50))
+        draw.SimpleText(title, "HUDFontSmall", w / 2, 20, color_white, TEXT_ALIGN_CENTER)
+        draw.SimpleText(caption, "HUDFontSmall", w / 2, 40, color_white, TEXT_ALIGN_CENTER)
     end
 
-    if not dPanel then return end
+    local x, y = 20, 60
+    for i = 1, numArgs, 2 do
+        local btnText = args[i]
+        local btnFunc = args[i + 1] or function() end
 
-    local function CreateButton(text, func)
-        local btn = vgui.Create("DButton", dPanel)
+        local btn = vgui.Create("DButton", frame)
+        btn:SetSize(170, 30)
+        btn:SetPos(x, y)
         btn:SetText("")
-        btn:SizeToContents()
-        btn:SetTall(20)
-        btn:SetWide(btn:GetWide() + 75)
-        btn:SetPos(x, y + 5)
-        btn.DoClick = function() qry:Close(); func() end
+
+        btn.DoClick = function()
+            frame:Close()
+            btnFunc()
+        end
 
         btn.Paint = function(self, w, h)
-            local bgColor = self:IsHovered() and Color(100, 100, 100) or Color(80, 80, 80)
-            draw.RoundedBox(3, 0, 0, w, h, bgColor)
-            draw.SimpleText(text, "HUDFontSmall", w / 2, h / 2, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            local bgColor = self:IsHovered() and Color(70, 130, 180) or Color(60, 60, 60)
+            draw.RoundedBox(4, 0, 0, w, h, bgColor)
+            draw.SimpleText(btnText, "HUDFontSmall", w / 2, h / 2, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
         end
 
-        x = x + btn:GetWide() + 5
-        buttonCounter = buttonCounter + 1
-
-        if buttonCounter > 4 then
-            x, y = 5, y + 25
-            buttonCounter = 1
+        if x > 20 then
+            x = 20
+            y = y + 40
+        else
+            x = x + 190
         end
     end
-
-    for k = 9, numArgs, 2 do
-        local text = arg[k]
-        local func = arg[k + 1] or function() end
-        CreateButton(text, func)
-    end
-
-    qry:SetTall(qry:GetTall() + nExtra)
 end
 
 function Window.MakeRequest(c, t, d, f, l)

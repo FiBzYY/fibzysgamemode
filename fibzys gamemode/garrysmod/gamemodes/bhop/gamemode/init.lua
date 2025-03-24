@@ -273,7 +273,6 @@ function UTIL:GetPlayerCountryByIP(ply)
 end
 
 local hasLoadedStartup = false
-
 local function Startup()
     if not hasLoadedStartup then
 	    TIMER:Boot()
@@ -281,6 +280,15 @@ local function Startup()
     end
 end
 hook_Add("Initialize", "Startup", Startup)
+
+local hasLoaded = false
+local function LoadEntities()
+    if not hasLoaded then
+        TIMER:DBRetry()
+        hasLoaded = true
+    end
+end
+hook_Add("InitPostEntity", "LoadEntities", LoadEntities)
 
 -- player spawn call
 function GM:PlayerSpawn(ply)

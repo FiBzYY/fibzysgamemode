@@ -303,6 +303,8 @@ Theme:Register("NumberedUI", "nui.kawaii", "Kawaii Clan", {
     },
 })
 
+Settings:Register('selected.nui', 'nui.kawaii', {'nui.kawaii', 'nui.css'})
+
 -- Get preferance
 local sel = "nui.kawaii"
 local selop = "Dark"
@@ -406,7 +408,7 @@ concommand.Add("bhop_change_scoreboard", ChangeScoreboardTheme)
 local function ChangeScoreboardPreset(ply, cmd, args)
     local newPreset = args[1]
 
-    local selectedScoreboard = Settings:GetValue('selected.scoreboard')
+    local selectedScoreboard = Settings:GetValue('selected.scoreboard') or "scoreboard.kawaii"
 
     if themes[selectedScoreboard] and themes[selectedScoreboard].options[newPreset] then
         Settings:SetValue('preference.' .. selectedScoreboard, newPreset)
@@ -420,7 +422,7 @@ concommand.Add("bhop_change_scoreboard_preset", ChangeScoreboardPreset)
 local function ChangeZonesPreset(ply, cmd, args)
     local newPreset = args[1]
 
-    local selectedZones = Settings:GetValue('selected.zones')
+    local selectedZones = Settings:GetValue('selected.zones') or "zones.kawaii"
 
     if themes[selectedZones] and themes[selectedZones].options[newPreset] then
         Settings:SetValue('preference.' .. selectedZones, newPreset)

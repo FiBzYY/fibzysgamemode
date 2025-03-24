@@ -122,12 +122,12 @@ Lang = {
     AdminPlayerBan = {UTIL.Colour["Timer"], "1;", UTIL.Colour["White"], " has been banned for ", UTIL.Colour["Timer"], "2;", UTIL.Colour["White"], " minutes. (Reason: ", UTIL.Colour["Timer"], "3;", UTIL.Colour["White"], ")"},
 
     -- Join/Leave
-    Connect = { UTIL.Colour["Server"], "1;", UTIL.Colour["White"], " (", UTIL.Colour["Server"], "2;", UTIL.Colour["White"], ") has connected from ", UTIL.Colour["Server"], "3;", UTIL.Colour["White"], "." },
-    Disconnect = {"1; (2;) has disconnected from the server. (Reason: 3;)"},
+    Connect = {UTIL.Colour["Server"], "1;", UTIL.Colour["White"], " (", UTIL.Colour["Server"], "2;", UTIL.Colour["White"], ") has connected from ", UTIL.Colour["Server"], "3;", UTIL.Colour["White"], "." },
+    Disconnect = {UTIL.Colour["Server"], "1;", UTIL.Colour["White"], " (", UTIL.Colour["Server"], "2;", UTIL.Colour["White"], ") has disconnected from the server. (Reason: ", UTIL.Colour["Server"], "3;", UTIL.Colour["White"], ")."},
 
     -- Joining Details
-    GMLoaded = { UTIL.Colour["White"], "Gamemode loaded ", UTIL.Colour["White"], "(", UTIL.Colour["Timer"], "1;", UTIL.Colour["White"], ")." },
-    DetailsCount = { UTIL.Colour["Timer"], "1;", UTIL.Colour["White"], " has connected ", UTIL.Colour["Timer"], "2;", UTIL.Colour["White"], " times." },
+    GMLoaded = {UTIL.Colour["White"], "Gamemode loaded ", UTIL.Colour["White"], "(", UTIL.Colour["Timer"], "1;", UTIL.Colour["White"], ")." },
+    DetailsCount = {UTIL.Colour["Timer"], "1;", UTIL.Colour["White"], " has connected ", UTIL.Colour["Timer"], "2;", UTIL.Colour["White"], " times." },
 
     -- Other
     AdminChat = {"[", UTIL.Colour["Timer"], "1;", UTIL.Colour["White"], "] ", UTIL.Colour["Timer"], "2;", UTIL.Colour["White"], " says: ", UTIL.Colour["Timer"], "3;", UTIL.Colour["White"]},
@@ -136,7 +136,7 @@ Lang = {
 
     -- MISC
     MiscZoneNotFound = {"The ", UTIL.Colour["Timer"], "1;", UTIL.Colour["White"], " zone couldn't be found."},
-    MiscAbout = {"This Gamemode, Bunny Hop Version ", UTIL.Colour["Timer"], BHOP.Version.GM, UTIL.Colour["White"], ", was developed By ",Color(0, 132, 255), "F",Color(85, 172, 255), "i",Color(128, 195, 255), "B",Color(170, 215, 255), "z",Color(213, 235, 255), "Y",color_white, "."}
+    MiscAbout = {"This Gamemode, Bunny Hop Version ", UTIL.Colour["Timer"], BHOP.Version.GM, UTIL.Colour["White"], ", was developed By ", Color(0, 132, 255), "F", Color(85, 172, 255), "i", Color(128, 195, 255), "B", Color(170, 215, 255), "z", Color(213, 235, 255), "Y",color_white, "."}
 }
 
 -- Utility function to replace args in text
