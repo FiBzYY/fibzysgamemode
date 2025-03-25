@@ -1494,19 +1494,24 @@ function DrawSpecHUD()
     local lp = LocalPlayer()
     if not IsValid(lp) or not disablespec:GetBool() then return end
 
-    lp.SpectatorList = lp.SpectatorList or {}
     local Obs = lp:GetObserverTarget()
     local SpecList = {}
-
     local txt = ""
 
-    if lp:Alive() and #lp.SpectatorList > 0 then
-        SpecList = lp.SpectatorList
-        txt = string.format("Spectating You (%d):", #lp.SpectatorList)
-    
-    elseif lp:Team() == TEAM_SPECTATOR and IsValid(Obs) then
-        Obs.SpectatorList = Obs.SpectatorList or {}
+    if lp:Alive() and lp:Team() ~= TEAM_SPECTATOR then
+        for _, v in ipairs(player.GetAll()) do
+            if IsValid(v) and v:GetObserverTarget() == lp then
+                table.insert(SpecList, v)
+            end
+        end
 
+        if #SpecList > 0 then
+            txt = string.format("Spectating You (%d):", #SpecList)
+        else
+            return
+        end
+
+    elseif lp:Team() == TEAM_SPECTATOR and IsValid(Obs) then
         for _, v in ipairs(player.GetAll()) do
             if IsValid(v) and v:GetObserverTarget() == Obs then
                 table.insert(SpecList, v)
@@ -1518,11 +1523,10 @@ function DrawSpecHUD()
         else
             txt = string.format("Spectating %s (%d):", Obs:GetName(), #SpecList)
         end
+
+    else
+        return
     end
-
-    if #SpecList == 0 then return end
-
-    DrawText(txt, "ui.mainmenu.button", ScrW() - 20, ScrH() / 2 - (#SpecList * 10), color_white, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
 
     local combinedList = {}
     local seenNames = {}
@@ -1545,6 +1549,8 @@ function DrawSpecHUD()
             end
         end
     end
+
+    DrawText(txt, "ui.mainmenu.button", ScrW() - 20, ScrH() / 2 - (#combinedList * 10), color_white, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
 
     for i = 1, #combinedList do
         DrawText(combinedList[i], "ui.mainmenu.button", ScrW() - 20, ScrH() / 2 + (i * 20) - (#combinedList * 10), color_white, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)

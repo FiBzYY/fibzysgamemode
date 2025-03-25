@@ -263,6 +263,18 @@ function TIMER:SetInSpawn(bool, bonus)
     end
 end
 
+hook.Add("SetupMove", "TrackGroundTicks", function(ply, mv, cmd)
+    if not IsValid(ply) then return end
+
+    ply.groundTicks = ply.groundTicks or 0
+
+    if ply:IsOnGround() then
+        ply.groundTicks = (ply.groundTicks or 0) + 1
+    else
+        ply.groundTicks = 0
+    end
+end)
+
 -- Start Timer
 function TIMER:StartTimer(ply)
     if not self:ValidTimer(ply) then
@@ -271,6 +283,10 @@ function TIMER:StartTimer(ply)
 
     if ply.outsideSpawn then
         TIMER:Disable(ply)
+        return
+    end
+
+    if (ply.groundTicks or 0) < 10 then
         return
     end
 
@@ -424,6 +440,10 @@ function TIMER:BonusStart(ply)
 
     if ply.outsideSpawn then
         TIMER:Disable(ply)
+        return
+    end
+
+    if (ply.groundTicks or 0) < 10 then
         return
     end
 
