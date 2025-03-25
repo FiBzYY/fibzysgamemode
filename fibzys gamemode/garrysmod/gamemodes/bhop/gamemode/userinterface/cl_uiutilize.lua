@@ -440,7 +440,7 @@ function UI:CreateInputBox(parent, y, command, defaultVal, labelText, infoText, 
         surface.DrawRect(0, 0, w, h)
     end
 
-    minVal = minVal or 0.1
+    minVal = minVal or 0
     maxVal = maxVal or 10
 
     local cvarValue = GetConVar(command) and GetConVar(command):GetFloat() or defaultVal

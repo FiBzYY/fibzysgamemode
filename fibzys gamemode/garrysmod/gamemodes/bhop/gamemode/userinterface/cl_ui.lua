@@ -1145,8 +1145,8 @@ UI:AddListener("style", function(_, data)
     elseif (not UI.style) or (not UI.style.title) and (not tonumber(data)) then
         local styles = {
             "Normal", "Sideways", "Half-Sideways", "W-Only", "A-Only", "Legit", "Easy Scroll",
-            "Unreal", "Swift", "Bonus", "WTF", "LG", "Backwards", "Stamina", 
-            "Segment", "Auto-Strafe", "Moon Man", "High Gravity", "SPEED", "Prespeed"
+            "Unreal", "Swift", "Bonus", "WTF", "Low Gravity", "Backwards", "Stamina", 
+            "Segment", "Auto-Strafe", "Moon Man", "High Gravity", "Speedrun", "Prespeed"
         }
 
         local options = {}

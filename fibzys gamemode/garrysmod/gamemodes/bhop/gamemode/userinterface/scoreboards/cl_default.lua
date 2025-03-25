@@ -1488,6 +1488,8 @@ local function PutPlayerItem(self, pList, ply, mw)
 	btn:SetTall(32)
 	btn:SetText("")
 	
+	if not IsValid(ply) then return end
+
 	function btn:Paint(w, h)
 		surface.SetDrawColor(0, 0, 0, 0)
 		surface.DrawRect(0, 0, w, h)
