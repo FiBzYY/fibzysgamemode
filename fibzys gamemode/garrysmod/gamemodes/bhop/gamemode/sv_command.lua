@@ -353,17 +353,26 @@ end)
 
 -- Style UI Clicker
 local styleIDs = {
-    [1] = TIMER:GetStyleID("Normal"),       [2] = TIMER:GetStyleID("Sideways"),
-    [3] = TIMER:GetStyleID("HSW"),          [4] = TIMER:GetStyleID("W"),
-    [5] = TIMER:GetStyleID("A"),            [6] = TIMER:GetStyleID("L"),
-    [7] = TIMER:GetStyleID("E"),            [8] = TIMER:GetStyleID("Unreal"),
-    [9] = TIMER:GetStyleID("Swift"),        [10] = TIMER:GetStyleID("Bonus"),
-    [11] = TIMER:GetStyleID("WTF"),         [12] = TIMER:GetStyleID("Low Gravity"),
-    [13] = TIMER:GetStyleID("Backwards"),   [14] = TIMER:GetStyleID("Stamina"),
-    [15] = TIMER:GetStyleID("Segment"),     [16] = TIMER:GetStyleID("LG"),
-    [17] = TIMER:GetStyleID("AS"),          [18] = TIMER:GetStyleID("MM"),
-    [19] = TIMER:GetStyleID("HG"),          [20] = TIMER:GetStyleID("SPEED"),
-    [21] = TIMER:GetStyleID("Prespeed")
+    [1] = TIMER:GetStyleID("Normal"),
+    [2] = TIMER:GetStyleID("Sideways"),
+    [3] = TIMER:GetStyleID("HSW"),
+    [4] = TIMER:GetStyleID("W"),
+    [5] = TIMER:GetStyleID("A"),
+    [6] = TIMER:GetStyleID("L"),
+    [7] = TIMER:GetStyleID("E"),
+    [8] = TIMER:GetStyleID("Unreal"),
+    [9] = TIMER:GetStyleID("Swift"),
+    [10] = TIMER:GetStyleID("Bonus"),
+    [11] = TIMER:GetStyleID("WTF"),
+    [12] = TIMER:GetStyleID("LG"),
+    [13] = TIMER:GetStyleID("Backwards"),
+    [14] = TIMER:GetStyleID("Stamina"),
+    [15] = TIMER:GetStyleID("Segment"),
+    [16] = TIMER:GetStyleID("AS"),
+    [17] = TIMER:GetStyleID("MM"),
+    [18] = TIMER:GetStyleID("HG"),
+    [19] = TIMER:GetStyleID("SPEED"),
+    [20] = TIMER:GetStyleID("Prespeed")
 }
 
 UI:AddListener("style", function(client, data)

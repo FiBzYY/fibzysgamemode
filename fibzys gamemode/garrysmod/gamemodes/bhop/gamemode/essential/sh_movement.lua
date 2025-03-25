@@ -12,18 +12,10 @@ local clamp, ft, ct, currentMap = math.Clamp, FrameTime, CurTime, game.GetMap()
 local bn, ba, bo, math_floor = bit.bnot, bit.band, bit.bor, math.floor
 local timer_Simple, Vector, hook_Add, Iv = timer.Simple, Vector, hook.Add, IsValid
 local math_sin, math_cos, math_rad, bit_band = math.sin, math.cos, math.rad, bit.band
-local duckspeed, unduckspeed = 0.4, 0.2
-local StyleSpeeds = {[3] = 450, [4] = 450, [5] = 450}
-local LastBaseVelocity = {}
-
--- Crouching
-local duckCooldownTime = 0.2
-local duckspeed = 0.4
-local lastDuckTime = {}
+local LastBaseVelocity, duckspeed, unduckspeed = {}, 0.4, 0.2
 
 -- Scroll Height
 local scrollpower, normpower = 268.4, 290
-local punchState = punchState or {}
 
 -- CVars
 CV_FLAGSMV = FCVAR_ARCHIVE + FCVAR_NOTIFY + FCVAR_REPLICATED
@@ -53,7 +45,7 @@ local StyleInfo = {
 
 -- Style Speeds
 local function UpdateStyleInfo(client, style)
-    if style == TIMER:GetStyleID("Unreal") or style == TIMER:GetStyleID("WTF") then
+    if style == TIMER:GetStyleID("Unreal") or style == TIMER:GetStyleID("WTF") or style == TIMER:GetStyleID("Swift") then
         StyleInfo.mv = movementspeedunreal:GetFloat()
         StyleInfo.cap = movementcap:GetFloat()
     elseif style == TIMER:GetStyleID("L") then
@@ -206,7 +198,7 @@ function GM:SetupMove(client, data, cmd)
 
     -- Zone
     if client.InStartZone and not client:GetNWInt("inPractice", false) and style ~= TIMER:GetStyleID("SPEED") and style ~= TIMER:GetStyleID("Prespeed") then
-        local speedcap = StyleSpeeds[style] or zonecap:GetFloat()
+        local speedcap = zonecap:GetFloat()
 
         if velocity2d > speedcap and not client.Teleporting then
             local diff = velocity2d - speedcap
@@ -295,6 +287,18 @@ function GM:SetupMove(client, data, cmd)
     elseif style == TIMER:GetStyleID("D") then
         forwardInput = 0
         sideInput = rightPressed and 3 or 0
+    elseif style == TIMER:GetStyleID("Backwards") then
+        forwardInput = (forwardPressed and 3 or 0) - (backPressed and 3 or 0)
+        sideInput = (rightPressed and 3 or 0) - (leftPressed and 3 or 0)
+
+        local velAngle = velocity:Angle()[2]
+        local viewAngle = cmd:GetViewAngles()[2]
+        local diff = math.AngleDifference(viewAngle, velAngle)
+
+        if math.abs(diff) < 100 then
+            forwardInput = 0
+            sideInput = 0
+        end
     elseif style == TIMER:GetStyleID("AS") then
         if client:GetMoveType() ~= MOVETYPE_WALK or (not client:IsFlagSet(FL_ONGROUND) and data:KeyDown(IN_JUMP)) then
             local moveX = cmd:GetMouseX()
@@ -331,7 +335,8 @@ function GM:SetupMove(client, data, cmd)
            style == TIMER:GetStyleID("Bonus") or style == TIMER:GetStyleID("Segment") or style == TIMER:GetStyleID("LG") or 
            style == TIMER:GetStyleID("HG") or style == TIMER:GetStyleID("MM") or 
            style == TIMER:GetStyleID("SPEED") or style == TIMER:GetStyleID("E") or 
-           style == TIMER:GetStyleID("Stamina") or style == TIMER:GetStyleID("Prespeed") then
+           style == TIMER:GetStyleID("Stamina") or style == TIMER:GetStyleID("Prespeed") or 
+           style == TIMER:GetStyleID("Swift") then
         forwardInput = (forwardPressed and 3 or 0) - (backPressed and 3 or 0)
         sideInput = (rightPressed and 3 or 0) - (leftPressed and 3 or 0)
     end
@@ -390,6 +395,13 @@ function GM:SetupMove(client, data, cmd)
     end
 end
 
+CreateClientConVar("bhop_kzsidefix", "0", true, false, "Enable stamina style for no side on kz maps")
+
+function IsKZMap()
+    local map = game.GetMap():lower()
+    return string.sub(map, 1, 3) == "kz_"
+end
+
 hook.Add("SetupMove", "Stamina", function(client, data, cmd)
     if not IsValid(client) or not client:Alive() then return end
 
@@ -399,7 +411,10 @@ hook.Add("SetupMove", "Stamina", function(client, data, cmd)
     local velocity2d = velocity:Length2D()
     local c = CurTime()
 
-    if (style ==  TIMER:GetStyleID("L") or TIMER:GetStyleID("Stamina")) and onGround and not client:IsBot() then
+    local enableStamina = style == TIMER:GetStyleID("L") or 
+    style == TIMER:GetStyleID("Stamina") or IsKZMap()
+
+    if enableStamina and onGround and not client:IsBot() then
         if client.AirStam then
             data:SetVelocity(velocity)
             if client.AirStam == 4 then
@@ -431,7 +446,7 @@ hook.Add("SetupMove", "Stamina", function(client, data, cmd)
         end
     end
 
-    if (style == TIMER:GetStyleID("L") or style ==  TIMER:GetStyleID("Stamina")) and not onGround then
+    if enableStamina and not onGround then
         if not client.AirStam or client.AirStam < 4 then 
             client.AirStam = 4 
         end

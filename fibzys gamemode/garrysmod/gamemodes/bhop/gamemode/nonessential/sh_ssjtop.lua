@@ -13,6 +13,7 @@ playerDuckStatus = {}
 
 if SERVER then
     util.AddNetworkString("SSJTOP_SendData")
+    util.AddNetworkString("SSJTOP_RemoveRecord")
 
     function SaveSSJToMySQL(ply, ssjType, jumpSpeed)
         if not IsValid(ply) then return end
@@ -29,9 +30,9 @@ if SERVER then
 
         MySQL:Start(query, function(result)
             if result then
-                print("[SSJTOP] MySQL saved for " .. steamID .. " (" .. ssjType .. ")")
+                 UTIL:Notify(Color(255, 0, 255), "SSJTop", "MySQL saved for " .. steamID .. " (" .. ssjType .. ")")
             else
-                print("[SSJTOP] Failed MySQL save for " .. steamID)
+                 UTIL:Notify(Color(255, 0, 255), "SSJTop", "Failed MySQL save for " .. steamID)
             end
         end)
     end
@@ -46,6 +47,40 @@ if SERVER then
             end
         end
     end
+
+    net.Receive("SSJTOP_RemoveRecord", function(len, ply)
+        if not IsValid(ply) or not ply:IsAdmin() then return end
+
+        local playerName = net.ReadString()
+        local steamID64 = net.ReadString()
+
+        if not steamID64 or steamID64 == "" then
+            UTIL:Notify(Color(255, 0, 255), "SSJTop", "Invalid SteamID64 provided.")
+            return
+        end
+
+        local steamID = util.SteamIDFrom64(steamID64)
+        if not steamID then
+            UTIL:Notify(Color(255, 0, 255), "SSJTop", "Failed to convert SteamID64.")
+            return
+        end
+
+        -- Wipe from memory
+        SSJTOP[steamID64] = nil
+
+        -- MySQL DELETE
+        local query = string.format("DELETE FROM ssjtop_records WHERE steamid = '%s'", steamID)
+        MySQL:Start(query, function(result)
+            if result then
+                UTIL:Notify(Color(255, 0, 255), "SSJTop", "Successfully deleted record for " .. playerName)
+            else
+                UTIL:Notify(Color(255, 0, 255), "SSJTop", "Failed to delete SSJTop record for " .. playerName)
+            end
+        end)
+
+        -- Save updated data file
+        file_Write(ssjFileName, util_TableToJSON(SSJTOP, true))
+    end)
 
     hook_Add("Initialize", "LoadSSJTopData", function()
         LoadSSJTopFromFile()

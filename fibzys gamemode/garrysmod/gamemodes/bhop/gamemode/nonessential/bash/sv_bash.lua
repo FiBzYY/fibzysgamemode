@@ -183,50 +183,41 @@ local function IsTimerPaused(ply)
 end
 
 local function GetStyleName(ply)
-	if not ply.Style or not BHDATA then return "Unknown" end
-	return table.KeyFromValue(BHDATA.Config.Style, ply.Style) or "Unknown"
+    if not ply.style or not TIMER.Styles then return "Unknown" end
+    return TIMER:TranslateStyle(ply.style) or "Unknown"
 end
 
 local function IsScrollStyle(ply)
-	return ply.style == 113 or ply.style == 122
+	return ply.style == TIMER:GetStyleID("E") or ply.style == TIMER:GetStyleID("L") 
 end
 
 local function StripMovement(ply, move, buttons)
     local st, bt = ply.style, 0
 
-    if st == 2 or st == 4 or st == 14 then -- SW, W, S
+    if st == TIMER:GetStyleID("SW") or st == TIMER:GetStyleID("W") or st == TIMER:GetStyleID("S") then
         bt, move.y = IN_MOVELEFT + IN_MOVERIGHT, 0
         if (st == 4 and move.x < 0) or (st == 14 and move.x > 0) then
 			bt, move.x = bt + IN_BACK + IN_FORWARD, 0
         end
-    elseif st == 5 then -- A
+    elseif st == TIMER:GetStyleID("A") then -- A
         bt, move.x = IN_BACK + IN_FORWARD, 0
         if move.y > 0 then
             bt, move.y = bt + IN_MOVELEFT + IN_MOVERIGHT, 0
         end
-    elseif st == 13 then -- D
+    elseif st == TIMER:GetStyleID("D") then -- D
         bt, move.x = IN_BACK + IN_FORWARD, 0
         if move.y < 0 then
             bt, move.y = bt + IN_MOVELEFT + IN_MOVERIGHT, 0
         end
-    elseif st == 3 and (move.x == 0 or move.y == 0 or (move.x < 0 and move.y ~= 0)) then
+    elseif st == TIMER:GetStyleID("HSW") and (move.x == 0 or move.y == 0 or (move.x < 0 and move.y ~= 0)) then
         move.x, move.y = 0, 0 -- HSW - WA/WD
 		bt = IN_MOVELEFT + IN_MOVERIGHT + IN_BACK + IN_FORWARD
-    elseif st == 27 and ((move.x >= 0 and move.y >= 0) or (move.x <= 0 and move.y <= 0)) then
+    elseif st == TIMER:GetStyleID("SHSW") and ((move.x >= 0 and move.y >= 0) or (move.x <= 0 and move.y <= 0)) then
         move.x, move.y = 0, 0 -- SHSW
 		bt = IN_MOVELEFT + IN_MOVERIGHT + IN_BACK + IN_FORWARD
     end
 
     return bit.band(buttons, bit.bnot(bt))
-end
-
-local function GetSpeedCap(ply)
-	local st = ply.style
-	if st == 6 or st == 7 or st == 16 then return 32.4 end
-	if st == 21 or st == 10 or st == 12 or st == 43 then return 50 end
-	if st == 24 then return 420 end -- MLG
-	if st == 30 then return 1000 end -- Cancer
-	return 32.4 -- Other styles
 end
 
 local function KickPlayer(ply, real_reason)
@@ -1637,28 +1628,6 @@ local function CheckForTeleport(data, pos)
 	end
 end
 
-local function CheckForKLook(client, cmd, data, vel)
-	if not client:OnGround() then
-		local iLR = bit.band(cmd:GetButtons(), IN_MOVELEFT + IN_MOVERIGHT)
-		local iFB = bit.band(cmd:GetButtons(), IN_FORWARD + IN_BACK)
-
-		if (vel.x == 0.0 and iFB ~= 0 and iFB ~= (IN_FORWARD + IN_BACK)) or
-			(vel.y == 0.0 and iLR ~= 0 and iLR ~= (IN_MOVELEFT + IN_MOVERIGHT))
-		then
-			data.iKLookUses = data.iKLookUses + 1
-			ResetPlayerMove(vel, cmd)
-		end
-	else
-		data.iKLookUses = 0
-	end
-
-	if data.iKLookUses ~= 0 and data.iCmdNum - data.iLastKLook >= g_cfg.klook_delay then
-		ReasonLog(Reasons.KLook, LogLevel.MEDIUM, client, data.iKLookUses)
-		data.iLastKLook = data.iCmdNum
-		data.iKLookUses = 0
-	end
-end
-
 local function IsValidMove(move)
 	local x = math.abs(move)
 	return x == 0 or x == MAX_MOVE or x == MAX_MOVE*.75 or x == MAX_MOVE*.50 or x == MAX_MOVE*.25
@@ -2378,9 +2347,6 @@ local function OnPlayerRunCmd(client, cmd)
         CheckForIllegalTurning(data, vel, cmd:GetMouseX())
         UpdateGains(data, vel, angles, buttons)
 
-        if g_cfg.check_klook then
-            CheckForKLook(client, cmd, data, vel)
-        end
         if g_cfg.do_scroll_checks and IsScrollStyle(client) then
             CheckScrollHacks(client, data, buttons)
         end

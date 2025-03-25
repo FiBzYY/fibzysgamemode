@@ -60,9 +60,9 @@ hook.Add("StartCommand", "UnrealBoost_StartCommand", function(ply, cmd)
             DoUnrealBoost(ply)
         elseif style == TIMER:GetStyleID("WTF") then
             local st = sys()
-            if st - (ply.lastUnrealBoost or 0) > 0.1 then
-                local mult = 2.2
-                ply:SetVelocity(Vector(ply:GetVelocity()[1] * mult, ply:GetVelocity()[2] * mult, ply:GetVelocity()[3] * (mult * 50)))
+            if st - (ply.lastUnrealBoost or 0) > 0.6 then
+                local mult = 0.5
+                ply:SetVelocity(Vector(ply:GetVelocity()[1] * mult, ply:GetVelocity()[2] * mult, ply:GetVelocity()[3] * (mult * 2)))
                 ply.lastUnrealBoost = st
             end
         end

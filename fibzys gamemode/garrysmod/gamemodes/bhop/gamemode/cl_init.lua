@@ -73,7 +73,8 @@ local files = {
         "nonessential/misc/cl_centerbox.lua",
         "nonessential/misc/cl_perfprinter.lua",
         "nonessential/misc/cl_peakheight.lua",
-        "nonessential/misc/cl_boxgraph.lua"
+        "nonessential/misc/cl_boxgraph.lua",
+        "nonessential/misc/cl_jumppred.lua"
     }
 }
 

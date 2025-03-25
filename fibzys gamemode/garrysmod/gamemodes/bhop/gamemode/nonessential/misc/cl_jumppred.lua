@@ -1,3 +1,4 @@
+local hook_Add = hook.Add
 local JUMP_POWER = 290
 local GRAVITY = 800
 local PREDICTION_INTERVAL = 0.02

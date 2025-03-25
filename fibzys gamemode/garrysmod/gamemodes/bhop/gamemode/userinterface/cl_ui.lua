@@ -1139,14 +1139,14 @@ end
 UI:AddListener("style", function(_, data)
     data = data[1] or false
     local currentStyle = LocalPlayer():GetNWInt("Style", 1)
-    
+
     if tonumber(data) and UI.style then
         UI.style:UpdateOptionBool(tonumber(data))
     elseif (not UI.style) or (not UI.style.title) and (not tonumber(data)) then
         local styles = {
             "Normal", "Sideways", "Half-Sideways", "W-Only", "A-Only", "Legit", "Easy Scroll",
-            "Unreal", "Swift", "Bonus", "WTF", "Low Gravity", "Backwards", "Stamina", 
-            "Segment", "Low Gravity", "Auto-Strafe", "Moon Man", "High Gravity", "Speedrun", "Prespeed"
+            "Unreal", "Swift", "Bonus", "WTF", "LG", "Backwards", "Stamina", 
+            "Segment", "Auto-Strafe", "Moon Man", "High Gravity", "SPEED", "Prespeed"
         }
 
         local options = {}
@@ -1495,11 +1495,11 @@ local function CreateSSJTopMenu(data)
     listCanvas:SetSize(380, 420)
     listCanvas.Paint = nil
 
-    local sortedData = {}
-    for steamID64, ssjData in pairs(data) do
-        local playerName = UTIL:GetPlayerName(steamID64)
-        table.insert(sortedData, {playerName, ssjData.normal or 0, ssjData.duck or 0})
-    end
+	local sortedData = {}
+	for steamID64, ssjData in pairs(data) do
+		local playerName = UTIL:GetPlayerName(steamID64)
+		table.insert(sortedData, {playerName, ssjData.normal or 0, ssjData.duck or 0, steamID64})
+	end
 
     table.sort(sortedData, function(a, b)
         return (a[2] > b[2]) or (a[2] == b[2] and a[3] > b[3])
@@ -1518,23 +1518,92 @@ local function CreateSSJTopMenu(data)
         draw.SimpleText("Normal", "hud.subtitle", 220, h / 2, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
         draw.SimpleText("Ducked", "hud.subtitle", 300, h / 2, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
     end
-    for rank, info in ipairs(sortedData) do
-        local entry = vgui.Create("DPanel", listCanvas)
-        entry:SetSize(360, 25)
-        entry:SetPos(10, (rank - 1) * 25)
 
-        entry.Paint = function(self, w, h)
-            local bgColor = rank % 2 == 0 and Color(70, 70, 70, 200) or Color(60, 60, 60, 200)
-            draw.RoundedBox(4, 0, 0, w, h, bgColor)
+	for rank, info in ipairs(sortedData) do
+		local entry = vgui.Create("DButton", listCanvas)
+		entry:SetSize(360, 25)
+		entry:SetPos(10, (rank - 1) * 25)
+		entry:SetText("") -- Remove default button label
 
-            local textColor = (info[1] == LocalPlayer():Nick()) and Color(0, 150, 255) or Color(255, 255, 255)
+		local isAdmin = LocalPlayer():IsAdmin()
 
-            draw.SimpleText(rank, "hud.subtitle", 10, h / 2, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-            draw.SimpleText(info[1], "hud.subtitle", 50, h / 2, textColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-            draw.SimpleText(math.Round(info[2], 2), "hud.subtitle", 220, h / 2, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-            draw.SimpleText(math.Round(info[3], 2), "hud.subtitle", 300, h / 2, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-        end
-    end
+		entry.Paint = function(self, w, h)
+			local bgColor = rank % 2 == 0 and Color(70, 70, 70, 200) or Color(60, 60, 60, 200)
+			if self:IsHovered() and isAdmin then
+				bgColor = Color(100, 40, 40, 220)
+			end
+
+			draw.RoundedBox(4, 0, 0, w, h, bgColor)
+
+			local textColor = (info[1] == LocalPlayer():Nick()) and Color(0, 150, 255) or Color(255, 255, 255)
+
+			draw.SimpleText(rank, "hud.subtitle", 10, h / 2, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			draw.SimpleText(info[1], "hud.subtitle", 50, h / 2, textColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			draw.SimpleText(math.Round(info[2], 2), "hud.subtitle", 220, h / 2, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			draw.SimpleText(math.Round(info[3], 2), "hud.subtitle", 300, h / 2, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+
+			if isAdmin then
+				draw.SimpleText("X", "hud.subtitle", w - 20, h / 2, Color(255, 50, 50), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+			end
+		end
+
+		if isAdmin then
+			entry.DoClick = function()
+				local confirm = vgui.Create("DFrame")
+				confirm:SetSize(300, 140)
+				confirm:Center()
+				confirm:SetTitle("")
+				confirm:MakePopup()
+				confirm:ShowCloseButton(false)
+
+				confirm.Paint = function(self, w, h)
+					surface.SetDrawColor(colors.box)
+					surface.DrawOutlinedRect(0, 0, w, h, 2)
+					surface.SetDrawColor(colors.toggleButton)
+					surface.DrawRect(2, 2, w - 4, h - 4)
+					draw.SimpleText("Delete SSJ record for:", "ui.mainmenu.button", w / 2, 30, Color(255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+					draw.SimpleText(info[1], "ui.mainmenu.button", w / 2, 55, Color(255, 0, 0), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+				end
+
+				-- Confirm
+				local yesBtn = vgui.Create("DButton", confirm)
+				yesBtn:SetText("")
+				yesBtn:SetSize(120, 30)
+				yesBtn:SetPos(30, 90)
+				yesBtn.Paint = function(self, w, h)
+					surface.SetDrawColor(colors.box)
+					surface.DrawOutlinedRect(0, 0, w, h, 2)
+					surface.SetDrawColor(self:IsHovered() and Color(0, 255, 0) or colors.toggleButton)
+					surface.DrawRect(2, 2, w - 4, h - 4)
+					draw.SimpleText("Yes", "ui.mainmenu.button", w / 2, h / 2, Color(255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+				end
+				yesBtn.DoClick = function()
+					net.Start("SSJTOP_RemoveRecord")
+					net.WriteString(info[1])
+					net.WriteString(info[4] or "")
+					net.SendToServer()
+
+					confirm:Close()
+				end
+
+				local noBtn = vgui.Create("DButton", confirm)
+				noBtn:SetText("")
+				noBtn:SetSize(120, 30)
+				noBtn:SetPos(150, 90)
+				noBtn.Paint = function(self, w, h)
+					surface.SetDrawColor(colors.box)
+					surface.DrawOutlinedRect(0, 0, w, h, 2)
+					surface.SetDrawColor(self:IsHovered() and Color(100, 100, 100) or colors.toggleButton)
+					surface.DrawRect(2, 2, w - 4, h - 4)
+					draw.SimpleText("Cancel", "ui.mainmenu.button", w / 2, h / 2, Color(255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+				end
+				noBtn.DoClick = function()
+					confirm:Close()
+				end
+			end
+
+		end
+	end
 end
 
 -- SSJTop Data

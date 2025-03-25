@@ -322,7 +322,7 @@ function TIMER:ResetTimer(ply)
     ply.iFullTicks = 0
     ply.wasInEndZone = false
     ply.InSpawn = true
-    ply.InStartZone = false
+    ply.InStartZone = true
 
     -- Send Start Timer | InStartZone | ScoreBoard
     NETWORK:StartNetworkMessage(ply, "UpdateSingleVar", ply, "InStartZone", ply.InStartZone)

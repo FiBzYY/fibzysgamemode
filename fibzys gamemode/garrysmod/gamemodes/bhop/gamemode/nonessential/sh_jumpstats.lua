@@ -550,7 +550,16 @@ local function SSJ_PrintStats(ply, lastSpeed, jumpTimeDiff)
 
     -- Illegal Check
     local style = TIMER:GetStyle(ply)
-    if jumpCount == 1 and velocity > 290 or style == TIMER:GetStyleID("TAS") or style == TIMER:GetStyleID("Unreal") or style == TIMER:GetStyleID("WTF") or style == TIMER:GetStyleID("AS") or ply:GetNWInt("inPractice", true) then
+    if 
+        (jumpCount == 1 and velocity > 290) or
+        style == TIMER:GetStyleID("TAS") or
+        style == TIMER:GetStyleID("Unreal") or
+        style == TIMER:GetStyleID("WTF") or
+        style == TIMER:GetStyleID("AS") or
+        style == TIMER:GetStyleID("Swift") or
+        style == TIMER:GetStyleID("Speedrun") or
+        ply:GetNWInt("inPractice", true)
+    then
         gB_IllegalSSJ[ply] = true
     end
 
