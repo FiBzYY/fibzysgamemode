@@ -65,6 +65,10 @@ function TIMER:Boot()
     self:LoadTop()
     self:AddPlays()
 
+    if Admin and Admin.LoadAdmins then
+        Admin:LoadAdmins()
+    end
+
     BHDATA:Optimize()
 
     MapGlobals:GetGlobalWRForMap(game.GetMap(), function(globalWR)
