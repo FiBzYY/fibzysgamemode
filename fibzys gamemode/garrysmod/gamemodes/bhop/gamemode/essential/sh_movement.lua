@@ -276,11 +276,11 @@ function GM:SetupMove(client, data, cmd)
 
     -- Styles
     if style == TIMER:GetStyleID("W") then
-        forwardInput = forwardPressed and 0.05 or 0
+        forwardInput = forwardPressed and 3 or 0
     elseif style == TIMER:GetStyleID("SW") then
-        forwardInput = (forwardPressed and 0.05 or 0) - (backPressed and 0.05 or 0)
+        forwardInput = (forwardPressed and 3 or 0) - (backPressed and 3 or 0)
     elseif style == TIMER:GetStyleID("HSW") then
-        forwardInput = forwardPressed and 0.3 or 0
+        forwardInput = forwardPressed and 2 or 0
     elseif style == TIMER:GetStyleID("A") then
         forwardInput = 0
         sideInput = leftPressed and -3 or 0

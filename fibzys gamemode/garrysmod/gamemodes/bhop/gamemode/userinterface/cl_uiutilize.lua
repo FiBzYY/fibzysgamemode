@@ -914,7 +914,30 @@ function UI:UpdatePlayerList(parent)
     end
 end
 
-function UI:UpdateServerLogs(parent)
+net.Receive("SendAdminLogs", function()
+    local count = net.ReadUInt(16)
+    local logs = {}
+
+    for i = 1, count do
+        local date = net.ReadString()
+        local admin = net.ReadString()
+        local steam = net.ReadString()
+        local action = net.ReadString()
+
+        -- Build a single line for display
+        local logText = "[" .. date .. "] " .. admin .. " (" .. steam .. "): " .. action
+        table.insert(logs, logText)
+    end
+
+    -- Now pass the logs into your UI panel (assuming it’s global access)
+    if UI and UI.UpdateServerLogs then
+        UI:UpdateServerLogs(UI.CurrentPanel or UI.PanelMain, logs)
+    end
+end)
+
+
+function UI:UpdateServerLogs(parent, logs)
+
     if not Iv(parent) then return end
 
     if Iv(self.PlayerListPanel) then
