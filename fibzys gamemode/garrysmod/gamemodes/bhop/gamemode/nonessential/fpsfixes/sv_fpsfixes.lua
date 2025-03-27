@@ -159,7 +159,7 @@ local function isNonEssentialGlobal(key)
         ["ACT_VM_SHOOTLAST"] = true, ["angle_zero"] = true, ["ACT_DOD_CROUCHWALK_AIM"] = true, 
         ["ACT_VM_DEPLOYED_DRYFIRE"] = true, ["ACT_DOD_PRONEWALK_IDLE_GREASE"] = true, 
         ["vector_up"] = true, ["ACT_HL2MP_GESTURE_RELOAD_SUITCASE"] = true, 
-        ["vector_origin"] = true, ["Particle"] = true, ["ACT_VM_UNDEPLOY_8"] = true, 
+        ["vector_origin"] = false, ["Particle"] = true, ["ACT_VM_UNDEPLOY_8"] = true, 
         ["ColorRand"] = true, ["AngleRand"] = true, ["VectorRand"] = true, ["SCHED_NONE"] = true, 
         ["ACT_DOD_HS_IDLE_BAZOOKA"] = true, ["COLLISION_GROUP_NPC_SCRIPTED"] = true,
         ["ACT_DOD_SPRINT_IDLE_MG"] = true, ["ACT_HL2MP_SWIM_IDLE_PASSIVE"] = true, 
