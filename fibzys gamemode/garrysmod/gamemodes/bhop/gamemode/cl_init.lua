@@ -8,6 +8,7 @@ local files = {
     shared = {
         "essential/sh_config.lua",
         "shared.lua",
+        "sh_playerclass.lua",
         "essential/sh_movement.lua",
         "essential/sh_network.lua",
         "essential/sh_utilities.lua",
