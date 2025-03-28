@@ -796,14 +796,7 @@ function UI:CreateMenu()
                 local x, y = 10, 0
                 self:CreatePanel(parent, {"View server logs"})
 
-                        -- 🔥 This sends the request to the server to trigger SendLogs
-        net.Start("RequestAdminLogs")
-        net.SendToServer()
-
-        -- Pre-load with "loading" or empty panel
-        UI:UpdateServerLogs(parent, {})
-
-           
+                UI:UpdateServerLogs(parent)
             end },
 
             { text = "Timer", panelContent = function(parent)

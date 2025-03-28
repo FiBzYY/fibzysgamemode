@@ -27,13 +27,8 @@ util.AddNetworkString("BadImprovement")
 
 timer_sounds = {}
 
-local ok, loadedReqwest = pcall(require, "reqwest")
-if ok and loadedReqwest then
-    reqwest = loadedReqwest
-else
-    UTIL:Notify(Color(255, 0, 0), "Module", "reqwest not found — skipping discord features.")
-end
-
+require "reqwest"
+local reqwest = reqwest
 local WEBHOOK = file.Read("bhop-wr-webhook.txt", "DATA")
 local WEBHOOKOFF = file.Read("bhop_wr-webhook-offstyles.txt", "DATA")
 

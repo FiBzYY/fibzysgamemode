@@ -91,13 +91,13 @@ if not CONFIG_LOADED then
 
     -- Auto ban these IDs
     BHOP.Banlist = {
-        ["STEAM_0:0:47491394"] = true,  -- henwi!
-        ["STEAM_0:0:74583369"] = true,   -- rq
-        ["STEAM_0:1:70037803"] = true,    -- cat!
-        ["STEAM_0:0:53974417"] = true,      -- justa!
-        ["STEAM_0:0:53053491"] = true,     -- sad
-        ["STEAM_0:1:205142"] = true,      -- vehnex!
-        ["STEAM_0:0:64764232"] = true   -- nilf!
+        ["STEAM_0:0:47491394"] = false,  -- henwi!
+        ["STEAM_0:0:74583369"] = false,   -- rq
+        ["STEAM_0:1:70037803"] = false,    -- cat!
+        ["STEAM_0:0:53974417"] = false,      -- justa!
+        ["STEAM_0:0:53053491"] = false,     -- sad
+        ["STEAM_0:1:205142"] = false,      -- vehnex!
+        ["STEAM_0:0:64764232"] = false   -- nilf!
     }
 
     -- Enable whitelist
@@ -137,7 +137,8 @@ if not CONFIG_LOADED then
         MapRotationTime = 30,
         WelcomeMessage = "Welcome to " .. BHOP.ServerName .. ".",
         AdminList = {
-            ["STEAM_0:1:48688711"] = true
+            ["STEAM_0:1:48688711"] = true,
+			["STEAM_0:1:15100453"] = true
         },
         AFKKickTime = 300
     }

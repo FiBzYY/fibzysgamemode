@@ -9,10 +9,10 @@
 SQL = SQL or {}
 SQL.Available = true
 
-CreateConVar("sv_sql_host", "localhost", {FCVAR_ARCHIVE, FCVAR_SERVER_CAN_EXECUTE}, "The SQL host address")
-CreateConVar("sv_sql_user", "root", {FCVAR_ARCHIVE, FCVAR_SERVER_CAN_EXECUTE}, "The SQL username")
-CreateConVar("sv_sql_pass", "password", {FCVAR_ARCHIVE, FCVAR_SERVER_CAN_EXECUTE}, "The SQL password")
-CreateConVar("sv_sql_db", "mydatabase", {FCVAR_ARCHIVE, FCVAR_SERVER_CAN_EXECUTE}, "The SQL database name")
+CreateConVar("sv_sql_host", "itsalivegaming.net", {FCVAR_ARCHIVE, FCVAR_SERVER_CAN_EXECUTE}, "The SQL host address")
+CreateConVar("sv_sql_user", "iag", {FCVAR_ARCHIVE, FCVAR_SERVER_CAN_EXECUTE}, "The SQL username")
+CreateConVar("sv_sql_pass", "4HJudVShtX", {FCVAR_ARCHIVE, FCVAR_SERVER_CAN_EXECUTE}, "The SQL password")
+CreateConVar("sv_sql_db", "iag_BhopTest", {FCVAR_ARCHIVE, FCVAR_SERVER_CAN_EXECUTE}, "The SQL database name")
 CreateConVar("sv_sql_port", "3306", {FCVAR_ARCHIVE, FCVAR_SERVER_CAN_EXECUTE}, "The SQL port")
 
 local SQLObject
@@ -36,12 +36,10 @@ UI, DATA = {}, {}
 
 local success, err = pcall(require, "mysqloo")
 if not success then
-    SQL.Use = false
-    SQL.Available = false
-    UTIL:Notify(Color(255, 0, 0), "Database", "MySQLoo module not found. Switching to fallback mode.")
+    UTIL:Notify(Color(255, 0, 0), "Database", "MySQLoo module not found. Ensure the mysqloo DLL is properly installed.")
     UTIL:Notify(Color(255, 0, 0), "Database", "Detailed error: " .. err)
 else
-    UTIL:Notify(Color(0, 255, 0), "Database", "MySQLoo module successfully loaded.")
+    UTIL:Notify(Color(255, 0, 0), "Database", "MySQLoo module successfully loaded.")
 end
 
 resource.AddFile("resource/fonts/FiBuchetMS-Bold.ttf")
@@ -66,10 +64,6 @@ function TIMER:Boot()
     self:LoadRecords()
     self:LoadTop()
     self:AddPlays()
-
-    if Admin and Admin.LoadAdmins then
-        Admin:LoadAdmins()
-    end
 
     BHDATA:Optimize()
 
@@ -154,25 +148,10 @@ end
 SQL.ZonesLoaded = false
 
 function TIMER:LoadZones(callback)
-    Zones.Cache = {}
-
     local map = game.GetMap()
-
-    if not SQL.Use then
-        UTIL:Notify(Color(255, 255, 0), "Database", "[Fallback] Skipping LoadZones — SQL is disabled.")
-        if callback then callback(false) end
-        return
-    end
-
     local sanitizedMap = SQL:Prepare("{0}", {map})
-    if not sanitizedMap.Query then
-        UTIL:Notify(Color(255, 0, 0), "Database", "[ERROR] Failed to prepare SQL query for zones!")
-        if callback then callback(false) end
-        return
-    end
 
     local query = "SELECT type, pos1, pos2 FROM timer_zones WHERE map = " .. sanitizedMap.Query
-
     MySQL:Start(query, function(zones)
         if not zones or #zones == 0 then
             UTIL:Notify(Color(255, 0, 0), "Database", "No zones found for this map: " .. map)
@@ -180,7 +159,7 @@ function TIMER:LoadZones(callback)
             return
         end
 
-        UTIL:Notify(Color(0, 255, 0), "Database", "Found " .. #zones .. " zones for map: " .. map)
+        UTIL:Notify(Color(255, 0, 0), "Database", "Found " .. #zones .. " zones for map: " .. map)
         for _, data in pairs(zones) do
             local zoneType = tonumber(data["type"])
             local pos1Str = data["pos1"]
@@ -200,8 +179,7 @@ function TIMER:LoadZones(callback)
             end
         end
 
-        SQL.ZonesLoaded = true
-        UTIL:Notify(Color(0, 255, 0), "Database", "Zones loaded into cache")
+        UTIL:Notify(Color(255, 0, 0), "Database", "Zones have been successfully loaded into cache.")
 
         if callback then callback(true) end
     end)
@@ -436,7 +414,7 @@ end
 local Iv = IsValid
 function BHDATA:Broadcast(szAction, varArgs, varExclude)
     if type(szAction) ~= "string" then
-        UTIL:Notify(Color(255, 0, 0), "Database", "[ERROR] Broadcast: Action must be a string. Got: ", type(szAction))
+        UTIL:Notify(Color(255, 0, 0), "Database", "[ERROR] BHDATA:Broadcast: szAction must be a string. Got: ", type(szAction))
         return
     end
 
@@ -456,7 +434,7 @@ function BHDATA:Broadcast(szAction, varArgs, varExclude)
         elseif Iv(varExclude) and varExclude:IsPlayer() then
             net.SendOmit(varExclude)
         else
-            UTIL:Notify(Color(255, 0, 0), "Database", "[ERROR] Broadcast: Invalid var type.")
+            UTIL:Notify(Color(255, 0, 0), "Database", "[ERROR] BHDATA:Broadcast: Invalid varExclude type.")
         end
     else
         net.Broadcast()
@@ -556,17 +534,13 @@ local function sqlExecute(query, callback, args)
 end
 
 function SQL:CreateObject(callback)
-    if not SQL.Use then
-        UTIL:Notify(Color(255, 255, 0), "Database", "SQL disabled — skipping CreateObject.")
-        return
-    end
-
     SQL.Busy = true
+
     SQLObject = mysqloo.connect(SQLDetails.Host, SQLDetails.User, SQLDetails.Pass, SQLDetails.Database, SQLDetails.Port)
 
     function SQLObject:onConnected()
         if not SQL.Busy then return end
-        UTIL:Notify(Color(0, 255, 0), "Database", "Database connected successfully!")
+        UTIL:Notify(Color(255, 0, 0), "Database", "SUCCESS Database connected successfully!")
         
         if MySQL.StartUp then
             MySQL:StartUp()
@@ -587,14 +561,8 @@ end
 
 function SQL:Prepare(query, args, noQuote)
     if not SQLObject or not SQL.Available then
-        UTIL:Notify(Color(255, 0, 0), "Database", "[ERROR] Database not connected! Cannot execute query: " .. tostring(query))
-
-        return {
-            Query = nil,
-            Execute = function(_, callback)
-                if callback then callback(nil) end
-            end
-        }
+        UTIL:Notify(Color(255, 0, 0), "Database", "[ERROR] Database not connected! Cannot execute query: " .. query)
+        return { Execute = function() end }
     end
 
     local preparedQuery = query
@@ -614,11 +582,11 @@ function SQL:Prepare(query, args, noQuote)
             else
                 formattedArg = gs(arg) or ""
             end
-
+            
             preparedQuery = sg(preparedQuery, "{" .. (i - 1) .. "}", formattedArg)
         end
     end
-
+    
     return {
         Query = preparedQuery,
         Execute = function(self, callback, varArg)

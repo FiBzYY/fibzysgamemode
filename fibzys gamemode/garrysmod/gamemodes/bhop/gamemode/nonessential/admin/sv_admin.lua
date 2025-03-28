@@ -49,28 +49,30 @@ local Bans = {
     ip = {}
 }
 
-util.AddNetworkString("SendAdminLogs")
-util.AddNetworkString("RequestAdminLogs")
-util.AddNetworkString("AdminChangeMovementSetting")
+util.AddNetworkString("SendServerLogs")
 
-net.Receive("AdminChangeMovementSetting", function(len, ply)
-    if not ply:IsAdmin() then return end
+if SERVER then
+    util.AddNetworkString("AdminChangeMovementSetting")
 
-    local cvarName = net.ReadString()
-    local newValue = net.ReadFloat()
+    net.Receive("AdminChangeMovementSetting", function(len, ply)
+        if not ply:IsAdmin() then return end
 
-    if newValue < 0 or newValue > 100000 then
-        return
-    end
+        local cvarName = net.ReadString()
+        local newValue = net.ReadFloat()
 
-    local cvar = GetConVar(cvarName)
-    if cvar then
-        RunConsoleCommand(cvarName, tostring(newValue))
-        BHDATA:Send(ply, "Print", {"Admin", cvarName .. " updated to " .. string.format("%.6f", newValue)})
-    else
-        BHDATA:Send(ply, "Print", {"Admin", "Invalid ConVar: " .. cvarName})
-    end
-end)
+        if newValue < 0 or newValue > 100000 then
+            return
+        end
+
+        local cvar = GetConVar(cvarName)
+        if cvar then
+            RunConsoleCommand(cvarName, tostring(newValue))
+            BHDATA:Send(ply, "Print", {"Admin", cvarName .. " updated to " .. string.format("%.6f", newValue)})
+        else
+            BHDATA:Send(ply, "Print", {"Admin", "Invalid ConVar: " .. cvarName})
+        end
+    end)
+end
 
 AdminLoad.Levels = {}
 AdminLoad.Setup = {
@@ -94,7 +96,6 @@ AdminLoad.Setup = {
 	{ 22, "Remove map", Admin.Level.Developer, { 145, 252, 100, 40 } },
 	{ 7, "Set admin", Admin.Level.Manager, { 250, 252, 100, 40, true } },
 	{ 8, "Remove admin", Admin.Level.Manager, { 355, 252, 100, 40, true } },
-	{ 99, "Remove admin", Admin.Level.Manager, { 355, 252, 100, 40, true } },
 }
 
 local ti, tr = table.insert, table.remove
@@ -182,44 +183,13 @@ end
 function Admin:AddLog(text, steam, zoner)
 	SQL:Prepare(
 		"INSERT INTO timer_logging (type, data, date, adminsteam, adminname) VALUES ({0}, {1}, {2}, {3}, {4})",
-		{ 2, text, os.date( "%Y-%m-%d %H:%M:%S", os.time() ), steam, zoner }
+		{ Admin.GamemodeKey, text, os.date( "%Y-%m-%d %H:%M:%S", os.time() ), steam, zoner }
 	):Execute( function( data, varArg, szError )
 		if data then
 			BHDATA:Print( "Logging", "Added entry: " .. text )
 		end
 	end )
 end
-
-function Admin:SendLogs(ply)
-    SQL:Prepare("SELECT * FROM timer_logging ORDER BY date DESC LIMIT 100")
-    :Execute(function(data)
-        PrintTable(data) -- 👈 DEBUG LOG
-
-        if not data or #data == 0 then
-            print("[Logs] No data returned from SQL.")
-            return
-        end
-
-        net.Start("SendAdminLogs")
-        net.WriteUInt(#data, 16)
-
-        for _, row in ipairs(data) do
-            net.WriteString(row.date or "Unknown")
-            net.WriteString(row.adminname or "Unknown")
-            net.WriteString(row.adminsteam or "Unknown")
-            net.WriteString(row.data or "No data")
-        end
-
-        net.Send(ply)
-    end)
-end
-
-
-net.Receive("RequestAdminLogs", function(len, ply)
-    if Admin:CanAccess(ply, Admin.Level.Developer) then
-        Admin:SendLogs(ply)
-    end
-end)
 
 function Admin:GenerateRequest( szCaption, szTitle, szDefault, nReturn )
 	return { Caption = szCaption, Title = szTitle, Default = szDefault, Return = nReturn }

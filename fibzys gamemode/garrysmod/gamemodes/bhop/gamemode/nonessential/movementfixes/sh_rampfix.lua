@@ -10,12 +10,12 @@ local math_max = math.max
 local math_min = math.min
 
 local HullTrace, LineTrace = util.TraceHull, util.TraceLine
-local Hook_Add = hook.Add
+local HookAdd = hook.Add
 local BOUNDARY_MIN = Vector(-16, -16, 0)
 local BOUNDARY_MAX = Vector(16, 16, 62)
 
 if SERVER then
-    Hook_Add("PlayerInitialSpawn", "FixSurf_SetupData", function(ply)
+    hook.Add("PlayerInitialSpawn", "FixSurf_SetupData", function(ply)
         if not IsValid(ply) then return end
         PreviousPos[ply] = Vector()
         PreviousVelocity[ply] = Vector()
@@ -42,55 +42,112 @@ local function InitializePlayerState(player)
     player.traceRecords = {}
 end
 
-local function RampLossFix(ply, mv)
-    if not IsValid(ply) or not ply:Alive() then return end
-    if ply:Team() == TEAM_SPECTATOR or ply:GetMoveType() == MOVETYPE_NOCLIP then return end
-    if not ply.prevSpeed then InitializePlayerState(ply) end
-    if ply:OnGround() then InitializePlayerState(ply) return end
+local function RampCorrection(player, moveData)
+    if not IsValid(player) then return end
+    if player:Team() == TEAM_SPECTATOR or player:Team() == TEAM_UNASSIGNED then return end
+    if not player.prevSpeed then InitializePlayerState(player) end
+    if player:OnGround() then InitializePlayerState(player) return end
 
-    local baseVel = ply:GetBaseVelocity()
-    local vel = mv:GetVelocity() + baseVel
-    local speedSqr = vel:LengthSqr()
+    local baseVel = player:GetBaseVelocity()
+    local totalVel = moveData:GetVelocity() + baseVel
+    local speedSquared = totalVel:LengthSqr()
 
-    if ply.prevSpeed > speedSqr then
-        local loss = ply.prevSpeed - speedSqr
-        local lossPercent = (loss / ply.prevSpeed) * 100
+    if player.prevSpeed > speedSquared then
+        local speedReduction = player.prevSpeed - speedSquared
+        local lossPercent = (speedReduction / player.prevSpeed) * 100
 
-        if lossPercent == 100 then InitializePlayerState(ply) return end
-        if lossPercent > 96 and lossPercent ~= ply.prevLossPercent then
-            local pos = ply:GetPos()
-            local fwd, bwd, left, right = ply:GetForward(), -ply:GetForward(), -ply:GetRight(), ply:GetRight()
-            local directions = {fwd, bwd, Vector(0, 0, -100), left, right}
-            local foundNormal
+        if lossPercent == 100 then InitializePlayerState(player) return end
 
-            for _, dir in ipairs(directions) do
-                local tr = util.TraceHull({
-                    start = pos,
-                    endpos = pos + dir * 30,
+        if lossPercent > 96 and lossPercent ~= player.prevLossPercent then
+            local traceLengths = {5, 10, 20, 30, 45, 60, 75, 90}
+            local isSurfaceInclined = false
+            local detectedNormal = nil
+
+            for _, length in ipairs(traceLengths) do
+                local fwdTrace = util.TraceHull({
+                    start = player:GetPos(),
+                    endpos = player:GetPos() + (player:GetForward() * length),
                     mins = BOUNDARY_MIN,
                     maxs = BOUNDARY_MAX,
-                    filter = ply,
+                    filter = player,
                     mask = MASK_PLAYERSOLID_BRUSHONLY + CONTENTS_DETAIL
                 })
 
-                if tr.Hit and tr.HitNormal.z < 0.7 and tr.HitNormal.z > 0.1 then
-                    foundNormal = tr.HitNormal
+                local bwdTrace = util.TraceHull({
+                    start = player:GetPos(),
+                    endpos = player:GetPos() - (player:GetForward() * length),
+                    mins = BOUNDARY_MIN,
+                    maxs = BOUNDARY_MAX,
+                    filter = player,
+                    mask = MASK_PLAYERSOLID_BRUSHONLY + CONTENTS_DETAIL
+                })
+
+                local downTrace = util.TraceHull({
+                    start = player:GetPos(),
+                    endpos = player:GetPos() - Vector(0, 0, 100),
+                    mins = BOUNDARY_MIN,
+                    maxs = BOUNDARY_MAX,
+                    filter = player,
+                    mask = MASK_PLAYERSOLID_BRUSHONLY + CONTENTS_DETAIL
+                })
+
+                local leftTrace = util.TraceHull({
+                    start = player:GetPos(),
+                    endpos = player:GetPos() - (player:GetRight() * length),
+                    mins = BOUNDARY_MIN,
+                    maxs = BOUNDARY_MAX,
+                    filter = player,
+                    mask = MASK_PLAYERSOLID_BRUSHONLY + CONTENTS_DETAIL
+                })
+
+                local rightTrace = util.TraceHull({
+                    start = player:GetPos(),
+                    endpos = player:GetPos() + (player:GetRight() * length),
+                    mins = BOUNDARY_MIN,
+                    maxs = BOUNDARY_MAX,
+                    filter = player,
+                    mask = MASK_PLAYERSOLID_BRUSHONLY + CONTENTS_DETAIL
+                })
+
+                if fwdTrace.Hit then
+                    detectedNormal = fwdTrace.HitNormal
+                elseif bwdTrace.Hit then
+                    detectedNormal = bwdTrace.HitNormal
+                elseif downTrace.Hit then
+                    detectedNormal = downTrace.HitNormal
+                elseif leftTrace.Hit then
+                    detectedNormal = leftTrace.HitNormal
+                elseif rightTrace.Hit then
+                    detectedNormal = rightTrace.HitNormal
+                end
+
+                if detectedNormal and detectedNormal[3] < 0.7 and detectedNormal[3] > 0.1 then
+                    isSurfaceInclined = true
                     break
                 end
             end
 
-            if not foundNormal then InitializePlayerState(ply) return end
-            local corrected = ModifyVelocity(ply.prevVelocity + baseVel, foundNormal, 1.0)
-            mv:SetVelocity(corrected)
-            mv:SetOrigin(mv:GetOrigin() + Vector(0, 0, 1))
-            mv:SetMoveAngles(ply.prevMoveAngles)
-            ply.prevLossPercent = lossPercent
+            if not isSurfaceInclined then InitializePlayerState(player) return end
+
+            local lastVelSpeed = math.sqrt(player.prevSpeed)
+            if lastVelSpeed < 0 or lastVelSpeed > 10000 then return end
+
+            local fixedVelocity = ModifyVelocity(player.prevVelocity + baseVel, detectedNormal, 1.0)
+            if moveData:GetVelocity()[3] > 0 then
+                fixedVelocity = fixedVelocity * 1.02
+            end
+
+            moveData:SetVelocity(fixedVelocity)
+            moveData:SetOrigin(moveData:GetOrigin() + Vector(0, 0, 1))
+            moveData:SetMoveAngles(player.prevMoveAngles)
+
+            player.prevLossPercent = lossPercent
             return
         end
     end
 
-    ply.prevSpeed = speedSqr
-    ply.prevVelocity = mv:GetVelocity()
-    ply.prevMoveAngles = mv:GetMoveAngles()
+    player.prevSpeed = speedSquared
+    player.prevVelocity = moveData:GetVelocity()
+    player.prevMoveAngles = moveData:GetMoveAngles()
 end
-hook.Add("Move", "RampLossFix", RampLossFix)
+HookAdd("SetupMove", "RampCorrection", RampCorrection)
