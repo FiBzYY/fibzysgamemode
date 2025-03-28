@@ -96,34 +96,44 @@ function TIMER:ResetPlayerAttributes(ply, previous, start)
     elseif ply:GetGravity() != 0 then
         ply:SetGravity(0)
     end
+
+    local style = TIMER:GetStyle(ply)
+    local enableStamina = style == TIMER:GetStyleID("L") or 
+        style == TIMER:GetStyleID("Stamina") or IsKZMap()
+
+    if enableStamina and ply:IsOnGround() and not ply:IsBot() then
+        ply.AirStam = 4
+        ply.Gset = nil
+        ply.Gtime = nil
+    end
 end
 
-local LastPlayerAngles = {}
 function TIMER:SpawnChecks(ply)
     self:SetJumps(ply, 0)
     self:ResetPlayerAttributes(ply)
 
+    local isBonus = (ply.style == 2)
     local steamID = ply:SteamID()
     local map = game.GetMap()
-    local isBonus = TIMER and TIMER.GetStyleID and (ply.style == TIMER:GetStyleID("bonus"))
-    local index = Setspawn.Points[map] and Setspawn.Points[map][steamID] and Setspawn.Points[map][steamID][isBonus and 2 or 0]
 
-    local spawnPos
+    local index = Setspawn.Points 
+        and Setspawn.Points[map] 
+        and Setspawn.Points[map][steamID] 
+        and Setspawn.Points[map][steamID][isBonus and 2 or 0]
+
     if index then
-        spawnPos = index[1]
+        ply:SetPos(index[1])
         ply:SetEyeAngles(index[2])
-    elseif Zones and Zones.GetSpawnPoint then
-        spawnPos = Zones:GetSpawnPoint(isBonus and Zones.BonusPoint or Zones.StartPoint)
-    else
-        spawnPos = Vector(0, 0, 0)
+    elseif isBonus and Zones.BonusPoint then
+        ply:SetPos(Zones:GetSpawnPoint(Zones.BonusPoint))
+    elseif not isBonus and Zones.StartPoint then
+        ply:SetPos(Zones:GetSpawnPoint(Zones.StartPoint))
     end
-
-    ply:SetPos(spawnPos)
 
     local zoneType = 2 and 0
     ply.outsideSpawn = not Zones:IsInside(ply, zoneType)
 
-    if not ply:IsBot() and ply:GetMoveType() ~= MOVETYPE_WALK then
+    if not ply:IsBot() and ply:GetMoveType() != MOVETYPE_WALK then
         ply:SetMoveType(MOVETYPE_WALK)
     end
 end

@@ -80,3 +80,31 @@ local function SetspawnHandler(ply)
     end
 end
 Command:Register({"setspawn", "spawnpoint", "ss", "spawn"}, SetspawnHandler)
+
+local function RemoveSpawnPoint(ply)
+    local steamID = ply:SteamID()
+    local map = game.GetMap()
+    local spawnIdentifier = getSpawnIdentifier(ply)
+
+    if Setspawn.Points[map] and Setspawn.Points[map][steamID] then
+        Setspawn.Points[map][steamID][spawnIdentifier] = nil
+        Setspawn.Points[map][steamID][spawnIdentifier .. "_up"] = nil
+        Setspawn.Points[map][steamID][spawnIdentifier .. "_down"] = nil
+
+        if table.IsEmpty(Setspawn.Points[map][steamID]) then
+            Setspawn.Points[map][steamID] = nil
+        end
+        if table.IsEmpty(Setspawn.Points[map]) then
+            Setspawn.Points[map] = nil
+        end
+
+        SaveSetSpawn()
+
+        NETWORK:StartNetworkMessageTimer(ply, "Print", {"Timer", "Your spawn point has been removed!"})
+        SendPopupNotification(ply, "Notification", "Your spawn point has been removed!", 2)
+    else
+        NETWORK:StartNetworkMessageTimer(ply, "Print", {"Timer", "You don't have a custom spawn point set!"})
+        SendPopupNotification(ply, "Notification", "No custom spawn found to remove!", 2)
+    end
+end
+Command:Register({"removess", "delspawn", "removespawn"}, RemoveSpawnPoint)

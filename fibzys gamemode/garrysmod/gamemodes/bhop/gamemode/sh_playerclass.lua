@@ -2,8 +2,8 @@ DEFINE_BASECLASS "player_default"
 
 local PLAYER = {
     DisplayName = "Player",
-    JumpPower = 290,
     AvoidPlayers = false,
+    CrouchedWalkSpeed = 0.6,
     Model = "models/player/group01/male_01.mdl", BotModel = "models/player/group01/male_01.mdl"
 }
 

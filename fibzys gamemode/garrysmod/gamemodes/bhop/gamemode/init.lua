@@ -12,6 +12,7 @@ end
 local coreFiles = {
     "essential/sh_config.lua",
     "shared.lua",
+    "sh_playerclass.lua",
     "essential/sh_movement.lua",
     "essential/sh_network.lua",
     "essential/sh_utilities.lua"
@@ -292,6 +293,8 @@ hook_Add("InitPostEntity", "LoadEntities", LoadEntities)
 
 -- player spawn call
 function GM:PlayerSpawn(ply)
+    player_manager.SetPlayerClass(ply, "player_bhop")
+    self.BaseClass:PlayerSpawn(ply)
     TIMER:Spawn(ply)
 end
 

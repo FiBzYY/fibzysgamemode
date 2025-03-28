@@ -193,14 +193,8 @@ function Command:Trigger(pl, szCommand, szText)
     end
 end
 
-local LastPlayerAngles = {}
-
 -- Restart Player
 function Command:PerformRestart(pl, currentFOV)
-    if IsValid(pl) then
-        LastPlayerAngles[pl] = pl:EyeAngles()
-    end
-
     if pl.Spectating then
         pl:SetTeam(1)
         pl.Spectating = false
@@ -227,10 +221,6 @@ function Command:PerformRestart(pl, currentFOV)
         if pl.WeaponsFlipped then
             TIMER:Print(pl, "Client", {"WeaponFlip", true})
             SendPopupNotification(pl, "Notification", "Weapons have been flipped.", 2)
-        end
-
-        if LastPlayerAngles[pl] then
-           -- pl:SetEyeAngles(LastPlayerAngles[pl])
         end
     else
         TIMER:Print(pl, Lang:Get("SpectateRestart"))
