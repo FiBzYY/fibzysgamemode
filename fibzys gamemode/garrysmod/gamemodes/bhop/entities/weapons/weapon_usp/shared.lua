@@ -328,8 +328,16 @@ function SWEP:ResetTimers()
     self.SilencerTimer = CurTime()
     self.ShotTimer = CurTime()
     self.Reloading = 0
-    self.ReloadingTimer = CurTime() + self.Owner:GetViewModel():SequenceDuration()
+
+    if IsValid(self.Owner) and IsValid(self.Owner:GetViewModel()) then
+        local seqDur = self.Owner:GetViewModel():SequenceDuration()
+        self.ReloadingTimer = CurTime() + seqDur
+        self.IdleTimer = CurTime() + seqDur
+    else
+        self.ReloadingTimer = CurTime() + 1
+        self.IdleTimer = CurTime() + 1
+    end
+
     self.Recoil = 0
     self.Idle = 0
-    self.IdleTimer = CurTime() + self.Owner:GetViewModel():SequenceDuration()
 end
