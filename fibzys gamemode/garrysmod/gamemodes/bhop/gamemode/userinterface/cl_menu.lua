@@ -714,26 +714,49 @@ function UI:CreateMenu()
         end, isActive = true },
 
         { text = "Layouts", panelContent = function(parent)
+        local scrollPanel = vgui.Create("DScrollPanel", parent)
+        scrollPanel:Dock(FILL)
+
+        local vBar = scrollPanel:GetVBar()
+        UI:MenuScrollbar(vBar)
+
+        local container = vgui.Create("DPanel", scrollPanel)
+        container:SetSize(parent:GetWide() - 20, 650)
+        container:SetPos(0, 0)
+        container.Paint = function(self, w, h)
+            surface.SetDrawColor(colors.content)
+            surface.DrawRect(0, 0, w, h)
+        end
+
+        local x, y = 10, 0
+        self:CreatePanel(container, {"SSJ"})
+    
+            surface.SetDrawColor(120, 120, 120)
+            surface.DrawRect(10, y + 35, container:GetWide() - 20, 1)
+
             local x, y = 10, 0
-            self:CreatePanel(parent, {"Layouts"})
+
+            self:CreatePanel(container, {"Layouts"})
             y = y + 45
-            self:CreateToggle(parent, y, "bhop_sidetimer", "Side Timer", "Enables or disables side timer.")
+            self:CreateToggle(container, y, "bhop_sidetimer", "Side Timer", "Enables or disables side timer.")
             y = y + 60
-            self:CreateToggle(parent, y, "bhop_show_notifications", "Pop-up Notifications", "Enables or disables pop-up notifications.")
+            self:CreateToggle(container, y, "bhop_show_notifications", "Pop-up Notifications", "Enables or disables pop-up notifications.")
             y = y + 60
-            self:CreateToggle(parent, y, "bhop_roundedbox", "Rounded Boxes", "Enables or disables rounded boxes.")
+            self:CreateToggle(container, y, "bhop_roundedbox", "Rounded Boxes", "Enables or disables rounded boxes.")
             y = y + 60
-            self:CreateToggle(parent, y, "bhop_simplebox", "Simple HUD Boxes", "Enables or disables simple HUD boxes.")
+            self:CreateToggle(container, y, "bhop_simplebox", "Simple HUD Boxes", "Enables or disables simple HUD boxes.")
             y = y + 60
-            self:CreateToggle(parent, y, "bhop_rainbowtext", "Rainbow HUD", "Enables or disables rainbow HUD text.")
+            self:CreateToggle(container, y, "bhop_rainbowtext", "Rainbow HUD", "Enables or disables rainbow HUD text.")
             y = y + 60
-            self:CreateToggle(parent, y, "bhop_chatbox", "Custom Chatbox", "Enables or disables the custom chat box.")
+            self:CreateToggle(container, y, "bhop_chatbox", "Custom Chatbox", "Enables or disables the custom chat box.")
             y = y + 60
-            self:CreateToggle(parent, y, "bhop_netgraph", "Net Graph", "Enables or disables the custom net graph.")
+            self:CreateToggle(container, y, "bhop_netgraph", "Net Graph", "Enables or disables the custom net graph.")
             y = y + 60
-            self:CreateToggle(parent, y, "bhop_ramp_o_meter", "Ramp-o-Meter", "Enables or disables the ramp meter.")
+            self:CreateToggle(container, y, "bhop_ramp_o_meter", "Ramp-o-Meter", "Enables or disables the ramp meter.")
             y = y + 60
-            self:CreateToggle(parent, y, "bhop_rampometer_percent", "Ramp-o-Meter Percent", "If you want to see the meter in percentage.")
+            self:CreateToggle(container, y, "bhop_rampometer_percent", "Ramp-o-Meter Percent", "If you want to see the meter in percentage.")
+            y = y + 60
+            self:CreateToggle(container, y, "bhop_bash2_screen", "Bash2 Screen Logs", "If you want to see Bash2 logs on screen.")
         end },
 
         { text = "Colors", panelContent = function(parent)
@@ -796,14 +819,10 @@ function UI:CreateMenu()
                 local x, y = 10, 0
                 self:CreatePanel(parent, {"View server logs"})
 
-                        -- 🔥 This sends the request to the server to trigger SendLogs
-        net.Start("RequestAdminLogs")
-        net.SendToServer()
+                net.Start("RequestAdminLogs")
+                net.SendToServer()
 
-        -- Pre-load with "loading" or empty panel
-        UI:UpdateServerLogs(parent, {})
-
-           
+                UI:UpdateServerLogs(parent, {})
             end },
 
             { text = "Timer", panelContent = function(parent)

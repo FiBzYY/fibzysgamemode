@@ -420,7 +420,7 @@ function GM:OnPlayerChat(ply, szText, bTeam, bDead)
                 tab[#tab + 1] = v
             end
         else
-            local rankID = ply:GetNWInt("Rank")
+            local rankID = ply:GetNWInt("Rank", -1)
             local rankData = TIMER.Ranks[rankID]
             if rankData then
                 tab[#tab + 1] = rankData[2] -- Rank Color

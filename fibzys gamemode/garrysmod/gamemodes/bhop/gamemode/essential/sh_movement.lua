@@ -50,7 +50,7 @@ local function UpdateStyleInfo(client, style)
         StyleInfo.cap = movementcap:GetFloat()
     elseif style == TIMER:GetStyleID("L") then
         StyleInfo.mv = movementspeed:GetFloat()
-        StyleInfo.cap = 100
+        StyleInfo.cap = 30
     else
         StyleInfo.mv = movementspeed:GetFloat()
         StyleInfo.cap = movementcap:GetFloat()

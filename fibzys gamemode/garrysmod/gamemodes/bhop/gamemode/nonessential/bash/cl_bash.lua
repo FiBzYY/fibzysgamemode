@@ -2,13 +2,12 @@
 local TURN_BIND_DELAY = 150
 local BLOCK_BINDS = true
 
-local DebugMessages = {}  -- Store messages
+local DebugMessages = {}
 
 net.Receive("Bash_DebugLog", function()
     local msg = net.ReadString()
 
-    -- 🔥 Add message to HUD queue 🔥
-    table.insert(DebugMessages, {text = msg, time = CurTime() + 5})  -- Remove after 5s
+    table.insert(DebugMessages, {text = msg, time = CurTime() + 5})
 end)
 
 local BINDS_BLACKLIST = {
@@ -168,7 +167,11 @@ net.Receive(ID .. "_cv", function()
 	end
 end)
 
+CreateClientConVar("bhop_bash2_screen", "0", true, false, "Toggles the bash2 HUD")
+
 hook.Add("HUDPaint", "Bash_DebugHUD", function()
+    if not GetConVar("bhop_bash2_screen"):GetBool() then return end
+
     local x, y = ScrW() / 2, ScrH() / 2 - (#DebugMessages * 10)
 
     for k, v in ipairs(DebugMessages) do

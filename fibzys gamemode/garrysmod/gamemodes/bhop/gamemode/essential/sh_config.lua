@@ -1,4 +1,4 @@
---[[~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+﻿--[[~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     Bunny Hop Configuration
 
     Author: FiBzY (www.steamcommunity.com/id/fibzy_)
@@ -22,6 +22,7 @@ if not CONFIG_LOADED then
 
     BHOP.DicordLink = "https://discord.com/invite/mGh2KE9FzD"
     BHOP.OwnerRank = "Demon"
+    BHOP.UniTag = "ᴵᴬᴳ" -- iag tag support
 
     -- Cycle text
     BHOP.Nametime = 10
@@ -49,9 +50,9 @@ if not CONFIG_LOADED then
     -- Gamemode version
     BHOP.Version = {
         Engine = "9594",
-        GM = "13.23",
-        ReleaseDate = "03/25/25",
-        LastUpdated = "03/25/25"
+        GM = "13.24",
+        ReleaseDate = "03/29/25",
+        LastUpdated = "03/29/25"
     }
 
     -- Main movement settings

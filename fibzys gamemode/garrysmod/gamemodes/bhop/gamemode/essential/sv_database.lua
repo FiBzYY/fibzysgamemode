@@ -565,16 +565,14 @@ function SQL:CreateObject(callback)
     SQLObject = mysqloo.connect(SQLDetails.Host, SQLDetails.User, SQLDetails.Pass, SQLDetails.Database, SQLDetails.Port)
 
     function SQLObject:onConnected()
-        if not SQL.Busy then return end
         UTIL:Notify(Color(0, 255, 0), "Database", "Database connected successfully!")
-        
+
         if MySQL.StartUp then
             MySQL:StartUp()
         end
         MySQL:ProcessQueuedQueries()
 
         SQL.Busy = false
-        if callback then callback() end
     end
 
     function SQLObject:onConnectionFailed(err)
@@ -586,9 +584,8 @@ function SQL:CreateObject(callback)
 end
 
 function SQL:Prepare(query, args, noQuote)
-    if not SQLObject or not SQL.Available then
-        UTIL:Notify(Color(255, 0, 0), "Database", "[ERROR] Database not connected! Cannot execute query: " .. tostring(query))
-
+    if not SQLObject or not SQL.Available or SQLObject:status() ~= mysqloo.DATABASE_CONNECTED then
+        UTIL:Notify(Color(255, 0, 0), "Database", "[ERROR] Database not connected! Skipping Prepare for query: " .. tostring(query))
         return {
             Query = nil,
             Execute = function(_, callback)

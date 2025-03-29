@@ -510,28 +510,49 @@ local function CreateScoreboard(shouldHide)
 
 			local adminList = BHOP.Server.AdminList
 
-			if adminList[ply:SteamID()] then
-				local name = ply:Nick()
-				local charColors = {}
+			local function DrawRainbowWithTag(name, posX, posY, colors, font)
+				surface.SetFont(font)
 
-				for i = 1, #name do
-					charColors[i] = rainbowColors[i % #rainbowColors + 1]
+				-- Unicode tag support
+				local tag = BHOP.UniTag
+				local tagStart, tagEnd = string.find(name, tag, 1, true)
+				local offset = 0
+				local colorIndex = 1
+
+				local beforeTag = tagStart and string.sub(name, 1, tagStart - 1) or name
+				for i = 1, #beforeTag do
+					local char = beforeTag:sub(i, i)
+					local charWidth = surface.GetTextSize(char)
+					surface.SetTextColor(colors[colorIndex]:Unpack())
+					surface.SetTextPos(posX + offset, posY)
+					surface.DrawText(char)
+					offset = offset + charWidth
+					colorIndex = (colorIndex % #colors) + 1
 				end
 
-				local function DrawRainbowText(text, posX, posY, colors, font)
-					local offset = 0
-					for i = 1, #text do
-						surface.SetFont(font)
-						local char = text:sub(i, i)
+				if tagStart then
+					local tagWidth = surface.GetTextSize(tag)
+					surface.SetTextColor(255, 255, 255)
+					surface.SetTextPos(posX + offset, posY)
+					surface.DrawText(tag)
+					offset = offset + tagWidth
+
+					local afterTag = string.sub(name, tagEnd + 1)
+					for i = 1, #afterTag do
+						local char = afterTag:sub(i, i)
 						local charWidth = surface.GetTextSize(char)
-						surface.SetTextColor(colors[i]:Unpack())
+						surface.SetTextColor(colors[colorIndex]:Unpack())
 						surface.SetTextPos(posX + offset, posY)
 						surface.DrawText(char)
 						offset = offset + charWidth
+						colorIndex = (colorIndex % #colors) + 1
 					end
 				end
+			end
 
-				DrawRainbowText(name, x + (w * 0.25), ph / 3.3, charColors, font)
+			if adminList[ply:SteamID()] then
+				local name = ply:Nick()
+				DrawRainbowWithTag(name, x + (w * 0.25), ph / 3.3, rainbowColors, font)
 			else
 				DrawText(ply:Nick(), font, x + (w * 0.25), ph / 2, TEXT, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 			end

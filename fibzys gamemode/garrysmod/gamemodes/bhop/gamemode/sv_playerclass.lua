@@ -417,8 +417,8 @@ function TIMER:ReloadSubRanks(ply, old)
     local Points = self:GetMultiplier(ply.style)
     if not Points or Points == 0 then return end
     
-    local nAverage = self:GetAverage(ply.style)
-    if not nAverage or not old then return end
+    local average = self:GetAverage(ply.style)
+    if not average or not old then return end
 
     for _, p in ipairs(player.GetHumans()) do
         if p == ply or p.Style ~= ply.style or not p.RankSum or not p.Rank or not p.Record or p.Record == 0 then
@@ -426,17 +426,17 @@ function TIMER:ReloadSubRanks(ply, old)
         end
 
         local nCurrent = Points * (old / p.Record)
-        local nNew = Points * (nAverage / p.Record)
-        local nPoints = p.RankSum - nCurrent + nNew
+        local nNew = Points * (average / p.Record)
+        local points = p.RankSum - nCurrent + nNew
 
-        local Rank = self:GetRank(nPoints, Player:GetRankType(p.Style, true))
+        local Rank = self:GetRank(points, self:GetRankType(p.Style, true))
         if Rank ~= p.Rank then
             p.Rank = Rank
             p:SetNWInt("Rank", p.Rank)
         end
 
-        p.RankSum = nPoints
-        Player:SetSubRank(p, p.Rank, p.RankSum)
+        p.RankSum = points
+        self:SetSubRank(p, p.Rank, p.RankSum)
     end
 end
 
@@ -625,7 +625,7 @@ function TIMER:GetMapsBeat(ply, callback)
     end)
 end
 
-Player.RemoteWRCache = {}
+TIMER.RemoteWRCache = {}
 
 function TIMER:SendRemoteWRList(ply, mapName, styleID, page, isUpdate)
     if not mapName or type(mapName) ~= "string" or not styleID or type(styleID) ~= "number" then 
@@ -650,14 +650,14 @@ function TIMER:SendRemoteWRList(ply, mapName, styleID, page, isUpdate)
             end
             self.RemoteWRCache[mapName][styleID] = {}
 
-            if self:Assert(result, "szUID") then
+            if self:Assert(result, "uid") then
                 for _, data in pairs(result) do
                     table.insert(self.RemoteWRCache[mapName][styleID], {
-                        data.szUID, 
-                        data.szPlayer, 
-                        tonumber(data.nTime), 
-                        self:Null(data.szDate), 
-                        self:Null(data.vData)
+                        data.uid, 
+                        data.player, 
+                        tonumber(data.time), 
+                        self:Null(data.date), 
+                        self:Null(data.data)
                     })
                 end
             end
