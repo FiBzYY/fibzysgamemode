@@ -1,16 +1,42 @@
 ﻿HUDData = HUDData or {}
 
-local StrafeData = nil
-local StrafeAxis, StrafeButtons, StrafeCounter, StrafeLast, StrafeDirection, StrafeStill = 0, nil, 0, nil, nil, 0
-local StrafeAxis2, StrafeButtons2, StrafeCounter2, StrafeLast2, StrafeDirection2, StrafeStill2 = 0, nil, 0, nil, nil, 0
-local StrafeAxis11, StrafeButtons11, StrafeCounter11, StrafeLast11, StrafeDirection11, StrafeStill11 = 0, nil, 0, nil, nil, 0
-local MouseLeft, MouseRight = nil, nil
+local StrafeStates = {
+    [1] = { axis = 0, direction = nil, still = 0, buttons = nil },
+    [2] = { axis = 0, direction = nil, still = 0, buttons = nil },
+}
 
-local fb, ik, lp, ts, abs, Iv = bit.band, input.IsKeyDown, LocalPlayer, TEAM_SPECTATOR, math.abs, IsValid
+local fb = bit.band
+local ik = input.IsKeyDown
+local lp = LocalPlayer
+local ts = TEAM_SPECTATOR
+local Iv = IsValid
+
+local StrafeCounter, StrafeData = 0, 0
+local StrafeDirection = nil
 local LastUpdate = CurTime()
 
 function ResetStrafes() StrafeCounter = 0 end
 function SetSyncData(data) StrafeData = data end
+
+local function handle_strafe(index, ang)
+    local state = StrafeStates[index]
+    local diff = math.NormalizeAngle(ang - state.axis)
+
+    if diff > 0 then
+        state.direction = -1
+        state.still = 0
+    elseif diff < 0 then
+        state.direction = 1
+        state.still = 0
+    else
+        if state.still > 20 then
+            state.direction = nil
+        end
+        state.still = state.still + 1
+    end
+
+    state.axis = ang
+end
 
 local curTick = 0
 hook.Add("SetupMove", "MonitorInput", function(ply, data)
@@ -49,97 +75,49 @@ hook.Add("SetupMove", "MonitorInput", function(ply, data)
     StrafeAxis = ang
 end)
 
-local function MonitorInputCombined(ply, data)
-    local buttons = data:GetButtons()
+hook.Add("SetupMove", "MonitorInputCombined", function(ply, data)
     local ang = data:GetAngles().y
     local sideSpeed = data:GetSideSpeed()
+    local buttons = data:GetButtons()
 
     if sideSpeed ~= 0 then
-        local diff2 = math.NormalizeAngle(ang - StrafeAxis2)
-        if diff2 > 0 then
-            StrafeDirection2 = -1
-            StrafeStill2 = 0
-        elseif diff2 < 0 then
-            StrafeDirection2 = 1
-            StrafeStill2 = 0
-        else
-            if StrafeStill2 > 20 then
-                StrafeDirection2 = nil
-            end
-            StrafeStill2 = StrafeStill2 + 1
-        end
-        StrafeAxis2 = ang
-
-        local diff11 = math.NormalizeAngle(ang - StrafeAxis11)
-        if diff11 > 0 then
-            StrafeDirection11 = -1
-            StrafeStill11 = 0
-        elseif diff11 < 0 then
-            StrafeDirection11 = 1
-            StrafeStill11 = 0
-        else
-            if StrafeStill11 > 20 then
-                StrafeDirection11 = nil
-            end
-            StrafeStill11 = StrafeStill11 + 1
-        end
-        StrafeAxis11 = ang
+        handle_strafe(1, ang)
+        handle_strafe(2, ang)
     end
 
-    StrafeButtons2 = buttons
-    StrafeButtons11 = buttons
-end
-hook.Add("SetupMove", "MonitorInputCombined", MonitorInputCombined)
+    StrafeStates[1].buttons = buttons
+    StrafeStates[2].buttons = buttons
+end)
 
 local lastStrafeAxis = 0
-local lastMouseLeft, lastMouseRight = nil, nil
-local lastStrafeCounter, lastStrafeData = 0, 0
 local hudHideConVar = GetConVar("bhop_hud_hide")
 
-local function HUDPaintStrafes()
+hook.Add("HUDPaint", "HUDPaintStrafes", function()
     local ply = lp()
     if not Iv(ply) or ply:Team() == ts then return end
-
     if hudHideConVar:GetInt() == 1 then return end
 
-    local ang = ply:EyeAngles().y
-    local yawDifference = math.NormalizeAngle(ang - lastStrafeAxis)
+    local ang = ply:EyeAngles()[2]
+    local yawDiff = math.NormalizeAngle(ang - lastStrafeAxis)
     lastStrafeAxis = ang
 
-    MouseLeft, MouseRight = nil, nil
+    local mouseLeft = yawDiff > 0
+    local mouseRight = yawDiff < 0
 
-    local colchange = Color(142, 42, 42)
-    if yawDifference > 0 then
-        MouseLeft = colchange
-    elseif yawDifference < 0 then
-        MouseRight = colchange
-    end
-
-    local buttons = StrafeButtons2 or 0
-    local buttons11 = StrafeButtons11 or 0
-
-    local moveLeft = fb(buttons, IN_MOVELEFT) > 0
-    local moveRight = fb(buttons, IN_MOVERIGHT) > 0
-    local moveForward = fb(buttons11, IN_FORWARD) > 0
-    local moveBackward = fb(buttons11, IN_BACK) > 0
-    local jump = ik(KEY_SPACE) or fb(buttons11, IN_JUMP) > 0
-    local duck = fb(buttons11, IN_DUCK) > 0
-
-    local strafeCount = StrafeCounter or 0
-    local strafeSync = StrafeData or 0
+    local buttons1 = StrafeStates[1].buttons or 0
+    local buttons2 = StrafeStates[2].buttons or 0
 
     HUDData[ply] = {
         pos = {20, 20},
-        sync = strafeSync,
-        strafes = strafeCount,
-        l = MouseLeft ~= nil,
-        r = MouseRight ~= nil,
-        a = moveLeft,
-        d = moveRight,
-        w = moveForward,
-        s = moveBackward,
-        jump = jump,
-        duck = duck,
+        sync = StrafeData,
+        strafes = StrafeCounter,
+        l = mouseLeft,
+        r = mouseRight,
+        a = fb(buttons1, IN_MOVELEFT) > 0,
+        d = fb(buttons1, IN_MOVERIGHT) > 0,
+        w = fb(buttons2, IN_FORWARD) > 0,
+        s = fb(buttons2, IN_BACK) > 0,
+        jump = ik(KEY_SPACE) or fb(buttons2, IN_JUMP) > 0,
+        duck = fb(buttons2, IN_DUCK) > 0,
     }
-end
-hook.Add("HUDPaint", "HUDPaintStrafes", HUDPaintStrafes)
+end)

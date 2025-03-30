@@ -6,63 +6,63 @@ local math_sin, math_cos, math_rad, bit_band = math.sin, math.cos, math.rad, bit
 local mabs, matan, mdeg = math.abs, math.atan, math.deg
 
 -- Set tables
-BHOP_FRAMES = 10
-g_fTickrate = 0.01
-OFFSETS_MAX_FRAME = 15
+local BHOP_FRAMES = 10
+local g_fTickrate = 0.01
+local OFFSETS_MAX_FRAME = 15
 
 -- SSJ
-g_JumpData = {}
-totalGain = {}
-tickCount = {}
-g_bJumpedThisFrame = {}
-g_iTicksOnGround = {}
-g_iStrafeTick = {}
-g_iSyncedTick = {}
-g_iJump = {}
-g_fOldSpeed = {}
-g_fRawGain = {}
-g_iButtonCache = {}
-g_fOldVelocity = {}
-g_iStrafeCount = {}
-g_fSpeedLoss = {}
-g_fTraveledDistance = {}
-g_fTrajectory = {}
-g_iTouchTicks = {}
-g_bTouchesWall = {}
-g_fOldHeight = {}
-g_fInitialHeight = {}
-g_iUsageMode = {}
-g_bUsageRepeat = {}
-g_bFirstJump = {}
+local g_JumpData = {}
+local totalGain = {}
+local tickCount = {}
+local g_bJumpedThisFrame = {}
+local g_iTicksOnGround = {}
+local g_iStrafeTick = {}
+local g_iSyncedTick = {}
+local g_iJump = {}
+local g_fOldSpeed = {}
+local g_fRawGain = {}
+local g_iButtonCache = {}
+local g_fOldVelocity = {}
+local g_iStrafeCount = {}
+local g_fSpeedLoss = {}
+local g_fTraveledDistance = {}
+local g_fTrajectory = {}
+local g_iTouchTicks = {}
+local g_bTouchesWall = {}
+local g_fOldHeight = {}
+local g_fInitialHeight = {}
+local g_iUsageMode = {}
+local g_bUsageRepeat = {}
+local g_bFirstJump = {}
 
 -- JSS
-g_fAvgDiffFromPerf = {}
-g_fAvgAbsoluteJss = {}
-g_fLastAngles = {}
-g_jssThisTick = {}
-g_lastSpeed = {}
-g_prevSpeed = {}
-g_iYawwingTick = {}
-g_fJumpTime = {}
-g_speedDiff = {}
+local g_fAvgDiffFromPerf = {}
+local g_fAvgAbsoluteJss = {}
+local g_fLastAngles = {}
+local g_jssThisTick = {}
+local g_lastSpeed = {}
+local g_prevSpeed = {}
+local g_iYawwingTick = {}
+local g_fJumpTime = {}
+local g_speedDiff = {}
 gB_IllegalSSJ = {}
 
 -- Offests
-g_fLastNonZeroMove = {}
-g_iKeyTick = {}
-g_iTurnTick = {}
-g_iCmdNum = {}
-g_iTurnDir = {}
+local g_fLastNonZeroMove = {}
+local g_iKeyTick = {}
+local g_iTurnTick = {}
+local g_iCmdNum = {}
+local g_iTurnDir = {}
 
-g_bNoPress = {}
-g_bOverlap = {}
-g_bSawPress = {}
-g_bSawTurn = {}
+local g_bNoPress = {}
+local g_bOverlap = {}
+local g_bSawPress = {}
+local g_bSawTurn = {}
 
-FORWARD_MOVE = 0
-SIDE_MOVE = 1
-BHOP_LEFT = 0
-BHOP_RIGHT = 1
+local FORWARD_MOVE = 0
+local SIDE_MOVE = 1
+local BHOP_LEFT = 0
+local BHOP_RIGHT = 1
 
 if CLIENT then
     CreateClientConVar("bhop_showssj", "1", true, false, "Toggle SSJ display in chat")
@@ -186,7 +186,7 @@ hook.Add("PlayerDisconnected", "CleanupSSJData", function(ply)
 end)
 
 -- Update Stats for reset
-function UpdateStats(ply)
+local function UpdateStats(ply)
     local velocity = ply:GetVelocity()
     velocity[3] = 0
     local origin = ply:GetPos()
@@ -286,9 +286,6 @@ if SERVER then
     net.Receive("SyncSSJSettings", function(len, ply)
         local showSSJ = net.ReadBool()
         local showPre = net.ReadBool()
-
-        print("[SERVER] Received settings from: " .. ply:Nick())
-        print("[SERVER] New SSJ: " .. tostring(showSSJ) .. ", New Pre: " .. tostring(showPre))
 
         local ssjData = ply:GetPData("SSJ_Settings", nil)
         local previousSettings = ssjData and util.JSONToTable(ssjData) or {true, true}
@@ -558,6 +555,7 @@ local function SSJ_PrintStats(ply, lastSpeed, jumpTimeDiff)
         style == TIMER:GetStyleID("AS") or
         style == TIMER:GetStyleID("Swift") or
         style == TIMER:GetStyleID("Speedrun") or
+        style == TIMER:GetStyleID("LG") or
         ply:GetNWInt("inPractice", true)
     then
         gB_IllegalSSJ[ply] = true

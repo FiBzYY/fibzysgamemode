@@ -67,8 +67,7 @@ local files = {
         "nonessential/fpsfixes/cl_buffthefps.lua",
         "nonessential/showhidden/cl_init.lua",
         "nonessential/showhidden/cl_lang.lua",
-        "nonessential/bash/cl_bash.lua",
-        "nonessential/bash/cl_menu.lua"
+        "nonessential/bash/cl_bash.lua"
     },
     fpsFixesShared = {
         "nonessential/fpsfixes/sh_fpsfixes.lua",

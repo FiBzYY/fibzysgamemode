@@ -1161,7 +1161,7 @@ local function CreateScoreboardKawaii()
 
 							local pRank = TIMER.Ranks[scoreboard_playerrow.pl:GetNWInt("Rank", -1)]
 							draw.SimpleText("Rank: " .. pRank[1], "hud.subtitle", 10, 104, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-							draw.SimpleText("Points: " .. LocalPlayer().Sum or 0, "hud.subtitle", 10, 122, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+							draw.SimpleText("Points: " .. (LocalPlayer().Sum or 0), "hud.subtitle", 10, 122, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 							draw.SimpleText("Place: #" .. pl:GetNWInt("Placement", 0) , "hud.subtitle", 10, 140, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 							draw.SimpleText("WRs : " .. pl:GetNWInt("WRCount", 0), "hud.subtitle", 10, 158, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 						end

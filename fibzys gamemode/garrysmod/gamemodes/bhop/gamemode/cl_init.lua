@@ -55,9 +55,7 @@ local files = {
         "nonessential/strafe/cl_synchronizer.lua",
         "nonessential/cl_soundstopper.lua",
         "nonessential/cl_cheats.lua",
-        "nonessential/bash/cl_bash.lua",
-        "nonessential/bash/cl_menu.lua"
-
+        "nonessential/bash/cl_bash.lua"
     },
     fpsFixes = {
         "nonessential/fpsfixes/sh_fpsfixes.lua",
