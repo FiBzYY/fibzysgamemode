@@ -1,13 +1,14 @@
 if CLIENT then
     CreateClientConVar("bhop_unlimited_ammo", "1", true, false, "Enable or disable unlimited ammo ")
-end
 
-if CLIENT then
 	SWEP.DrawAmmo = true
 	SWEP.DrawCrosshair = false
 	SWEP.ViewModelFOV = 82
 	SWEP.ViewModelFlip = true
 	SWEP.CSMuzzleFlashes = true
+
+	surface.CreateFont("CSKillIcons", { font="csd", weight="500", size=ScreenScale(30),antialiasing=true,additive=true })
+	surface.CreateFont("CSSelectIcons", { font="csd", weight="500", size=ScreenScale(60),antialiasing=true,additive=true })
 end
 
 SWEP.Author = "Counter-Strike"
