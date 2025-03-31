@@ -3,11 +3,14 @@
 
 -- DO TO: Added comments to make it easier, Make this work for client boosters recode it so when networked OnStartTouch is called then apply the Fix
 
-local TickRate = 1 / engine.TickInterval()
+local TickRate = 100
 local Boosters = {}
+local floor = math.floor
 
 local function SetupPlayerData(ply)
-    local enabled = ply.Boosterfix and ply.Boosterfix.Enabled or true
+    local stored = ply:GetPData("BoosterFix")
+    local enabled = stored == nil and true or (stored == "1")
+
     ply.Boosterfix = {
         Enabled = enabled,
         PreviousVL = {Vector()},
@@ -174,7 +177,7 @@ hook.Add("Move", "BoosterFix", function(ply, mv)
                 -- Optional cap for certain styles
                 if (v == 0 or v > 0.75) and ply.style == 8 then v = 0.75 end
                 if b.Timer > 0 then
-                    pFix.NextGravity = {math.floor(b.Timer * TickRate), v}
+                    pFix.NextGravity = {floor(b.Timer * TickRate), v}
                 else
                     ply:SetGravity(v)
                 end

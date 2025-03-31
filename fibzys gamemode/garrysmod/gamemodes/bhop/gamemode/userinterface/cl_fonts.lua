@@ -105,6 +105,7 @@ if not FONT_CACHE then
 
     MakeFont("ui.mainmenu.close", {font = "Verdana Regular", size = 20, weight = 1000, antialias = true})
     MakeFont("ui.mainmenu.button", {font = "Roboto", size = 18, weight = 500, antialias = true})
+    MakeFont("ui.mainmenu.logs", {font = "Roboto", size = 15, weight = 500, antialias = true})
     MakeFont("ui.mainmenu.button-bold", {font = "Roboto", size = 18, weight = 600, antialias = true})
     MakeFont("ui.mainmenu.button2", {font = "Roboto", size = 19, weight = 500, antialias = true})
     MakeFont("ui.mainmenu.desc", {font = "Roboto", size = 17, weight = 500, additive = true, antialias = true})

@@ -8,7 +8,7 @@
 
 -- Cache
 local band, math_min, math_max = bit.band, math.min, math.max
-local hook_Add, traceHull = hook.Add, util.TraceHull
+local hook_Add, traceHull, Iv = hook.Add, util.TraceHull, IsValid
 local CurT = CurTime
 local math_sin, math_cos, math_rad, bit_band = math.sin, math.cos, math.rad, bit.band
 local sl = string.lower
@@ -196,7 +196,7 @@ function TeleportEntity(ent, pos, ang, vel)
         ent:SetSaveValue("m_vecBaseVelocity", baseVelocity)
 
         local parent = ent:GetMoveParent()
-        if not IsValid(parent) then
+        if not Iv(parent) then
             ent:SetSaveValue("m_vecVelocity", vel)
         else
             local parentVel = parent:GetInternalVariable("m_vecAbsVelocity") or Vector(0, 0, 0)
@@ -224,7 +224,7 @@ local function SetVelocity(ply, velocity, mv, dontUseTeleportEntity)
     -- Use the pre-tick base velocity because that is what influenced this tick's movement and the desired new velocity.
     velocity:Sub(LastBaseVelocity[ply] or Vector(0, 0, 0))
 
-    if dontUseTeleportEntity and not IsValid(ply:GetMoveParent()) then
+    if dontUseTeleportEntity and not Iv(ply:GetMoveParent()) then
         ply:RemoveEFlags(EFL_DIRTY_ABSVELOCITY)
         ply:SetSaveValue("m_vecAbsVelocity", velocity)
         ply:SetSaveValue("m_vecVelocity", velocity)
@@ -386,7 +386,7 @@ local function DoPreTickChecks(ply, mv, cmd)
 
     -- If we are definitely staying on the ground this tick, don't predict it.
     LastGroundEnt[ply] = ply:GetGroundEntity()
-    if IsValid(LastGroundEnt[ply]) and not CanJump(ply) then return false end
+    if Iv(LastGroundEnt[ply]) and not CanJump(ply) then return false end
 
     iButtons[ply] = mv:GetButtons()
     iOldButtons[ply] = mv:GetOldButtons()
@@ -605,7 +605,7 @@ end
 hook_Add("InitPostEntity", "PrepareTPs", PrepareTPs)
 
 local function OnPlayerTeleported(ent, input, activator, caller)
-    if not IsValid(activator) or not activator:IsPlayer() then return end
+    if not Iv(activator) or not activator:IsPlayer() then return end
     if input ~= "teleported" then return end
 
     if (iLastMapTeleportTick[activator] == (iTick[activator] or 0) - 1) then
@@ -763,7 +763,7 @@ local function DoStairsFix(ply, mv)
 end
 
 local function RNGFix_SetupMove(ply, mv, cmd)
-    if not IsValid(ply) then return end
+    if not Iv(ply) then return end
 
     if not iTick[ply] then 
         iTick[ply] = 0
@@ -774,7 +774,9 @@ local function RNGFix_SetupMove(ply, mv, cmd)
     iTick[ply] = iTick[ply] + 1 or 12345
 
     local tickinterval = engine.TickInterval()
-    iFrameTime[ply] = tickinterval * ply:GetLaggedMovementValue()
+    local lagged = ply:GetLaggedMovementValue()
+
+    iFrameTime[ply] = tickinterval * lagged
 
     MapTeleportedSequentialTicks[ply] = false
     RNGFixHudDetect = false
@@ -788,7 +790,7 @@ hook.Add("SetupMove", "RNGFix", RNGFix_SetupMove)
 
 -- PostThink works a little better than a ProcessMovement post hook because we need to wait for ProcessImpacts (trigger activation)
 local function PlayerPostThink(ply, mv)
-    if not IsValid(ply) or not ply:Alive() or ply:GetMoveType() ~= MOVETYPE_WALK or ply:WaterLevel() ~= 0 then
+    if not Iv(ply) or not ply:Alive() or ply:GetMoveType() ~= MOVETYPE_WALK or ply:WaterLevel() ~= 0 then
         return
     end
 

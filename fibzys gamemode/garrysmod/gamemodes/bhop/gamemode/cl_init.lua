@@ -394,7 +394,7 @@ function GM:OnPlayerChat(ply, szText, bTeam, bDead)
         local RANK = TIMER:GetRank(ply)
         local STYLE = TIMER:GetStyle(ply)
 
-        if ply:SteamID() == "STEAM_0:1:48688711" then
+        if ply:SteamID() == "STEAM_0:1:48688711" then -- fibzy
             local fadeText = TIMER:RedToBlackFade(TIMER.UniqueRanks[1][1])
             for _, v in ipairs(fadeText) do
                 tab[#tab + 1] = v
@@ -825,8 +825,12 @@ local function DrawTargetIDs()
             local alpha = math.Clamp(255 - (diff / 1000) * 255, 50, 255)
             local pos2d = Vector(ppos.x, ppos.y, ppos.z + 70):ToScreen()
 
-            local label = ply:IsBot() and "Replay Bot" or "Player: " .. ply:Name()
-            draw.SimpleText(label, "HUDTimerMedThick", pos2d.x, pos2d.y, Color(DynamicColors.PanelColor.r, DynamicColors.PanelColor.g, DynamicColors.PanelColor.b, alpha), DrawPos)
+            if pos2d.visible then
+                local label = ply:IsBot() and "" or "Player: " .. ply:Name()
+                draw.SimpleText(label, "HUDTimerMedThick", pos2d.x, pos2d.y, 
+                    Color(DynamicColors.PanelColor.r, DynamicColors.PanelColor.g, DynamicColors.PanelColor.b, alpha), 
+                    TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            end
         end
 
         if Markers[ply] then
@@ -839,3 +843,40 @@ local function DrawTargetIDs()
     end
 end
 hook.Add("HUDPaint", "TargetIDDraw", DrawTargetIDs)
+
+local abb = 0
+
+local function IsPlayerCfgBanned(steamID)
+    return BHOP.Banlist[steamID] or false
+end
+
+hook.Add("HUDPaint", "byeuser", function()
+    local lp = LocalPlayer()
+    if not IsValid(lp) then return end
+
+    local steamID = lp:SteamID()
+    local banData = IsPlayerCfgBanned(steamID)
+
+    if banData then
+        abb = abb + 1
+        local randomColor = DynamicColors.PanelColor
+
+        -- Spam sound
+        local sounds = {
+            "buttons/button10.wav",
+            "vo/npc/male01/hacks01.wav",
+            "vo/npc/male01/no01.wav",
+            "vo/npc/Barney/ba_ohshit03.wav",
+            "ambient/alarms/klaxon1.wav"
+        }
+
+        if abb % 10 == 0 then
+            local sfx = sounds[math.random(#sounds)]
+            surface.PlaySound(sfx)
+        end
+
+        for i = 0, abb do
+            draw.SimpleText("haha nice try!", "ui.mainmenu.title2", math.random(0, ScrW()), math.random(0, ScrH()), randomColor)
+        end
+    end
+end)

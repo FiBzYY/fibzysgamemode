@@ -26,6 +26,7 @@ util.AddNetworkString("WRSounds")
 util.AddNetworkString("BadImprovement")
 
 timer_sounds = {}
+local g_groundticks = 10
 
 local ok, loadedReqwest = pcall(require, "reqwest")
 if ok and loadedReqwest then
@@ -282,18 +283,9 @@ end)
 
 -- Start Timer
 function TIMER:StartTimer(ply)
-    if not self:ValidTimer(ply) then
-        return
-    end
-
-    if ply.outsideSpawn then
-        TIMER:Disable(ply)
-        return
-    end
-
-    if (ply.groundTicks or 0) < 10 then
-        return
-    end
+    if not self:ValidTimer(ply) then return end
+    if ply.outsideSpawn then TIMER:Disable(ply) return end
+    if (ply.groundTicks or 0) < g_groundticks then return end
 
     -- Tick based
     ply.iFractionalTicks = 0
@@ -328,14 +320,8 @@ end
 -- Reset Timer
 function TIMER:ResetTimer(ply)
     ply:SetNWBool("inPractice", false)
-
-    if not self:ValidTimer(ply) then
-        return
-    end
-
-    if not ply.time then
-        return
-    end
+    if not self:ValidTimer(ply) then return end
+    if not ply.time then return end
 
     -- Tick based reset
     ply.time, ply.finished = nil, nil
@@ -386,9 +372,7 @@ end
 
 -- Stop Timer
 function TIMER:StopTimer(ply)
-    if not ply.time or ply.wasInEndZone then
-        return
-    end
+    if not ply.time or ply.wasInEndZone then return end
 
     ply.finished = engine.TickCount()
     self:UpdateTicks(ply)
@@ -419,8 +403,6 @@ function TIMER:Disable(ply)
     if not IsValid(ply) then return false end
     if ply:IsBot() then return false end
 
-    -- ply:SetNWBool("inPractice", true)
-
     ply.time = nil
     ply.finished = nil
     ply.bonustime = nil
@@ -439,18 +421,9 @@ end
 
 -- Bonus Start
 function TIMER:BonusStart(ply)
-    if not self:ValidTimer(ply, true) then
-        return
-    end
-
-    if ply.outsideSpawn then
-        TIMER:Disable(ply)
-        return
-    end
-
-    if (ply.groundTicks or 0) < 10 then
-        return
-    end
+    if not self:ValidTimer(ply, true) then return end
+    if ply.outsideSpawn then TIMER:Disable(ply) return end
+    if (ply.groundTicks or 0) < g_groundticks then return end
 
     ply.bonustime = engine.TickCount()
     ply.iFractionalTicksBonus = 0
@@ -482,9 +455,7 @@ end
 
 -- Bonus Stop
 function TIMER:BonusStop(ply)
-    if not self:ValidTimer(ply, true) then
-        return
-    end
+    if not self:ValidTimer(ply, true) then return end
 
     self:UpdateTicks(ply)
     ply.bonusfinished = engine.TickCount()
@@ -507,9 +478,7 @@ end
 
 -- Bonus Reset
 function TIMER:BonusReset(ply)
-    if not self:ValidTimer(ply, true) then
-        return
-    end
+    if not self:ValidTimer(ply, true) then return end
 
     ply.bonustime = nil
     ply.bonusfinished = nil

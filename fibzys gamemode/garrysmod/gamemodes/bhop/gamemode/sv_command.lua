@@ -517,8 +517,10 @@ function Command:Init()
         {
             {"boosterfix", "bfix"},
             function(pl, args)
-	        local pFix = pl.Boosterfix
-	        pFix.Enabled = not pFix.Enabled
+                local pFix = pl.Boosterfix
+                pFix.Enabled = not pFix.Enabled
+                pl:SetPData("BoosterFix", pFix.Enabled and "1" or "0")
+
                 TIMER:Print(pl, "You have " .. (pFix.Enabled and "enabled" or "disabled") .. " Consistent Boosterfix.") 
             end,
             "Booster Fix command",

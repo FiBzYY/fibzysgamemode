@@ -819,9 +819,14 @@ function UI:CreateMenu()
                 local x, y = 10, 0
                 self:CreatePanel(parent, {"View server logs"})
 
+                -- store the current panel reference so we can update later
+                UI.CurrentLogsPanel = parent
+
+                -- request the logs
                 net.Start("RequestAdminLogs")
                 net.SendToServer()
 
+                -- show loading or clear panel
                 UI:UpdateServerLogs(parent, {})
             end },
 

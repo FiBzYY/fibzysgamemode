@@ -33,8 +33,8 @@ Admin = {
 
 Admin.LevelNames = {}
 
-for key,id in pairs( Admin.Level ) do
-	Admin.LevelNames[ id ] = key
+for key,id in pairs(Admin.Level) do
+	Admin.LevelNames[id] = key
 end
 
 local hook_Add = hook.Add
@@ -74,27 +74,27 @@ end)
 
 AdminLoad.Levels = {}
 AdminLoad.Setup = {
-	{ 5, "Change map", Admin.Level.Zoner, { 40, 47, 100, 40 } },
-	{ 3, "Map points", Admin.Level.Zoner, { 145, 47, 100, 40 } },
-	{ 21, "Bonus points", Admin.Level.Zoner, { 250, 47, 100, 40 } },
-	{ 11, "Map options", Admin.Level.Zoner, { 355, 47, 100, 40 } },
+	{5, "Change map", Admin.Level.Zoner, { 40, 47, 100, 40 }},
+	{3, "Map points", Admin.Level.Zoner, { 145, 47, 100, 40 }},
+	{21, "Bonus points", Admin.Level.Zoner, { 250, 47, 100, 40 }},
+	{11, "Map options", Admin.Level.Zoner, { 355, 47, 100, 40 }},
 
-	{ 1, "Set zone", Admin.Level.Zoner, { 40, 97, 100, 40 } },
-	{ 10, "Remove zone", Admin.Level.Zoner, { 145, 97, 100, 40 } },
-	{ 2, "Cancel creation", Admin.Level.Zoner, { 250, 97, 100, 40 } },
-	{ 6, "Reload zones", Admin.Level.Zoner, { 355, 97, 100, 40 } },
+	{1, "Set zone", Admin.Level.Zoner, { 40, 97, 100, 40 }},
+	{10, "Remove zone", Admin.Level.Zoner, { 145, 97, 100, 40 }},
+	{2, "Cancel creation", Admin.Level.Zoner, { 250, 97, 100, 40 }},
+	{6, "Reload zones", Admin.Level.Zoner, { 355, 97, 100, 40 }},
 
-	{ 9, "Zone height", Admin.Level.Zoner, { 40, 147, 100, 40 } },
-	{ 20, "Cancel vote", Admin.Level.Zoner, { 145, 147, 100, 40 } },
-	{ 17, "Remove time", Admin.Level.Zoner, { 40, 202, 100, 40 } },
-	{ 18, "Remove replay", Admin.Level.Zoner, { 145, 202, 100, 40 } },
-	{ 28, "Remove all times", Admin.Level.Developer, { 250, 202, 205, 40 } },
+	{9, "Zone height", Admin.Level.Zoner, { 40, 147, 100, 40 }},
+	{20, "Cancel vote", Admin.Level.Zoner, { 145, 147, 100, 40 }},
+	{17, "Remove time", Admin.Level.Zoner, { 40, 202, 100, 40 }},
+	{18, "Remove replay", Admin.Level.Zoner, { 145, 202, 100, 40 }},
+	{28, "Remove all times", Admin.Level.Developer, { 250, 202, 205, 40 }},
 
-	{ 24, "Reload admins", Admin.Level.Developer, { 40, 252, 100, 40 } },
-	{ 22, "Remove map", Admin.Level.Developer, { 145, 252, 100, 40 } },
-	{ 7, "Set admin", Admin.Level.Manager, { 250, 252, 100, 40, true } },
-	{ 8, "Remove admin", Admin.Level.Manager, { 355, 252, 100, 40, true } },
-	{ 99, "Remove admin", Admin.Level.Manager, { 355, 252, 100, 40, true } },
+	{24, "Reload admins", Admin.Level.Developer, { 40, 252, 100, 40 }},
+	{22, "Remove map", Admin.Level.Developer, { 145, 252, 100, 40 }},
+	{7, "Set admin", Admin.Level.Manager, { 250, 252, 100, 40, true }},
+	{8, "Remove admin", Admin.Level.Manager, { 355, 252, 100, 40, true }},
+	{99, "Remove admin", Admin.Level.Manager, { 355, 252, 100, 40, true }},
 }
 
 local ti, tr = table.insert, table.remove
@@ -140,8 +140,8 @@ function Admin:CanAccessID(ply, id, bypass)
 	local l
 	
 	for _,data in pairs(AdminLoad.Setup) do
-		if data[ 1 ] == id then
-			l = data[ 3 ]
+		if data[1] == id then
+			l = data[3]
 			break
 		end
 	end
@@ -182,21 +182,22 @@ end
 function Admin:AddLog(text, steam, zoner)
 	SQL:Prepare(
 		"INSERT INTO timer_logging (type, data, date, adminsteam, adminname) VALUES ({0}, {1}, {2}, {3}, {4})",
-		{ 2, text, os.date( "%Y-%m-%d %H:%M:%S", os.time() ), steam, zoner }
-	):Execute( function( data, varArg, szError )
+		{2, text, os.date( "%Y-%m-%d %H:%M:%S", os.time()), steam, zoner}
+	):Execute(function(data, var, error)
 		if data then
-			BHDATA:Print( "Logging", "Added entry: " .. text )
+			BHDATA:Print("Logging", "Added entry: " .. text)
 		end
-	end )
+	end)
 end
 
 function Admin:SendLogs(ply)
     SQL:Prepare("SELECT * FROM timer_logging ORDER BY date DESC LIMIT 100")
-    :Execute(function(data)
-        PrintTable(data) -- 👈 DEBUG LOG
+    :Execute(function(data, var, error)
+        if error then
+            print("[Admin Logs] SQL ERROR: " .. tostring(error))
+        end
 
         if not data or #data == 0 then
-            print("[Logs] No data returned from SQL.")
             return
         end
 
@@ -214,22 +215,19 @@ function Admin:SendLogs(ply)
     end)
 end
 
-
 net.Receive("RequestAdminLogs", function(len, ply)
-    if Admin:CanAccess(ply, Admin.Level.Developer) then
-        Admin:SendLogs(ply)
-    end
+    Admin:SendLogs(ply)
 end)
 
-function Admin:GenerateRequest( szCaption, szTitle, szDefault, nReturn )
-	return { Caption = szCaption, Title = szTitle, Default = szDefault, Return = nReturn }
+function Admin:GenerateRequest(caption, title, default, ret)
+	return {Caption = caption, Title = title, Default = default, Return = ret}
 end
 
-function Admin:FindPlayer( szID )
+function Admin:FindPlayer(id)
 	local t = nil
 	
-	for _,p in pairs( player.GetHumans() ) do
-		if tostring( p:SteamID() ) == tostring( szID ) then
+	for _,p in pairs(player.GetHumans()) do
+		if tostring(p:SteamID()) == tostring(id) then
 			t = p
 			break
 		end
@@ -239,25 +237,25 @@ function Admin:FindPlayer( szID )
 end
 
 -- Not finish for my gamemode
-function Admin:SetVIP( ply, nType, szTag, szName, szChat, nRemaining, nID )
+function Admin:SetVIP(ply, type, tag, name, chat, remaining, id)
 	ply.IsVIP = true
-	ply.VIPID = nID
+	ply.VIPID = id
 	
-	ply:SetNWInt( "VIPStatus", 1 )
+	ply:SetNWInt("VIPStatus", 1)
 end
 
 local tabNames = nil
-function Admin:GetAccessString( nLevel )
+function Admin:GetAccessString(level)
 	if tabNames then
-		return tabNames[ nLevel ]
+		return tabNames[level]
 	end
 	
 	tabNames = {}
-	for name,level in pairs( Admin.Level ) do
-		tabNames[ level ] = name
+	for name,level in pairs(Admin.Level) do
+		tabNames[level] = name
 	end
 	
-	return tabNames[ nLevel ]
+	return tabNames[level]
 end
 
 function Admin.CommandProcess(ply, args)
@@ -268,8 +266,8 @@ function Admin.CommandProcess(ply, args)
     if #args == 0 then
         Admin:CreateWindow(ply)
     else
-        local szID, nAccess = args[1], Admin:GetAccess(ply)
-        local steamIDMessage = "Please enter a valid Steam ID like this: !admin " .. szID .. " STEAM_0:ID"
+        local id, acess = args[1], Admin:GetAccess(ply)
+        local steamIDMessage = "Please enter a valid Steam ID like this: !admin " .. id .. " STEAM_0:ID"
 
         local function handleButton(buttonID)
             if not args[2] then
@@ -283,7 +281,7 @@ function Admin.CommandProcess(ply, args)
             ["strip"] = {access = Admin.Level.Admin, id = 23}
         }
 
-        local command = commands[szID]
+        local command = commands[id]
         if command and nAccess >= command.access then
             handleButton(command.id)
         else
@@ -303,9 +301,9 @@ function Admin:CreateWindow(ply)
     if access < Admin.Level.Elevated then return end
     if access > Admin.Level.Admin then tab.Width = tab.Width + 105 end
 
-    table.insert(tab, { Type = "DButton", Close = true, Modifications = { ["SetPos"] = { tab.Width - 25, 8 }, ["SetSize"] = { 16, 16 }, ["SetText"] = { "X" } } })
+    table.insert(tab, {Type = "DButton", Close = true, Modifications = {["SetPos"] = {tab.Width - 25, 8 }, ["SetSize"] = { 16, 16 }, ["SetText"] = { "X" }} })
     if AdminLoad.RequiresSteamInput then
-        table.insert(tab, { Type = "DTextEntry", Label = "PlayerSteam", Modifications = { ["SetPos"] = { 10, 10 }, ["SetSize"] = { 200, 25 }, ["SetText"] = { "Enter Steam ID" } } })
+        table.insert(tab, {Type = "DTextEntry", Label = "PlayerSteam", Modifications = {["SetPos"] = { 10, 10 }, ["SetSize"] = { 200, 25 }, ["SetText"] = {"Enter Steam ID"} } })
     end
 
     for _, item in ipairs(AdminLoad.Setup) do
@@ -316,37 +314,37 @@ function Admin:CreateWindow(ply)
                 ["SetSize"] = { data[3], data[4] },
                 ["SetText"] = { item[2] }
             }
-            table.insert(tab, { Type = "DButton", Identifier = item[1], Require = item[5], Modifications = mod })
+            table.insert(tab, {Type = "DButton", Identifier = item[1], Require = item[5], Modifications = mod})
         end
     end
 
     BHDATA:Send(ply, "Admin", { "GUI", "Admin", tab })
 
     if AdminLoad.RequiresSteamInput then
-        BHDATA:Send(ply, "Admin", { "GUIData", "Store", { "PlayerSteam", "Steam ID" } })
+        BHDATA:Send(ply, "Admin", {"GUIData", "Store", {"PlayerSteam", "Steam ID"} })
     end
 end
 
-function Admin:HandleClient( ply, args )
-	local nID = tonumber( args[ 1 ] )
+function Admin:HandleClient(ply, args)
+	local nID = tonumber(args[1])
 	if nID == 1 then
-		Admin:VIPPanelCall( ply, args )
+		Admin:VIPPanelCall(ply, args)
 	elseif nID == -1 then
-		Admin:HandleRequest( ply, args )
+		Admin:HandleRequest(ply, args)
 	elseif nID == -2 then
-		Admin:HandleButton( ply, args )
+		Admin:HandleButton(ply, args)
 	end
 end
 
 -- Calls when a button is pressed
-function Admin:HandleButton( ply, args )
-	local ID, Steam = tonumber( args[ 2 ] ), tostring( args[ 3 ] )
-	if not Admin:CanAccessID( ply, ID ) then
-		return BHDATA:Send( ply, "Print", { "Admin", "You don't have access to use this functionality" } )
+function Admin:HandleButton(ply, args)
+	local ID, Steam = tonumber(args[2]), tostring(args[3])
+	if not Admin:CanAccessID(ply, ID) then
+		return BHDATA:Send(ply, "Print", {"Admin", "You don't have access to use this functionality." })
 	end
 	
 	if ID == 1 then
-		if Zones:CheckSet( ply, true, ply.ZoneExtra ) then return end
+		if Zones:CheckSet(ply, true, ply.ZoneExtra) then return end
 		if Steam == "Extra" then ply.ZoneExtra = true end
 		
 		local tabQuery = {
@@ -354,188 +352,188 @@ function Admin:HandleButton( ply, args )
 			Title = "Select zone type"
 		}
 
-		for name,id in pairs( Zones.Type ) do
-			table.insert( tabQuery, { name, { ID, id } } )
+		for name,id in pairs(Zones.Type) do
+			table.insert(tabQuery, { name, {ID, id} })
 		end
 		
-		table.insert( tabQuery, { "Close", {} } )
+		table.insert(tabQuery, {"Close", {}})
 		
 		if not ply.ZoneExtra then
-			table.insert( tabQuery, { "Add Extra", { ID, -10 } } )
+			table.insert(tabQuery, { "Add Extra", {ID, -10 } })
 		else
-			table.insert( tabQuery, { "Stop Extra", { ID, -20 } } )
+			table.insert(tabQuery, { "Stop Extra", {ID, -20 } })
 		end
 		
-		BHDATA:Send( ply, "Admin", { "Query", tabQuery } )
+		BHDATA:Send(ply, "Admin", {"Query", tabQuery })
 	elseif ID == 2 then
-		if Zones:CheckSet( ply ) then
-			Zones:CancelSet( ply, true )
+		if Zones:CheckSet(ply) then
+			Zones:CancelSet(ply, true)
 		else
-			BHDATA:Send( ply, "Print", { "Admin", Lang:Get( "ZoneNoEdit" ) } )
+			BHDATA:Send(ply, "Print", {"Admin", Lang:Get("ZoneNoEdit")})
 		end
 	elseif ID == 3 then
-		local tabRequest = Admin:GenerateRequest( "Enter the map points. This is the points value of the map", "Map Points", tostring( Timer.Multiplier ), ID )
+		local tabRequest = Admin:GenerateRequest("Enter the map points. This is the points value of the map", "Map Points", tostring(Timer.Multiplier), ID)
 		BHDATA:Send( ply, "Admin", { "Request", tabRequest } )
 	elseif ID == 5 then
-		local tabRequest = Admin:GenerateRequest( "Enter the map to change", "Change map", game.GetMap(), ID )
+		local tabRequest = Admin:GenerateRequest("Enter the map to change", "Change map", game.GetMap(), ID)
 		BHDATA:Send( ply, "Admin", { "Request", tabRequest } )
 	elseif ID == 6 then
 		Zones:Reload()
-		BHDATA:Send( ply, "Print", { "Admin", Lang:Get( "AdminOperationComplete" ) } )
+		BHDATA:Send( ply, "Print", { "Admin", Lang:Get("AdminOperationComplete") })
 	elseif ID == 8 then
 		-- removes all admin access from the specified Steam ID
 		SQL:Prepare(
 			"DELETE FROM timer_admins WHERE steam = {0}",
-			{ Steam }
-		):Execute( function( data, varArg, szError )
+			{Steam}
+		):Execute(function(data, arg, error)
 			if data then
-				if IsValid( varArg ) then
-					if varArg:GetNWInt( "AccessIcon", 0 ) > 0 then
-						varArg:SetNWInt( "AccessIcon", 0 )
+				if IsValid(arg) then
+					if arg:GetNWInt( "AccessIcon", 0 ) > 0 then
+						arg:SetNWInt( "AccessIcon", 0 )
 					end
 					
-					AdminLoad.Levels[ varArg:SteamID() ] = varArg.VIPLevel
+					AdminLoad.Levels[arg:SteamID()] = arg.VIPLevel
 				end
 				
-				BHDATA:Send( ply, "Print", { "Admin", Lang:Get( "AdminOperationComplete" ) } )
+				BHDATA:Send(ply, "Print", { "Admin", Lang:Get("AdminOperationComplete") })
 			else
-				BHDATA:Send( ply, "Print", { "Admin", Lang:Get( "AdminErrorCode", { szError } ) } )
+				BHDATA:Send(ply, "Print", { "Admin", Lang:Get("AdminErrorCode", {error}) })
 			end
-		end, Admin:FindPlayer( Steam ) )
+		end, Admin:FindPlayer(Steam))
 	elseif ID == 9 then
 		local tabQuery = {
 			Caption = "Which zone do you want to edit height of?\n(Note: When you select one, you will get a new window that shows height!)",
 			Title = "Select zone"
 		}
 
-		for _,zone in pairs( Zones.Entities ) do
+		for _,zone in pairs(Zones.Entities) do
 			if IsValid( zone ) then
-				table.insert( tabQuery, { Zones:GetName( zone.zonetype ) .. " (" .. zone:EntIndex() .. ")", { ID, zone:EntIndex() } } )
+				table.insert( tabQuery, { Zones:GetName(zone.zonetype) .. " (" .. zone:EntIndex() .. ")", { ID, zone:EntIndex() } } )
 			end
 		end
 		
-		table.insert( tabQuery, { "Close", {} } )
+		table.insert(tabQuery, { "Close", {} })
 		
-		BHDATA:Send( ply, "Admin", { "Query", tabQuery } )
+		BHDATA:Send(ply, "Admin", { "Query", tabQuery})
 	elseif ID == 10 then
 		local tabQuery = {
 			Caption = "Select the zone that you want to remove.\n(Note: The zone will be removed immediately!)\n(Note: The higher the number, the later it was added)",
 			Title = "Remove zone"
 		}
 		
-		for _,zone in pairs( Zones.Entities ) do
-			if IsValid( zone ) then
+		for _,zone in pairs(Zones.Entities) do
+			if IsValid(zone) then
 				local extra = ""
 				if zone.zonetype == Zones.Type.LegitSpeed then
 					extra = " (" .. zone.speed .. ")"
 				end
 				
-				table.insert( tabQuery, { Zones:GetName( zone.zonetype ) .. " (" .. zone:EntIndex() .. ")" .. extra, { ID, zone:EntIndex() } } )
+				table.insert(tabQuery, {Zones:GetName(zone.zonetype) .. " (" .. zone:EntIndex() .. ")" .. extra, { ID, zone:EntIndex()}})
 			end
 		end
 		
-		table.insert( tabQuery, { "Close", {} } )
+		table.insert(tabQuery, { "Close", {} })
 		
-		BHDATA:Send( ply, "Admin", { "Query", tabQuery } )
+		BHDATA:Send(ply, "Admin", { "Query", tabQuery })
 	elseif ID == 11 then
 		local tabQuery = {
 			Caption = "Please click map required options. Select values that you want to add. Once you're done, press Save (Default is none)",
 			Title = "Map options"
 		}
 		
-		for name,zone in pairs( Zones.Options ) do
-			local szAdd = bit.band( Timer.Options, zone ) > 0 and " (On)" or " (Off)"
+		for name,zone in pairs(Zones.Options) do
+			local szAdd = bit.band(Timer.Options, zone) > 0 and " (On)" or " (Off)"
 			table.insert( tabQuery, { name .. szAdd, { ID, zone } } )
 		end
 		
-		table.insert( tabQuery, { "Save", { ID, -1 } } )
-		table.insert( tabQuery, { "Cancel", {} } )
+		table.insert(tabQuery, { "Save", { ID, -1 } })
+		table.insert(tabQuery, { "Cancel", {} })
 		
-		BHDATA:Send( ply, "Admin", { "Query", tabQuery } )
+		BHDATA:Send(ply, "Admin", { "Query", tabQuery})
 	elseif ID == 13 then
-		local target = Admin:FindPlayer( Steam )
+		local target = Admin:FindPlayer(Steam)
 		
 		if IsValid( target ) then
-			if Admin:IsHigherThan( target, ply, true ) then
-				return BHDATA:Send( ply, "Print", { "Admin", Lang:Get( "AdminHierarchy" ) } )
+			if Admin:IsHigherThan(target, ply, true) then
+				return BHDATA:Send(ply, "Print", { "Admin", Lang:Get("AdminHierarchy")})
 			end
 			
 			target.AdminMute = not target.AdminMute
-			BHDATA:Broadcast( "Manage", { "Mute", target:SteamID(), target.AdminMute } )
-			BHDATA:Send( ply, "Print", { "Admin", "You have " .. (target.AdminMute and "muted " or "unmuted ") .. target:Name() .. "!" } )
+			BHDATA:Broadcast("Manage", { "Mute", target:SteamID(), target.AdminMute})
+			BHDATA:Send(ply, "Print", { "Admin", "You have " .. (target.AdminMute and "muted " or "unmuted ") .. target:Name() .. "!" } )
 		else
-			BHDATA:Send( ply, "Print", { "Admin", "Couldn't find a valid player with Steam ID: " .. Steam } )
+			BHDATA:Send(ply, "Print", { "Admin", "Couldn't find a valid player with Steam ID: " .. Steam } )
 		end
 	elseif ID == 17 then
 		if not ply.RemovingTimes then
 			ply.RemovingTimes = true
-			BHDATA:Send( ply, "Admin", { "Edit", ID } )
-			BHDATA:Send( ply, "Print", { "Admin", "You are now editing times. Type !wr and select an item to remove it. Press this option again to disable it." } )
+			BHDATA:Send(ply, "Admin", { "Edit", ID } )
+			BHDATA:Send(ply, "Print", { "Admin", "You are now editing times. Type !wr and select an item to remove it. Press this option again to disable it." } )
 		else
 			ply.RemovingTimes = nil
-			BHDATA:Send( ply, "Admin", { "Edit", nil } )
-			BHDATA:Send( ply, "Print", { "Admin", "You have left time editing mode." } )
+			BHDATA:Send(ply, "Admin", { "Edit", nil } )
+			BHDATA:Send(ply, "Print", { "Admin", "You have left time editing mode." } )
 		end
 	elseif ID == 18 then
 		local tabRequest = Admin:GenerateRequest( "Are you sure you want to remove a current Replay? Type the ID of the target style to confirm. (This cannot be un-done)", "Confirm removal", "No", ID )
-		BHDATA:Send( ply, "Admin", { "Request", tabRequest } )
+		BHDATA:Send(ply, "Admin", { "Request", tabRequest } )
 	elseif ID == 20 then
 		RTV.CancelVote = not RTV.CancelVote
-		BHDATA:Send( ply, "Print", { "Admin", "The map vote is now set to " .. (not RTV.CancelVote and "not " or "") .. "be cancelled!" } )
+		BHDATA:Send(ply, "Print", { "Admin", "The map vote is now set to " .. (not RTV.CancelVote and "not " or "") .. "be cancelled!" } )
 	elseif ID == 21 then
 		local tabRequest = Admin:GenerateRequest( "Enter the bonus points. This is the points value of the bonus", "Bonus Points", tostring( Timer.BonusMultiplier ), ID )
-		BHDATA:Send( ply, "Admin", { "Request", tabRequest } )
+		BHDATA:Send(ply, "Admin", { "Request", tabRequest } )
 	elseif ID == 22 then
 		local tabRequest = Admin:GenerateRequest( "Enter the name of the map to be removed.\nWARNING: This will remove all saved data of the map, including times!", "Completely remove map", "", ID )
-		BHDATA:Send( ply, "Admin", { "Request", tabRequest } )
+		BHDATA:Send(ply, "Admin", { "Request", tabRequest } )
 	elseif ID == 26 then
-		Zones.Editor[ ply ].Steps = true
+		Zones.Editor[ply].Steps = true
 		
 		local tabRequest = Admin:GenerateRequest( "Please enter the maximum speed the player will be able to get after entering this zone.\nNote: The player will keep this speed until entering a new zone.", "Enter speed limit for zone", "480", ID )
-		BHDATA:Send( ply, "Admin", { "Request", tabRequest } )
+		BHDATA:Send(ply, "Admin", { "Request", tabRequest } )
 	elseif ID == 27 then
 		if ply.Spectating then
-			return BHDATA:Send( ply, "Print", { "Admin", "You must be outside of spectator mode in order to change this setting in order to avoid suspicion." } )
+			return BHDATA:Send(ply, "Print", { "Admin", "You must be outside of spectator mode in order to change this setting in order to avoid suspicion."})
 		end
 		
 		ply.Incognito = not ply.Incognito
 		BHDATA:Send( ply, "Print", { "Admin", "Your incognito mode is now " .. (ply.Incognito and "enabled" or "disabled") } )
 	elseif ID == 28 then
 		local tabRequest = Admin:GenerateRequest( "Enter the ID of the style of which all times are to be removed.\nWARNING: This will remove all times permanently!", "Remove all times for mode", "No", ID )
-		BHDATA:Send( ply, "Admin", { "Request", tabRequest } )
+		BHDATA:Send(ply, "Admin", { "Request", tabRequest})
 	elseif ID == 32 then
-		local now = ply:GetNWInt( "AccessIcon", 0 )
+		local now = ply:GetNWInt("AccessIcon", 0)
 		if now > 0 then
-			ply:SetNWInt( "AccessIcon", 0 )
+			ply:SetNWInt("AccessIcon", 0)
 		else
-			local nAccess = Admin:GetAccess( ply )
-			if nAccess >= Admin.Level.Base then
-				Admin:SetAccessIcon( ply, nAccess )
+			local access = Admin:GetAccess( ply )
+			if access >= Admin.Level.Base then
+				Admin:SetAccessIcon(ply, access)
 			end
 		end
 		
-		BHDATA:Send( ply, "Print", { "Admin", "Your admin incognito mode is now " .. (now > 0 and "enabled" or "disabled") } )
+		BHDATA:Send(ply, "Print", { "Admin", "Your admin incognito mode is now " .. (now > 0 and "enabled" or "disabled")})
 	end
 end
 
 -- responses from Derma requests or Queries
-function Admin:HandleRequest( ply, args )
-	local ID, Value = tonumber( args[ 2 ] ), args[ 3 ]
+function Admin:HandleRequest(ply, args)
+	local ID, Value = tonumber(args[2]), args[3]
 	if ID != 17 then
-		Value = tostring( Value )
+		Value = tostring(Value)
 	end
 	
-	if not Admin:CanAccessID( ply, ID, ID > 50 ) then
-		return BHDATA:Send( ply, "Print", { "Admin", "You don't have access to use this functionality" } )
+	if not Admin:CanAccessID(ply, ID, ID > 50) then
+		return BHDATA:Send(ply, "Print", { "Admin", "You don't have access to use this functionality"})
 	end
 	
 	if ID == 1 then
-		local Type = tonumber( Value )
+		local Type = tonumber(Value)
 		if Type == -10 then
-			return Admin:HandleButton( ply, { -2, ID, "Extra" } )
+			return Admin:HandleButton(ply, { -2, ID, "Extra" })
 		elseif Type == -20 then
 			ply.ZoneExtra = nil
-			return Admin:HandleButton( ply, { -2, ID } )
+			return Admin:HandleButton(ply, { -2, ID })
 		end
 		
 		Zones:StartSet( ply, Type )
@@ -572,24 +570,24 @@ function Admin:HandleRequest( ply, args )
 		Admin:AddLog("Changed map multiplier on " .. game.GetMap() .. " from " .. nOld .. " to " .. Points, ply:SteamID(), ply:Name())
 	elseif ID == 5 then
 		BHDATA:Unload()
-		RunConsoleCommand( "changelevel", Value )
+		RunConsoleCommand("changelevel", Value)
 	elseif ID == 9 then
-		local nIndex, bFind = tonumber( Value ), false
+		local index, find = tonumber(Value), false
 		
-		for _,zone in pairs( Zones.Entities ) do
-			if IsValid( zone ) and zone:EntIndex() == nIndex then
-				ply.ZoneData = { zone.zonetype, zone.min, zone.max }
-				bFind = true
+		for _,zone in pairs(Zones.Entities) do
+			if IsValid(zone) and zone:EntIndex() == index then
+				ply.ZoneData = {zone.zonetype, zone.min, zone.max}
+				find = true
 				break
 			end
 		end
 		
-		if not bFind then
-			BHDATA:Send( ply, "Print", { "Admin", "Couldn't find selected entity. Please try again." } )
+		if not find then
+			BHDATA:Send(ply, "Print", { "Admin", "Couldn't find selected entity. Please try again."})
 		else
-			local nHeight = math.Round( ply.ZoneData[ 3 ].z - ply.ZoneData[ 2 ].z )
+			local nHeight = math.Round(ply.ZoneData[3].z - ply.ZoneData[2].z)
 			local tabRequest = Admin:GenerateRequest( "Enter new desired height (Default is 128)", "Change height", tostring( nHeight ), 90 )
-			BHDATA:Send( ply, "Admin", { "Request", tabRequest } )
+			BHDATA:Send(ply, "Admin", { "Request", tabRequest })
 		end
 	elseif ID == 90 then
 		local nValue = tonumber(Value)
@@ -599,7 +597,6 @@ function Admin:HandleRequest( ply, args )
 
 		local OldPos1 = "'" .. util.TypeToString(ply.ZoneData[2]) .. "'"
 		local OldPos2 = "'" .. util.TypeToString(ply.ZoneData[3]) .. "'"
-
     
 		local nMin = ply.ZoneData[2].z
 		ply.ZoneData[3].z = nMin + nValue
@@ -619,10 +616,10 @@ function Admin:HandleRequest( ply, args )
 		ReloadZonesOnMapLoad()
 		BHDATA:Send(ply, "Print", { "Admin", Lang:Get("AdminOperationComplete") })
 		elseif ID == 10 then
-			local nIndex, bFind, nType = tonumber(Value), false, nil
+			local index, find, type = tonumber(Value), false, nil
 
 			for _, zone in pairs(Zones.Entities) do
-				if IsValid(zone) and zone:EntIndex() == nIndex then
+				if IsValid(zone) and zone:EntIndex() == index then
 					if zone.zonetype == Zones.Type.LegitSpeed and zone.speed then
 						zone.deltype = zone.zonetype .. zone.speed
 					end
@@ -655,13 +652,13 @@ function Admin:HandleRequest( ply, args )
 						end
 					end)
 
-					nType = zone.zonetype
-					bFind = true
+					type = zone.zonetype
+					find = true
 					break
 				end
 			end
 
-			if not bFind then
+			if not find then
 				BHDATA:Send(ply, "Print", {"Admin", "Couldn't find selected entity. Please try again."})
 			else
 				BHDATA:Send(ply, "Print", {"Admin", Lang:Get("AdminOperationComplete")})
@@ -694,58 +691,58 @@ function Admin:HandleRequest( ply, args )
 				end)
 			end
 	elseif ID == 16 then
-		local split = string.Explode( ";", Value )
+		local split = string.Explode(";", Value)
 		if #split != 2 then
-			return BHDATA:Send( ply, "Print", { "Admin", Lang:Get( "AdminMisinterpret", { Value } ) } )
+			return BHDATA:Send(ply, "Print", { "Admin", Lang:Get( "AdminMisinterpret", {Value})})
 		end
 		
-		local target = Admin:FindPlayer( ply.AdminTarget )
-		local nLength, szReason, szName = tonumber( split[ 1 ] ), split[ 2 ], "Offline Player"
+		local target = Admin:FindPlayer(ply.AdminTarget)
+		local length, reason, name = tonumber(split[1]), split[2], "Offline Player"
 		
 		if not nLength then
-			return BHDATA:Send( ply, "Print", { "Admin", Lang:Get( "AdminInvalidFormat", { split[ 1 ], "Number" } ) } )
+			return BHDATA:Send(ply, "Print", { "Admin", Lang:Get( "AdminInvalidFormat", { split[ 1 ], "Number" } ) })
 		end
 		
-		if util.SteamIDTo64( ply.AdminTarget or "" ) == "0" then
-			return BHDATA:Send( ply, "Print", { "Admin", Lang:Get( "AdminInvalidFormat", { ply.AdminTarget, "Steam ID" } ) } )
+		if util.SteamIDTo64(ply.AdminTarget or "") == "0" then
+			return BHDATA:Send(ply, "Print", { "Admin", Lang:Get( "AdminInvalidFormat", { ply.AdminTarget, "Steam ID" } ) })
 		end
 		
 		if IsValid( target ) then
-			szName = target:Name()
+			name = target:Name()
 			target.DCReason = "Banned by admin"
-			target:Kick( "[Banned " .. (nLength == 0 and "permanently" or "for " .. nLength .. " minutes") .. "] Reason: " .. szReason )
+			target:Kick( "[Banned " .. (length == 0 and "permanently" or "for " .. length .. " minutes") .. "] Reason: " .. reason )
 		end
 		
-		Admin:AddBan( ply.AdminTarget, szName, nLength, szReason, ply:SteamID(), ply:Name() )
-		Admin:AddLog( "Admin banned player " .. ply.AdminTarget .. " (" .. nLength .. " mins) for reason: " .. szReason, ply:SteamID(), ply:Name() )
+		Admin:AddBan(ply.AdminTarget, name, length, reason, ply:SteamID(), ply:Name())
+		Admin:AddLog("Admin banned player " .. ply.AdminTarget .. " (" .. length .. " mins) for reason: " .. reason, ply:SteamID(), ply:Name())
 		
-		if not IsValid( target ) then
-			szName = ply.AdminTarget
+		if not IsValid(target) then
+			name = ply.AdminTarget
 		end
 		
-		BHDATA:Broadcast( "Print", { "General", Lang:Get( "AdminPlayerBan", { szName, nLength, szReason } ) } )
-		BHDATA:Send( ply, "Print", { "Admin", "You have banned " .. szName .. " for reason: " .. szReason .. " (Length: " .. nLength .. ")" } )
+		BHDATA:Broadcast("Print", { "General", Lang:Get( "AdminPlayerBan", {name, length, reason} ) })
+		BHDATA:Send(ply, "Print", { "Admin", "You have banned " .. name .. " for reason: " .. reason .. " (Length: " .. length .. ")" })
 	elseif ID == 17 then
 		ply.TimeRemoveData = Value
-		local tabRequest = Admin:GenerateRequest( "Are you sure you want to remove " .. Value[ 4 ] .. "'s #" .. Value[ 2 ] .. " time? (Type Yes to confirm)", "Confirm removal", "No", 170 )
+		local tabRequest = Admin:GenerateRequest("Are you sure you want to remove " .. Value[4] .. "'s #" .. Value[2] .. " time? (Type Yes to confirm)", "Confirm removal", "No", 170)
 		BHDATA:Send( ply, "Admin", { "Request", tabRequest } )
 	elseif ID == 170 then
 		if Value ~= "Yes" then
-			return BHDATA:Send(ply, "Print", { "Admin", "Time removal operation has been cancelled!" })
+			return BHDATA:Send(ply, "Print", { "Admin", "Time removal operation has been cancelled!"})
 		end
 
 		local d = ply.TimeRemoveData
 		if not d then return end
 
-		local nStyle, Rank, szUID = tonumber(d[1]), tonumber(d[2]), MySQL:Escape(tostring(d[3]))
+		local style, Rank, uid = tonumber(d[1]), tonumber(d[2]), MySQL:Escape(tostring(d[3]))
 		local mapName = MySQL:Escape(game.GetMap())
 
-		MySQL:Start("DELETE FROM timer_times WHERE map = " .. mapName .. " AND style = " .. nStyle .. " AND uid = " .. szUID .. "", function()
+		MySQL:Start("DELETE FROM timer_times WHERE map = " .. mapName .. " AND style = " .. style .. " AND uid = " .. uid .. "", function()
 			TIMER:LoadRecords()
 
-			local i = Replay:GetInfo(nStyle)
-			if i and i.Style and i.SteamID and i.Style == nStyle and i.SteamID == szUID then
-				MySQL:Start("DELETE FROM timer_replays WHERE map = " .. mapName .. " AND style = " .. nStyle .. " AND uid = " .. szUID .. "", function()
+			local i = Replay:GetInfo(style)
+			if i and i.Style and i.SteamID and i.Style == style and i.SteamID == uid then
+				MySQL:Start("DELETE FROM timer_replays WHERE map = " .. mapName .. " AND style = " .. style .. " AND uid = " .. uid .. "", function()
 					if Replay:Exists(i.Style) then
 						for _, b in pairs(player.GetBots()) do
 							if b.Style == i.Style then
@@ -755,10 +752,10 @@ function Admin:HandleRequest( ply, args )
 						end
 					end
 
-					Replay:ClearStyle(nStyle)
+					Replay:ClearStyle(style)
 
-					local szStyle = (nStyle == TIMER:GetStyleID("Normal")) and ".txt" or ("_" .. nStyle .. ".txt")
-					local replayFilePath = "timer/replays/data_" .. game.GetMap() .. szStyle
+					local stylename = (style == TIMER:GetStyleID("Normal")) and ".txt" or ("_" .. style .. ".txt")
+					local replayFilePath = "timer/replays/data_" .. game.GetMap() .. stylename
 					if file.Exists(replayFilePath, "DATA") then
 						file.Delete(replayFilePath)
 					end
@@ -767,7 +764,7 @@ function Admin:HandleRequest( ply, args )
 		end)
 
 		for _, p in pairs(player.GetHumans()) do
-			if IsValid(p) and p:SteamID() == szUID then
+			if IsValid(p) and p:SteamID() == uid then
 				TIMER:LoadBest(p)
 				break
 			end
@@ -776,12 +773,12 @@ function Admin:HandleRequest( ply, args )
 		ply.TimeRemoveData = nil
 		BHDATA:Send(ply, "Print", { "Admin", d[4] .. "'s #" .. Rank .. " time has been deleted and records have been reloaded!" })
 	elseif ID == 18 then
-		local nStyle = tonumber(Value)
-		if not nStyle then
+		local style = tonumber(Value)
+		if not style then
 			return BHDATA:Send(ply, "Print", { "Admin", "Replay removal operation has been cancelled!" })
 		end
 
-		if not BHDATA:IsValidStyle(nStyle) then
+		if not BHDATA:IsValidStyle(style) then
 			return BHDATA:Send(ply, "Print", { "Admin", "Invalid style entered!" })
 		end
 
@@ -794,35 +791,35 @@ function Admin:HandleRequest( ply, args )
 			end
 		end
 
-		local szStyle = (nStyle == TIMER:GetStyleID("Normal")) and ".txt" or ("_" .. nStyle .. ".txt")
-		local replayFilePath = "timer/replays/data_" .. game.GetMap() .. szStyle
+		local stylename = (style == TIMER:GetStyleID("Normal")) and ".txt" or ("_" .. style .. ".txt")
+		local replayFilePath = "timer/replays/data_" .. game.GetMap() .. stylename
 		if file.Exists(replayFilePath, "DATA") then
 			file.Delete(replayFilePath)
 		end
 
-		MySQL:Start("DELETE FROM timer_replays WHERE map = " .. mapName .. " AND style = " .. nStyle, function()
-			Replay:ClearStyle(nStyle)
-			BHDATA:Send(ply, "Print", { "Admin", "Replay for style " .. nStyle .. " has been successfully removed!" })
+		MySQL:Start("DELETE FROM timer_replays WHERE map = " .. mapName .. " AND style = " .. style, function()
+			Replay:ClearStyle(style)
+			BHDATA:Send(ply, "Print", { "Admin", "Replay for style " .. style .. " has been successfully removed!" })
 		end)
 	elseif ID == 19 then
-		local nFrame = tonumber( Value )
-		if not nFrame then
-			return BHDATA:Send( ply, "Print", { "Admin", Lang:Get( "AdminInvalidFormat", { Value, "Number" } ) } )
+		local frame = tonumber(Value)
+		if not frame then
+			return BHDATA:Send(ply, "Print", { "Admin", Lang:Get( "AdminInvalidFormat", { Value, "Number" } ) })
 		end
 		
-		local tabData = Replay:GetFramePosition( ply.AdminBotStyle )
-		if nFrame >= tabData[ 2 ] then
-			nFrame = tabData[ 2 ] - 2
-		elseif nFrame < 1 then
-			nFrame = 1
+		local tabData = Replay:GetFramePosition(ply.AdminBotStyle)
+		if frame >= tabData[2] then
+			frame = tabData[2] - 2
+		elseif frame < 1 then
+			frame = 1
 		end
 		
-		local info = Replay:GetInfo( ply.AdminBotStyle )
-		local current = (nFrame / tabData[ 2 ]) * info.Time
+		local info = Replay:GetInfo(ply.AdminBotStyle)
+		local current = (frame / tabData[ 2 ]) * info.Time
 		info.Start = CurTime() - current
 		
-		Replay:SetInfoData( ply.AdminBotStyle, info )
-		Replay:SetFramePosition( ply.AdminBotStyle, nFrame )
+		Replay:SetInfoData(ply.AdminBotStyle, info)
+		Replay:SetFramePosition(ply.AdminBotStyle, frame)
 	elseif ID == 21 then
 		local Points = tonumber(Value)
 		if not Points then
@@ -876,58 +873,58 @@ function Admin:HandleRequest( ply, args )
 			Admin:AddLog("Fully removed map " .. Value, ply:SteamID(), ply:Name())
 		end
 	elseif ID == 26  then
-		local nValue = tonumber( Value )
+		local nValue = tonumber(Value)
 		if not nValue then
-			return BHDATA:Send( ply, "Print", { "Admin", Lang:Get( "AdminInvalidFormat", { Value, "Number" } ) } )
+			return BHDATA:Send(ply, "Print", { "Admin", Lang:Get( "AdminInvalidFormat", { Value, "Number" } ) })
 		end
 		
-		Zones:FinishSet( ply, nValue )
+		Zones:FinishSet(ply, nValue)
 	elseif ID == 28 then
-		local nStyle = tonumber( Value )
+		local nStyle = tonumber(Value)
 		if not nStyle then
-			return BHDATA:Send( ply, "Print", { "Admin", "Time deletion operation has been cancelled!" } )
+			return BHDATA:Send(ply, "Print", { "Admin", "Time deletion operation has been cancelled!" })
 		end
 		
 		if not BHDATA:IsValidStyle( nStyle ) then
-			return BHDATA:Send( ply, "Print", { "Admin", "Invalid style entered!" } )
+			return BHDATA:Send(ply, "Print", { "Admin", "Invalid style entered!" } )
 		end
 		
-		MySQL:Start( "DELETE FROM timer_times WHERE map = '" .. game.GetMap() .. "' AND style = " .. nStyle )
+		MySQL:Start("DELETE FROM timer_times WHERE map = '" .. game.GetMap() .. "' AND style = " .. nStyle)
 		TIMER:LoadRecords()
 		
-		for _,p in pairs( player.GetHumans() ) do
-			if IsValid( p ) then
-				TIMER:LoadBest( p )
+		for _,p in pairs(player.GetHumans()) do
+			if IsValid(p) then
+				TIMER:LoadBest(p)
 				break
 			end
 		end
 	elseif ID == 29 then
 		if Value == "" then
-			return BHDATA:Send( ply, "Print", { "Admin", "Oborting notification because text was empty." } )
+			return BHDATA:Send(ply, "Print", { "Admin", "Oborting notification because text was empty." })
 		else
 			Value = "[" .. Admin:GetAccessString( Admin:GetAccess( ply ) ) .. "] " .. ply:Name() .. ": " .. Value
 		end
 		
-		if IsValid( ply.AdminTarget ) then
-			BHDATA:Send( ply.AdminTarget, "Admin", { "Message", Value } )
+		if IsValid(ply.AdminTarget) then
+			BHDATA:Send(ply.AdminTarget, "Admin", { "Message", Value })
 		else
-			BHDATA:Broadcast( "Admin", { "Message", Value } )
+			BHDATA:Broadcast("Admin", { "Message", Value })
 		end
 		
 		ply.AdminTarget = nil
 	elseif ID == 30 then
-		local target = Admin:FindPlayer( Value )
+		local target = Admin:FindPlayer(Value)
 		
-		if IsValid( target ) then
-			local source = Admin:FindPlayer( ply.AdminTarget )
-			if not IsValid( source ) then
-				return BHDATA:Send( ply, "Print", { "Admin", "The source entity was lost or disconnected." } )
+		if IsValid(target) then
+			local source = Admin:FindPlayer(ply.AdminTarget)
+			if not IsValid(source) then
+				return BHDATA:Send(ply, "Print", { "Admin", "The source entity was lost or disconnected."})
 			end
 			
-			source:SetPos( target:GetPos() )
-			BHDATA:Send( ply, "Print", { "Admin", source:Name() .. " has been teleported to " .. target:Name() } )
+			source:SetPos(target:GetPos())
+			BHDATA:Send(ply, "Print", { "Admin", source:Name() .. " has been teleported to " .. target:Name() })
 		else
-			BHDATA:Send( ply, "Print", { "Admin", "Couldn't find a valid target player with Steam ID: " .. Steam } )
+			BHDATA:Send(ply, "Print", { "Admin", "Couldn't find a valid target player with Steam ID: " .. Steam })
 		end
 	end
 end
@@ -1108,10 +1105,11 @@ hook.Add("CheckPassword", "BanCheck", function(steamID64, ip, sv_password, cl_pa
     end
 
     -- Check config bans
-    if IsPlayerCfgBanned(steamID) then
-        UTIL:Notify(Color(255, 0, 0), "BanSystem", BanSystem .. " SteamID " .. steamID .. " is banned via config.")
-        return false, "You are banned from this server your unwanted (config ban)."
-    end
+	local banData = IsPlayerCfgBanned(steamID)
+	if banData then
+		UTIL:Notify(Color(255, 0, 0), "BanSystem", BanSystem .. " SteamID " .. steamID .. " is banned via config.")
+		return false, "You are banned from this server: " .. banData.reason
+	end
 
     -- Steam bans from live ban system
     local isSteamBanned, steamReason = IsPlayerBanned(steamID)

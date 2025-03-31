@@ -1,14 +1,21 @@
 SSJ = SSJ or {}
 
 -- Cache
-local hook_Add = hook.Add
+local hook_Add, format, floor, mc, min, band = hook.Add, string.format, math.floor, math.Clamp, math.min, bit.band
 local math_sin, math_cos, math_rad, bit_band = math.sin, math.cos, math.rad, bit.band
 local mabs, matan, mdeg = math.abs, math.atan, math.deg
+local Vector, Color, IsValid = Vector, Color, IsValid
 
 -- Set tables
 local BHOP_FRAMES = 10
 local g_fTickrate = 0.01
 local OFFSETS_MAX_FRAME = 15
+
+local FORWARD_SCALE = 0.3
+local SIDE_SCALE = 2
+local IDEAL_GAIN = 32.4
+local MATH_PI = 3.14159
+local zeroVec = Vector(0, 0, 0)
 
 -- SSJ
 local g_JumpData = {}
@@ -257,28 +264,6 @@ local function GetJSSIndicator(jss)
     end
 end
 
--- Get Velocity
-local function GetClientVelocity(ply)
-    if not IsValid(ply) then return 0 end
-
-    local velocity = ply:GetAbsVelocity()
-    if not velocity then return 0 end
-    
-    local x, y = velocity:Unpack()
-    local speed2D = math.sqrt(x * x + y * y)
-
-    return speed2D
-end
-
--- Get Speed
-local function GetSpeed(vel, twoD)
-    if twoD then
-        vel = Vector(vel[1], vel[2], 0)
-    end
-
-    return vel:Length()
-end
-
 if SERVER then
     util.AddNetworkString("SyncSSJSettings")
     util.AddNetworkString("SyncSSJFromServer")
@@ -342,6 +327,37 @@ if CLIENT then
     cvars.AddChangeCallback("bhop_showpre", function() timer.Simple(0.05, SyncSSJSettings) end)
 end
 
+local ILLEGAL_STYLE_IDS = {
+    ["TAS"] = true,
+    ["Unreal"] = true,
+    ["WTF"] = true,
+    ["AS"] = true,
+    ["Swift"] = true,
+    ["Speedrun"] = true,
+    ["LG"] = true,
+}
+
+local function IsIllegalStyle(style)
+    for name in pairs(ILLEGAL_STYLE_IDS) do
+        if style == TIMER:GetStyleID(name) then return true end
+    end
+    return false
+end
+
+local function GetSSJSettings(ply)
+    if not ply.SSJ then
+        local ssj = ply:GetPData("SSJ_Settings", false)
+        ply.SSJ = ssj and {["Settings"] = util.JSONToTable(ssj)} or {
+            ["Settings"] = {
+                true, true, false, false, true,
+                false, false, false, false, false,
+                false, false, false, true
+            }
+        }
+    end
+    return ply.SSJ["Settings"]
+end
+
 -- Print the stats
 local function SSJ_PrintStats(ply, lastSpeed, jumpTimeDiff)
     if not IsValid(ply) then return end
@@ -351,15 +367,15 @@ local function SSJ_PrintStats(ply, lastSpeed, jumpTimeDiff)
     local strafeTicks = g_iStrafeTick[ply]
     local syncedTicks = g_iSyncedTick[ply]
 
-    local sync = strafeTicks > 0 and math.Clamp(math.floor((syncedTicks / strafeTicks) * 100), 0, 100) or 0
+    local sync = strafeTicks > 0 and mc(floor((syncedTicks / strafeTicks) * 100), 0, 100) or 0
 
     -- Distance & Efficiency
     local traveledDist = g_fTraveledDistance[ply]:Length2D()
     local trajectory = g_fTrajectory[ply]
-    local distance = math.min(traveledDist, trajectory)
+    local distance = min(traveledDist, trajectory)
 
     local efficiency = (distance > 0 and trajectory > 0) and (coeffsum * distance) / trajectory or 0
-    efficiency = math.floor(efficiency * 100 + 0.5) / 100
+    efficiency = floor(efficiency * 100 + 0.5) / 100
 
     -- Jump Sync Stats
     local avgDiff = g_fAvgDiffFromPerf[ply] or 0
@@ -378,34 +394,17 @@ local function SSJ_PrintStats(ply, lastSpeed, jumpTimeDiff)
 
     -- Stats Message
     local str = {ColorSSJ, color_white}
-    local velocity = math.floor(GetClientVelocity(ply))
-    
+
+    local absVel = ply:GetAbsVelocity()
+    local velocity = floor(absVel:Length2D())
+
     -- Height Check
-    local originZ = math.floor(ply:GetPos()[3])
-    local heightDiff = originZ - math.floor(g_fInitialHeight[ply])
+    local originZ = floor(ply:GetPos()[3])
+    local heightDiff = originZ - floor(g_fInitialHeight[ply])
     
     if heightDiff ~= 0 then gB_IllegalSSJ[ply] = true end
 
-    local ssj = ply:GetPData("SSJ_Settings", false)
-    ply.SSJ = ssj and {["Settings"] = util.JSONToTable(ssj)} or {
-        ["Settings"] = {
-            true,  -- 1: Toggle
-            true,   -- 2: Mode
-            false,   -- 3: Speed Difference
-            false,    -- 4: Height Difference
-            true,       -- 5: Observers Stats
-            false,        -- 6: Gain Percentage
-            false,          -- 7: Strafes Per Jump
-            false,           -- 8: Show JSS
-            false,          -- 9: Show Eff
-            false,         -- 10: Show Sync
-            false,       -- 11: Show Last Speed
-            false,      -- 12: Show Yaw
-            false,    -- 13: Show Time
-            true  -- 14 Pre-Speed
-        }
-    }
-    local settings = ply.SSJ["Settings"]
+    local settings = GetSSJSettings(ply)
     local jumpCount = g_iJump[ply]
 
     if jumpCount == 1 then
@@ -434,14 +433,14 @@ local function SSJ_PrintStats(ply, lastSpeed, jumpTimeDiff)
         if settings[6] then
             str[#str + 1] = " | Gn: "
             str[#str + 1] = colorgain
-            str[#str + 1] = string.format("%.2f%%", coeffsum)
+            str[#str + 1] = format("%.2f%%", coeffsum)
             str[#str + 1] = color_white
         end
 
         if settings[4] then
             str[#str + 1] = " | H Δ: "
             str[#str + 1] = ColorSSJ
-            str[#str + 1] = string.format("%.2f", heightDiff)
+            str[#str + 1] = format("%.2f", heightDiff)
             str[#str + 1] = color_white
         end
 
@@ -455,20 +454,20 @@ local function SSJ_PrintStats(ply, lastSpeed, jumpTimeDiff)
         if settings[9] then
             str[#str + 1] = " | Eff: "
             str[#str + 1] = ColorSSJ
-            str[#str + 1] = string.format("%.2f", efficiency)
+            str[#str + 1] = format("%.2f", efficiency)
             str[#str + 1] = color_white
         end
 
         if settings[10] then
             str[#str + 1] = " | Snc: "
             str[#str + 1] = colorsync
-            str[#str + 1] = string.format("%.2f%%", sync)
+            str[#str + 1] = format("%.2f%%", sync)
             str[#str + 1] = color_white
         end
 
         if settings[8] then
-            local jssDisplay = math.floor(jss * 100)
-            local absJssDisplay = math.floor(absjss)
+            local jssDisplay = floor(jss * 100)
+            local absJssDisplay = floor(absjss)
             local jssColor, jssSuffix = jssDisplay >= 102 and Color(255, 0, 0) or GetJSSIndicator(jssDisplay)
 
             str[#str + 1] = " | JSS: "
@@ -481,21 +480,21 @@ local function SSJ_PrintStats(ply, lastSpeed, jumpTimeDiff)
         if settings[11] then
             str[#str + 1] = " | Last Speed: "
             str[#str + 1] = ColorSSJ
-            str[#str + 1] = tostring(math.floor(lastSpeed))
+            str[#str + 1] = tostring(floor(lastSpeed))
             str[#str + 1] = color_white
         end
 
         if settings[12] then
             str[#str + 1] = " | Yaw: "
             str[#str + 1] = ColorSSJ
-            str[#str + 1] = tostring(math.floor(yawwing))
+            str[#str + 1] = tostring(floor(yawwing))
             str[#str + 1] = color_white
         end
 
         if settings[13] and jumpTimeDiff > 0 then
             str[#str + 1] = " | Time: "
             str[#str + 1] = ColorSSJ
-            str[#str + 1] = string.format("%.2f", jumpTimeDiff)
+            str[#str + 1] = format("%.2f", jumpTimeDiff)
             str[#str + 1] = color_white
         end
     end
@@ -546,18 +545,7 @@ local function SSJ_PrintStats(ply, lastSpeed, jumpTimeDiff)
     NETWORK:StartNetworkMessageSSJ(ply, "SSJ", jumpCount, coeffsum, velocity, strafes, efficiency, sync, lastSpeed or 0, g_speedDiff[ply])
 
     -- Illegal Check
-    local style = TIMER:GetStyle(ply)
-    if 
-        (jumpCount == 1 and velocity > 290) or
-        style == TIMER:GetStyleID("TAS") or
-        style == TIMER:GetStyleID("Unreal") or
-        style == TIMER:GetStyleID("WTF") or
-        style == TIMER:GetStyleID("AS") or
-        style == TIMER:GetStyleID("Swift") or
-        style == TIMER:GetStyleID("Speedrun") or
-        style == TIMER:GetStyleID("LG") or
-        ply:GetNWInt("inPractice", true)
-    then
+    if jumpCount == 1 and velocity > 290 or IsIllegalStyle(style) or ply:GetNWInt("inPractice", true) then
         gB_IllegalSSJ[ply] = true
     end
 
@@ -566,7 +554,7 @@ local function SSJ_PrintStats(ply, lastSpeed, jumpTimeDiff)
         local steamID = ply:SteamID()
         local wasDucking = playerDuckStatus[steamID] or false
         local ssjType = wasDucking and "duck" or "normal"
-        local jumpSpeed = math.floor(velocity)
+        local jumpSpeed = floor(velocity)
 
         SSJTOP[steamID] = SSJTOP[steamID] or { duck = 0, normal = 0 }
 
@@ -597,7 +585,8 @@ local function Player_Jump(ply)
     -- Prevent jump tracking if no strafing happened yet
     if (g_iJump[ply] > 0 and g_iStrafeTick[ply] == 0) then return end
 
-    local currentSpeed = math.floor(GetClientVelocity(ply))
+    local absVel = ply:GetAbsVelocity()
+    local currentSpeed = floor(absVel:Length2D())
     local lastSpeed = g_prevSpeed[ply] or currentSpeed
     local jumpCount = g_iJump[ply]
     local currentTime = SysTime()
@@ -607,7 +596,7 @@ local function Player_Jump(ply)
 
     -- Height only for first jump
     if jumpCount == 0 then
-        g_fInitialHeight[ply] = math.floor(ply:GetPos()[3])
+        g_fInitialHeight[ply] = floor(ply:GetPos()[3])
     end
 
     -- Speed difference
@@ -644,39 +633,31 @@ local function OnPluginStart(ply, cmd)
     local buttons = cmd:GetButtons()
     local wasOnGround = ply:IsFlagSet(FL_ONGROUND)
 
-    if wasOnGround and bit.band(buttons, IN_JUMP) ~= 0 then
+    if wasOnGround and band(buttons, IN_JUMP) ~= 0 then
         g_iTicksOnGround[ply] = 0
         Player_Jump(ply)
     end
 end
 hook.Add("StartCommand", "OnPluginStart", OnPluginStart)
 
--- Style data
-local StyleInfo = {
-    mv = 32.4,
-    cap = 100,
-    maxspeed = 250
-}
-
 -- Movement
-local function GetVectorLength(v)
-    return math.sqrt(v[1] * v[1] + v[2] * v[2] + v[3] * v[3])
-end
-
 local function SSJ_GetStats(ply, cmd)
     if not IsValid(ply) or not ply:Alive() then return end
     if ply:GetMoveType() ~= MOVETYPE_WALK or (ply:IsFlagSet(FL_ONGROUND) and not cmd:KeyDown(IN_JUMP)) then return end
 
     local buttons = cmd:GetButtons()
-    local velocity = ply:GetAbsVelocity() or Vector(0, 0, 0)
+    local velocity = ply:GetAbsVelocity() or zeroVec
+    local lagged = ply:GetLaggedMovementValue()
+    local yaw = cmd:GetViewAngles()[2]
+
     velocity[3] = 0
 
-    local tickrateMulti = g_fTickrate * ply:GetLaggedMovementValue()
+    local tickrateMulti = g_fTickrate * lagged
 
     g_iStrafeTick[ply] = (g_iStrafeTick[ply] or 0) + 1
 
     -- movement distance
-    g_fTraveledDistance[ply] = g_fTraveledDistance[ply] or Vector(0, 0, 0)
+    g_fTraveledDistance[ply] = g_fTraveledDistance[ply] or zeroVec
     local x, y, z = g_fTraveledDistance[ply]:Unpack()
     x = x + (velocity[1] * tickrateMulti)
     y = y + (velocity[2] * tickrateMulti)
@@ -686,28 +667,28 @@ local function SSJ_GetStats(ply, cmd)
 
     -- movement inputs
     local inputDirections = { forward = 0, side = 0 }
-    if bit.band(buttons, IN_FORWARD) ~= 0 then inputDirections.forward = 3 end
-    if bit.band(buttons, IN_BACK) ~= 0 then inputDirections.forward = -3 end
-    if bit.band(buttons, IN_MOVERIGHT) ~= 0 then inputDirections.side = 3 end
-    if bit.band(buttons, IN_MOVELEFT) ~= 0 then inputDirections.side = -3 end
+    if band(buttons, IN_FORWARD) ~= 0 then inputDirections.forward = 3 end
+    if band(buttons, IN_BACK) ~= 0 then inputDirections.forward = -3 end
+    if band(buttons, IN_MOVERIGHT) ~= 0 then inputDirections.side = 3 end
+    if band(buttons, IN_MOVELEFT) ~= 0 then inputDirections.side = -3 end
 
     -- movement vectors
-    local yawAngle = math.rad(cmd:GetViewAngles()[2])
-    local lookVector = Vector(math.cos(yawAngle), math.sin(yawAngle), 0)
-    local sideVector = Vector(math.cos(yawAngle - math.pi / 2), math.sin(yawAngle - math.pi / 2), 0)
+    local yawAngle = math_rad(yaw)
+    local lookVector = Vector(math_cos(yawAngle), math_sin(yawAngle), 0)
+    local sideVector = Vector(math_cos(yawAngle - MATH_PI / SIDE_SCALE), math_sin(yawAngle - MATH_PI / SIDE_SCALE), 0)
 
     -- acceleration vector
-    local accel = (lookVector * (inputDirections.forward * 0.3)) + (sideVector * (inputDirections.side * 2))
+    local accel = (lookVector * (inputDirections.forward * FORWARD_SCALE)) + (sideVector * (inputDirections.side * SIDE_SCALE))
     if accel:IsZero() then return end
     accel:Normalize()
 
     -- wish velocity
-    local wishvel = accel * StyleInfo.maxspeed
+    local wishvel = accel * 250
     wishvel[3] = 0
     local wishspeed = wishvel:Length()
 
-    if wishspeed > StyleInfo.maxspeed then
-        wishvel:Mul(StyleInfo.maxspeed / wishspeed)
+    if wishspeed > 250 then
+        wishvel:Mul(250 / wishspeed)
     end
 
     -- gain coefficient
@@ -718,29 +699,31 @@ local function SSJ_GetStats(ply, cmd)
     if (wishspeed > 0) then
         -- JSS
         local lastYaw = g_fLastAngles[ply] or 0
-        local yawDiff = normalizeAngle(cmd:GetViewAngles()[2] - lastYaw)
+        local yawDiff = normalizeAngle(yaw - lastYaw)
         if yawDiff ~= 0 then
-            local perfJss = mdeg(matan(StyleInfo.mv / velocity:Length2D()))
-            local finalJss = math.abs(yawDiff / perfJss)
+            local perfJss = mdeg(matan(IDEAL_GAIN / velocity:Length2D()))
+            local finalJss = mabs(yawDiff / perfJss)
 
             g_fAvgDiffFromPerf[ply] = (g_fAvgDiffFromPerf[ply] or 0) + finalJss
-            g_fAvgAbsoluteJss[ply] = (g_fAvgAbsoluteJss[ply] or 0) + (100 - math.abs((finalJss * 100) - 100))
+            g_fAvgAbsoluteJss[ply] = (g_fAvgAbsoluteJss[ply] or 0) + (100 - mabs((finalJss * 100) - 100))
             g_jssThisTick[ply] = finalJss
-            g_fLastAngles[ply] = cmd:GetViewAngles()[2]
+            g_fLastAngles[ply] = yaw
         end
 
         -- Yaw
-        if bit.band(buttons, IN_MOVELEFT) ~= 0 or bit.band(buttons, IN_MOVERIGHT) ~= 0 then
+        if band(buttons, IN_MOVELEFT) ~= 0 or band(buttons, IN_MOVERIGHT) ~= 0 then
             g_iYawwingTick[ply] = (g_iYawwingTick[ply] or 0) + 1
         end
 
         -- Gain 
-        if currentGain < StyleInfo.mv then
-            local gaincoeff = (StyleInfo.mv - math.abs(currentGain)) / StyleInfo.mv
-            gaincoeff = math.floor(gaincoeff * 100 + 0.5) / 100
+        if currentGain < IDEAL_GAIN then
+            local gaincoeff = (IDEAL_GAIN - mabs(currentGain)) / IDEAL_GAIN
+            gaincoeff = floor(gaincoeff * 100 + 0.5) / 100
 
             g_iSyncedTick[ply] = (g_iSyncedTick[ply] or 0) + 1
-            g_fRawGain[ply] = (g_fRawGain[ply] or 0) + gaincoeff
+            local rawGain = g_fRawGain[ply] or 0
+            rawGain = rawGain + gaincoeff
+            g_fRawGain[ply] = rawGain
         end
 
         -- last non-zero movement
@@ -760,23 +743,25 @@ local function OnPlayerStartCmd(ply, cmd)
 
     -- to reduce table lookups
     local buttons = cmd:GetButtons()
-    local speed = GetClientVelocity(ply)
+    local absVel = ply:GetAbsVelocity()
+    local speed = absVel:Length2D()
+
     local wasOnGround = ply:IsFlagSet(FL_ONGROUND)
     local buttonCache = g_iButtonCache[ply] or 0
-    local jumpedThisFrame = bit.band(buttons, IN_JUMP) ~= 0
+    local jumpedThisFrame = band(buttons, IN_JUMP) ~= 0
 
     -- Strafe counting
     if not wasOnGround then
-        if bit.band(g_iButtonCache[ply] or 0, IN_FORWARD) == 0 and bit.band(buttons, IN_FORWARD) > 0 then
+        if band(g_iButtonCache[ply] or 0, IN_FORWARD) == 0 and band(buttons, IN_FORWARD) > 0 then
             g_iStrafeCount[ply] = (g_iStrafeCount[ply] or 0) + 1
         end
-        if bit.band(g_iButtonCache[ply] or 0, IN_MOVELEFT) == 0 and bit.band(buttons, IN_MOVELEFT) > 0 then
+        if band(g_iButtonCache[ply] or 0, IN_MOVELEFT) == 0 and band(buttons, IN_MOVELEFT) > 0 then
             g_iStrafeCount[ply] = (g_iStrafeCount[ply] or 0) + 1
         end
-        if bit.band(g_iButtonCache[ply] or 0, IN_BACK) == 0 and bit.band(buttons, IN_BACK) > 0 then
+        if band(g_iButtonCache[ply] or 0, IN_BACK) == 0 and band(buttons, IN_BACK) > 0 then
             g_iStrafeCount[ply] = (g_iStrafeCount[ply] or 0) + 1
         end
-        if bit.band(g_iButtonCache[ply] or 0, IN_MOVERIGHT) == 0 and bit.band(buttons, IN_MOVERIGHT) > 0 then
+        if band(g_iButtonCache[ply] or 0, IN_MOVERIGHT) == 0 and band(buttons, IN_MOVERIGHT) > 0 then
             g_iStrafeCount[ply] = (g_iStrafeCount[ply] or 0) + 1
         end
     end
@@ -815,13 +800,6 @@ local function OnPlayerStartCmd(ply, cmd)
 
         g_bJumpedThisFrame[ply] = false
         g_iTicksOnGround[ply] = 0
-    end
-
-    if g_bTouchesWall[ply] then
-        g_iTouchTicks[ply] = (g_iTouchTicks[ply] or 0) + 1
-        g_bTouchesWall[ply] = false
-    else
-        g_iTouchTicks[ply] = 0
     end
 
     -- button state & velocity for next frame

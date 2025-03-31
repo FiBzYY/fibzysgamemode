@@ -7,9 +7,9 @@ Spectator.Modes = {
 
 local AFK = {}
 local afkMinutes = 25
-local afkKickMinutes = 999
-local adminBypass = false
-local adminNotify = false
+local afkKickMinutes = BHOP.AFKSystem.afkMinutes
+local adminBypass = BHOP.AFKSystem.adminBypass
+local adminNotify = BHOP.AFKSystem.adminNotify
 local hook_Add = hook.Add
 
 hook_Add("PlayerInitialSpawn", "AFKSpawn", function(ply)
@@ -119,17 +119,17 @@ local function PlayerPressKey(ply, key)
 		local ar = GetAlive()
 		ply.SpectateType = 1
 		ply.SpectateID = ply.SpectateID - 1
-		Spectator:Mode( ply, true )
-		Spectator:Change( ar, ply, false )
+		Spectator:Mode(ply, true)
+		Spectator:Change(ar, ply, false)
 	elseif key == IN_RELOAD then
 		local ar = GetAlive()
 		if #ar == 0 then
 			ply.SpectateType = #Spectator.Modes
-			Spectator:Mode( ply, true )
+			Spectator:Mode(ply, true)
 		else
 			local bRespec = ply.SpectateType == #Spectator.Modes
 			ply.SpectateType = ply.SpectateType + 1 > #Spectator.Modes and 1 or ply.SpectateType + 1
-			Spectator:Mode( ply, nil, bRespec )
+			Spectator:Mode(ply, nil, bRespec)
 		end
 	end
 end
@@ -145,12 +145,12 @@ function Spectator:Change(ar, ply, forward)
 
 	if not ar[ply.SpectateID] then
 		ply.SpectateID = forward and 1 or #ar
-		if not ar[ ply.SpectateID ] then
-			return Command.Spectate( ply )
+		if not ar[ply.SpectateID] then
+			return Command.Spectate(ply)
 		end
 	end
 
-	ply:SpectateEntity( ar[ply.SpectateID] )
+	ply:SpectateEntity(ar[ply.SpectateID])
 	Spectator:Checks(ply, previous)
 end
 
@@ -172,7 +172,7 @@ function Spectator:Mode(ply, cancel, respec)
     end
 
     ply:Spectate(Spectator.Modes[ply.SpectateType])
-    BHDATA:Send(ply, "Spectate", {"Mode", ply.SpectateType })
+    BHDATA:Send(ply, "Spectate", {"Mode", ply.SpectateType})
 
     if ply.SpectateType ~= #Spectator.Modes and respec then
         Spectator:Checks(ply)
@@ -180,9 +180,9 @@ function Spectator:Mode(ply, cancel, respec)
 end
 
 function Spectator:End(ply, watching)
-	if not IsValid( watching ) or ply.Incognito then return end
-	Spectator:Notify( watching, ply, true )
-	Spectator:NotifyWatchers( watching, ply )
+	if not IsValid(watching) or ply.Incognito then return end
+	Spectator:Notify(watching, ply, true)
+	Spectator:NotifyWatchers(watching, ply)
 end
 
 function Spectator:New(ply)
@@ -196,20 +196,20 @@ function Spectator:New(ply)
 		if not ply.SpectateID then ply.SpectateID = 1 end
 		if not ar[ ply.SpectateID ] then ply.SpectateID = 1 end
 		
-		ply:Spectate( Spectator.Modes[ ply.SpectateType ] )
-		ply:SpectateEntity( ar[ ply.SpectateID ] )
-		BHDATA:Send( ply, "Spectate", { "Mode", ply.SpectateType } )
-		Spectator:Checks( ply )
+		ply:Spectate( Spectator.Modes[ply.SpectateType])
+		ply:SpectateEntity( ar[ply.SpectateID])
+		BHDATA:Send(ply, "Spectate", {"Mode", ply.SpectateType})
+		Spectator:Checks(ply)
 	end
 end
 
-function Spectator:NewById(ply, szSteam, bSwitch, szName)
+function Spectator:NewById(ply, steam, mode, name)
 	local ar = GetAlive()
-	local target = { ID = nil, Ent = nil }
-	local bBot = szSteam == "NULL"
+	local target = {ID = nil, Ent = nil}
+	local replay = steam == "NULL"
 	
-	for id,p in pairs( ar ) do
-		if (bBot and p:IsBot() and szName and p:Name() == szName) or (tostring( p:SteamID() ) == tostring( szSteam )) then
+	for id,p in pairs(ar) do
+		if (replay and p:IsBot() and name and p:Name() == name) or (tostring( p:SteamID()) == tostring(steam)) then
 			target.Ent = p
 			target.ID = id
 			break
@@ -217,25 +217,25 @@ function Spectator:NewById(ply, szSteam, bSwitch, szName)
 	end
 	
 	if target.Ent then
-		local previous = bSwitch and ply:GetObserverTarget() or nil
+		local previous = mode and ply:GetObserverTarget() or nil
 		
 		ply.SpectateType = 1
 		ply.SpectateID = target.ID
-		ply:Spectate( Spectator.Modes[ ply.SpectateType ] )
-		ply:SpectateEntity( target.Ent )
-		BHDATA:Send( ply, "Spectate", { "Mode", ply.SpectateType } )
+		ply:Spectate(Spectator.Modes[ply.SpectateType])
+		ply:SpectateEntity(target.Ent)
+		BHDATA:Send(ply, "Spectate", {"Mode", ply.SpectateType})
 		
-		Spectator:Checks( ply, previous )
+		Spectator:Checks(ply, previous)
 	else
-		BHDATA:Send( ply, "Print", { "Spectator", Lang:Get( "SpectateTargetInvalid" ) } )
+		BHDATA:Send(ply, "Print", { "Spectator", Lang:Get("SpectateTargetInvalid") })
 	end
 end
 
-function Spectator:Checks( ply, previous )
+function Spectator:Checks(ply, previous)
 	if ply.Incognito then
 		local target = ply:GetObserverTarget()
 		if IsValid( target ) then
-			return Spectator:NotifyWatchers( target )
+			return Spectator:NotifyWatchers(target)
 		else
 			return false
 		end
@@ -255,8 +255,8 @@ function Spectator:Checks( ply, previous )
 	end
 end
 
-function Spectator:Notify(target, ply, bLeave)
-	if bLeave then
+function Spectator:Notify(target, ply, left)
+	if left then
 		Spectator:NotifyWatchers(target)
 		return BHDATA:Send(target, "Spectate", { "Viewer", true, ply:Name(), ply:SteamID()})
 	else
@@ -271,7 +271,7 @@ function Spectator:NotifyBot(Replay)
 end
 
 function Spectator:PlayerRestart(ply)
-	local nTimer = ply.bonustime or ply.time
+	local timedisplay = ply.bonustime or ply.time
 
 	local Watchers = {}
 	for _, p in ipairs(player.GetHumans()) do
@@ -283,7 +283,7 @@ function Spectator:PlayerRestart(ply)
 	BHDATA:Send(Watchers, "Spectate", {
 		"Timer",
 		false,
-		nTimer,
+		timedisplay,
 		(ply.record and ply.record > 0) and ply.record or nil,
 		CurTime(),
 		"Save"
@@ -311,14 +311,14 @@ function Spectator:NotifyWatchers(ply, ending)
 
 	if #SpectatorList == 0 then SpectatorList = nil end
 
-	local nTimer = ply.bonustime or ply.time
+	local timedisplay = ply.bonustime or ply.time
 	local data
 
 	if ply:IsBot() then
 		data = Replay:GenerateNotify(ply.Style, SpectatorList)
 		if not data then return end
 	else
-		data = { "Timer", false, nTimer, (ply.record and ply.record > 0) and ply.record or nil, CurTime(), SpectatorList }
+		data = { "Timer", false, timedisplay, (ply.record and ply.record > 0) and ply.record or nil, CurTime(), SpectatorList }
 	end
 
 	if #Watchers > 0 then

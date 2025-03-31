@@ -924,45 +924,29 @@ net.Receive("SendAdminLogs", function()
         local steam = net.ReadString()
         local action = net.ReadString()
 
-        -- Build a single line for display
         local logText = "[" .. date .. "] " .. admin .. " (" .. steam .. "): " .. action
         table.insert(logs, logText)
     end
 
-    -- Now pass the logs into your UI panel (assuming it’s global access)
-    if UI and UI.UpdateServerLogs then
-        UI:UpdateServerLogs(UI.CurrentPanel or UI.PanelMain, logs)
+    if UI and UI.UpdateServerLogs and IsValid(UI.CurrentLogsPanel) then
+        print("[Client] Updating logs into panel.")
+        UI:UpdateServerLogs(UI.CurrentLogsPanel, logs)
+    else
+        print("[Client] Panel not valid or missing")
     end
 end)
 
-
 function UI:UpdateServerLogs(parent, logs)
-
     if not Iv(parent) then return end
 
-    if Iv(self.PlayerListPanel) then
-        self.PlayerListPanel:Remove()
-    end
-
-    self.PlayerListPanel = vgui.Create("DPanel", parent)
-    self.PlayerListPanel:Dock(FILL)
-    self.PlayerListPanel:DockMargin(0, 50, 0, 0) 
-    self.PlayerListPanel.Paint = function(self, w, h)
+    self.LogsPanel = vgui.Create("DPanel", parent)
+    self.LogsPanel:Dock(FILL)
+    self.LogsPanel:DockMargin(0, 50, 0, 0)
+    self.LogsPanel.Paint = function(self, w, h)
         surface.SetDrawColor(0, 0, 0, 0)
     end
 
-    local headerPanel = vgui.Create("DPanel", self.PlayerListPanel)
-    headerPanel:Dock(TOP)
-    headerPanel:SetHeight(30)
-    headerPanel:DockMargin(10, 0, 10, 0)
-    headerPanel.Paint = function(self, w, h)
-        surface.SetDrawColor(32, 32, 32)
-        surface.DrawRect(0, 0, w, h)
-
-        DrawText("Logs Listing", "ui.mainmenu.button", 10, h / 2, colors.text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-    end
-
-    local scrollPanel = vgui.Create("DScrollPanel", self.PlayerListPanel)
+    local scrollPanel = vgui.Create("DScrollPanel", self.LogsPanel)
     scrollPanel:Dock(FILL)
     scrollPanel:DockMargin(10, 5, 10, 10)
 
@@ -976,7 +960,7 @@ function UI:UpdateServerLogs(parent, logs)
             logPanel.Paint = function(self, w, h)
                 surface.SetDrawColor(42, 42, 42)
                 surface.DrawRect(0, 0, w, h)
-                DrawText(log, "ui.mainmenu.button", 10, h / 2, colors.text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+                DrawText(log, "ui.mainmenu.logs", 10, h / 2, colors.text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
             end
         end
     else

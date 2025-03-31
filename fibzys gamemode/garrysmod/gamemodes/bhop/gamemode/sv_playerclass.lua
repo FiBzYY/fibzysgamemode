@@ -59,8 +59,13 @@ function TIMER:Spawn(ply)
         ply:SetFOV(100, 0)
         ply:SetGravity(0)
 
-        ply:SetRenderMode(RENDERMODE_TRANSALPHA)
-        ply:SetColor(Color(255, 255, 255, 150))
+        if BHOP.GhostBot then
+            ply:SetRenderMode(RENDERMODE_TRANSALPHA)
+            ply:SetColor(Color(255, 255, 255, 150))
+        else
+            ply:SetRenderMode(RENDERMODE_NORMAL)
+            ply:SetColor(Color(255, 255, 255, 255))
+        end
 
         return
     end
@@ -112,7 +117,7 @@ function TIMER:SpawnChecks(ply)
     self:SetJumps(ply, 0)
     self:ResetPlayerAttributes(ply)
 
-    local isBonus = (ply.style == 2)
+    local isBonus = (ply.style == TIMER:GetStyleID("bonus"))
     local steamID = ply:SteamID()
     local map = game.GetMap()
 

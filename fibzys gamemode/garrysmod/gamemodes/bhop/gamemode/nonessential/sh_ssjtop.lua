@@ -1,7 +1,7 @@
 ﻿SSJTOP = SSJTOP or {}
 
 -- Cache system
-local hook_Add = hook.Add
+local hook_Add, Iv = hook.Add, IsValid
 local util_TableToJSON, util_JSONToTable = util.TableToJSON, util.JSONToTable
 local file_Write, file_Read, file_Exists = file.Write, file.Read, file.Exists
 local ipairs, IsValid, timer_Create, timer_Start = ipairs, IsValid, timer.Create, timer.Start
@@ -16,7 +16,7 @@ if SERVER then
     util.AddNetworkString("SSJTOP_RemoveRecord")
 
     function SaveSSJToMySQL(ply, ssjType, jumpSpeed)
-        if not IsValid(ply) then return end
+        if not Iv(ply) then return end
 
         local steamID = ply:SteamID()
 
@@ -49,7 +49,7 @@ if SERVER then
     end
 
     net.Receive("SSJTOP_RemoveRecord", function(len, ply)
-        if not IsValid(ply) or not ply:IsAdmin() then return end
+        if not Iv(ply) or not ply:IsAdmin() then return end
 
         local playerName = net.ReadString()
         local steamID64 = net.ReadString()
@@ -97,7 +97,7 @@ end
 
 -- Crouch Status Before Jump
 hook_Add("StartCommand", "TrackDuckDuringJumps", function(ply)
-    if not IsValid(ply) then return end
+    if not Iv(ply) then return end
 
     if ply:IsOnGround() then
         playerDuckStatus[ply:SteamID()] = ply:Crouching()
@@ -110,7 +110,7 @@ end)
 
 -- Teleport
 local function SSJTOP_OnPlayerTeleported(ent, input, activator)
-    if input == "teleported" and IsValid(activator) and activator:IsPlayer() then
+    if input == "teleported" and Iv(activator) and activator:IsPlayer() then
         gB_IllegalSSJ[activator] = true
     end
 end
@@ -127,7 +127,7 @@ end)
 -- SSJ Data Sync
 if SERVER then
     local function SendSSJTopToClient(ply)
-        if IsValid(ply) then
+        if Iv(ply) then
             net.Start("SSJTOP_SendData")
             net.WriteTable(SSJTOP)
             net.Send(ply)
@@ -140,7 +140,7 @@ end
 
 -- Ground Trace
 local function TracePlayerGround(ply)
-    if not IsValid(ply) or not ply:Alive() or ply:GetMoveType() ~= MOVETYPE_WALK or ply:WaterLevel() > 1 then return nil end
+    if not Iv(ply) or not ply:Alive() or ply:GetMoveType() ~= MOVETYPE_WALK or ply:WaterLevel() > 1 then return nil end
 
     local origin, mins, maxs = ply:GetPos(), ply:GetHull()
 
@@ -174,7 +174,7 @@ function GetGroundUnits(ply)
 end
 
 hook_Add("SetupMove", "CheckPlayerOnSlope", function(ply)
-    if IsValid(ply) and ply:Alive() and ply:GetMoveType() == MOVETYPE_WALK then
+    if Iv(ply) and ply:Alive() and ply:GetMoveType() == MOVETYPE_WALK then
         IsPlayerOnSlope(ply)
         GetGroundUnits(ply)
     end

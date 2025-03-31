@@ -5,13 +5,8 @@ local Styles = { Unreal = 10, WTF = 13 }
 local sys = SysTime
 
 local function DoUnrealBoost(ply, nForce)
-    if ply.InStartZone then
-        ply.BoostTimer = nil
-    end
-
-    if ply.InStartZone then
-        return
-    end
+    if ply.InStartZone then ply.BoostTimer = nil end
+    if ply.InStartZone then return end
 
     local currentTime = sys()
     if not ply.InStartZone and ply.BoostTimer and currentTime < ply.BoostTimer then return end

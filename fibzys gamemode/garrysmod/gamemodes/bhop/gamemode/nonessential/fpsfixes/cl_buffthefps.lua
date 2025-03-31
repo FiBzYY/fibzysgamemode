@@ -41,7 +41,7 @@ local function draw_GetFontHeight(font)
         return CachedFontHeights[font]
     end
 
-    surface_SetFont(font)
+    surface_SetFont(font or "TargetID")
     w, h = surface_GetTextSize("W")
     CachedFontHeights[font] = h
 
@@ -81,7 +81,7 @@ function surface.GetTextSize(text)
 end
 
 local function draw_SimpleText(text, font, x, y, colour, xalign, yalign)
-    surface_SetFont(font)
+    surface_SetFont(font or "TargetID")
     local w, h = surface_GetTextSize(text)
 
     if xalign == TEXT_ALIGN_CENTER then
@@ -91,10 +91,10 @@ local function draw_SimpleText(text, font, x, y, colour, xalign, yalign)
     end
 
     if yalign == TEXT_ALIGN_CENTER then
-        h = draw_GetFontHeight(font)
+        h = draw_GetFontHeight(font or "TargetID")
         y = y - h / 2
     elseif yalign == TEXT_ALIGN_BOTTOM then
-        h = draw_GetFontHeight(font)
+        h = draw_GetFontHeight(font or "TargetID")
         y = y - h
     end
 
@@ -116,8 +116,8 @@ local strT = "\t"
 local strEmpty = ""
 
 local function draw_DrawText(text, font, x, y, colour, xalign, yalign)
-    surface_SetFont(font)
-    local lineHeight = draw_GetFontHeight(font)
+    surface_SetFont(font or "TargetID")
+    local lineHeight = draw_GetFontHeight(font or "TargetID")
     local curX = x
     local curY = y
     local curString = ""

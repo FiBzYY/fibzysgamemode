@@ -50,17 +50,17 @@ if not CONFIG_LOADED then
     -- Gamemode version
     BHOP.Version = {
         Engine = "9594",
-        GM = "13.24",
-        ReleaseDate = "03/29/25",
-        LastUpdated = "03/29/25"
+        GM = "13.242",
+        ReleaseDate = "03/31/25",
+        LastUpdated = "03/31/25"
     }
 
     -- Main movement settings
     BHOP.Move = {
-        BaseGainsMovement = true,
+        BaseGainsMovement = true, -- CS:S Movement support?
         GModGainsMovement = true,
 
-        -- Cvar settings
+        -- Cvar settings (most changeable via menu)
         MaxVel = 250,
         Gravity = 800,
         AirAccel = 100,
@@ -87,18 +87,43 @@ if not CONFIG_LOADED then
         OffsetDuck = 47.0
     }
 
-    BHOP.Banlist = BHOP.Banlist or {}
     BHOP.IsBanOn = BHOP.IsBanOn or true
 
     -- Auto ban these IDs
+    -- These individuals have a history of toxicity or abuse in bhop servers
     BHOP.Banlist = {
-        ["STEAM_0:0:47491394"] = true,  -- henwi!
-        ["STEAM_0:0:74583369"] = true,   -- rq
-        ["STEAM_0:1:70037803"] = true,    -- cat!
-        ["STEAM_0:0:53974417"] = true,      -- justa!
-        ["STEAM_0:0:53053491"] = true,     -- sad
-        ["STEAM_0:1:205142"] = true,      -- vehnex!
-        ["STEAM_0:0:64764232"] = true   -- nilf!
+        ["STEAM_0:0:47491394"] = {
+            name = "henwi",
+            reason = "Hacked into my server in 2020, put nasty stuff in the gamemode"
+        },
+        ["STEAM_0:0:74583369"] = {
+            name = "rq",
+            reason = "Known for spamming, toxic chat, and constant complaining"
+        },
+        ["STEAM_0:1:70037803"] = {
+            name = "cat",
+            reason = "Talks shit about other gamemodes and spreads negativity"
+        },
+        ["STEAM_0:0:53974417"] = {
+            name = "justa",
+            reason = "Trolls and trash talks gamemodes, follows cat!, causes drama"
+        },
+        ["STEAM_0:0:53053491"] = {
+            name = "sad",
+            reason = "Part of justa's crew, minor issues, brags about 'better' code"
+        },
+        ["STEAM_0:1:205142"] = {
+            name = "vehnex",
+            reason = "DDoSed me, joined just to hate, extreme toxic behavior"
+        },
+        ["STEAM_0:0:64764232"] = {
+            name = "nilf",
+            reason = "Follows vehnex, causes drama, joins/leave spam, hates on servers"
+        },
+        ["STEAM_0:1:162351300"] = {
+            name = "bland",
+            reason = "Joins then leaves servers because he doesn't like any gamemode also used to follow vehnex."
+        }
     }
 
     -- Enable whitelist
@@ -106,8 +131,8 @@ if not CONFIG_LOADED then
 
     -- Auto whitelist these IDs
     BHOP.Whitelist = {
-        ["STEAM_0:1:48688711"] = true,
-        ["STEAM_0:0:87749794"] = false
+        ["STEAM_0:1:48688711"] = true, -- fibzy
+        ["STEAM_0:0:87749794"] = false -- obvixus
     }
 
     -- Zone colors
@@ -120,27 +145,37 @@ if not CONFIG_LOADED then
 
         ZoneMaterial = "sprites/jscfixtimer",
         ZoneHeight = 128,
-        JumpZoneSpeedCap = 290
+        JumpZoneSpeedCap = 290 -- via changeable menu
     }
 
-    -- RTV colors
+    -- RTV Colors and Timers
     BHOP.RTV = {
         VoteStartedColour = Color(255, 0, 0),
         VoteColourPicked = Color(0, 106, 0),
         VoteSuccessColour = Color(0, 255, 0),
         VoteFailColour = Color(255, 0, 0),
-        ExtendColour = Color(0, 132, 255)
+        ExtendColour = Color(0, 132, 255),
+        AmountNeeded = 2/3, -- 66% of the active players need to vote for a map change
+        ChangeMapTime = 10 -- 10 Seconds after RTV Menu
     }
+
+    BHOP.AFKSystem = {
+        afkMinutes = 999, -- Time in minutes untill kick
+        adminBypass = false, -- Set this to true for admin AFK bypass
+        adminNotify = false, -- Notify admin when someone is AFK
+    }
+
+    BHOP.GhostBot = true -- Enables ghosting feel for replays
 
     -- Server stuff
     BHOP.Server = {
         AdminLogging = true,
-        MapRotationTime = 30,
+        MapRotationTime = 30, -- WiP
         WelcomeMessage = "Welcome to " .. BHOP.ServerName .. ".",
         AdminList = {
-            ["STEAM_0:1:48688711"] = true
+            ["STEAM_0:1:48688711"] = true -- fibzy
         },
-        AFKKickTime = 300
+        AFKKickTime = 300 -- Use AFKSystem
     }
 
     -- WR Sounds Exclude List for Bad Improvements (Put full path relative to sound/)
@@ -149,7 +184,7 @@ if not CONFIG_LOADED then
         "wrsfx/no_improvement.mp3"
     }
 
-    -- MISC
+    -- MISC WiP
     BHOP.HUD = {
         HUDColors = {
             SpeedColor = Color(0, 255, 0),
