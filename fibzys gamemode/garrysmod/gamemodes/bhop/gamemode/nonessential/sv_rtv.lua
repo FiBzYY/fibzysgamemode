@@ -131,7 +131,7 @@ function RTV:EndVote()
     local max, won = 0, -1
     for i = 1, 7 do
         if RTV.MapVoteList[i] > max then
-            nMax = RTV.MapVoteList[i]
+            max = RTV.MapVoteList[i]
             won = i
         end
     end
