@@ -82,9 +82,9 @@ if not FONT_CACHE then
     MakeFont("StrafeTrainerCSS", { font = "Trebuchet MS", size = 24, weight = 500, antialias = true, extended = false })
 
     -- UI
-    MakeFont("hud.numberedui.css1", {font = "Roboto", size = 19, weight = 500, antialias = true})
-    MakeFont("hud.numberedui.css2", {font = "Roboto", size = 18, weight = 500, antialias = true})
-    MakeFont("hud.numberedui.kawaii1", {font = "Roboto", size = 17, weight = 500, antialias = true})
+    MakeFont("hud.numberedui.css1", {font = "Roboto", size = 23, weight = 500, antialias = true})
+    MakeFont("hud.numberedui.css2", {font = "Roboto", size = 19, weight = 500, antialias = true})
+    MakeFont("hud.numberedui.kawaii1", {font = "Roboto", size = 19, weight = 500, antialias = true})
 
     MakeFont("hud.subinfo", {font = "Tahoma", size = 12, weight = 300, antialias = true})
     MakeFont("hud.zedit.title", {font = "Roboto", size = 28, weight = 0, antialias = true, italic = false})
@@ -96,6 +96,7 @@ if not FONT_CACHE then
     MakeFont("hud.simplefont", {font = "Roboto", size = 21, weight = 900, antialias = true})
 
     MakeFont("hud.title", {font = "coolvetica", size = 20, weight = 100, antialias = true})
+    MakeFont("hud.titlekawaii", {font = "Roboto", size = 23, weight = 100, antialias = true})
     MakeFont("hud.title2.1", {font = "Verdana", size = 14, weight = 0, antialias = true})
 
     MakeFont("ascii.font", {font = "", size = 9, weight = 0, antialias = true})

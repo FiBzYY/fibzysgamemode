@@ -107,8 +107,8 @@ function UI:NumberedUIPanel(title, ...)
 	pan.page = 1
 
 	-- Positioning and Sizing
-	local width = 200
-	local height = 75 + ((pan.hasPages and 9 or #options) * 20)
+	local width = 225
+	local height = 125 + ((pan.hasPages and 9 or #options) * 20)
 	pan.trueHeight = height
 	local xPos, yPos = 20, (ScrH() / 2) - (height / 2)
 
@@ -169,7 +169,7 @@ function UI:NumberedUIPanel(title, ...)
 		if (self.themeid == "nui.css") then 
 			-- Colours
 			local base = self.themec["Primary Colour"]
-			local title = self.themec["Title Colour"]
+			local title = Color(255, 165, 0) -- self.themec["Title Colour"]
 			local text = color_white
 
 			-- Print the box
@@ -185,7 +185,7 @@ function UI:NumberedUIPanel(title, ...)
 				if (not self.options[index]) then break end
 
 				local option = self.options[index]
-				draw.SimpleText(i .. ". " .. option.name, "hud.numberedui.css2", 10, 25 + (i * 20), option.col and option.col or text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+				draw.SimpleText(i .. ". " .. option.name, "hud.numberedui.css2", 10, 28 + (i * 25), option.col and option.col or text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 				i = i + 1
 			end
 
@@ -193,12 +193,12 @@ function UI:NumberedUIPanel(title, ...)
 			local index = self.hasPages and 7 or #self.options
 
 			-- Exit
-			draw.SimpleText("0. Exit", "hud.numberedui.css2", 10, 35 + ((index + (self.hasPages and 3 or 1)) * 20), title, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			draw.SimpleText("0. Exit", "hud.numberedui.css2", 10, 35 + ((index + (self.hasPages and 3 or 1)) * 25), title, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
 			-- Pages?
 			if (self.hasPages) then
-				draw.SimpleText("8. Previous", "hud.numberedui.css2", 10, 35 + ((index + 1) * 20), title, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-				draw.SimpleText("9. Next", "hud.numberedui.css2", 10, 35 + ((index + 2) * 20), title, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+				draw.SimpleText("8. Previous", "hud.numberedui.css2", 10, 35 + ((index + 1) * 25), title, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+				draw.SimpleText("9. Next", "hud.numberedui.css2", 10, 35 + ((index + 2) * 25), title, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 			end
 		elseif (self.themeid == "nui.kawaii") then
 			-- Colours
@@ -207,38 +207,52 @@ function UI:NumberedUIPanel(title, ...)
 			local text = self.themec["Text Colour"]
 			local title = self.themec["Title Colour"]
 
-			-- Box
 			surface.SetDrawColor(base)
 			surface.DrawRect(0, 0, width, height)
 
-			-- Boom boom boom boom
-			surface.SetDrawColor(base2)
-			surface.DrawRect(0, 0, width, 30)
+			surface.SetDrawColor(62, 62, 62)
+			surface.DrawOutlinedRect(0, 0, width, height, 5)
 
-			-- Title
-			draw.SimpleText(self.title, "hud.title", 10, 15, title, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			draw.SimpleText(
+				self.title,
+				"hud.titlekawaii",
+				width / 2, 20,
+				title,
+				TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER
+			)
 
-			-- Print options
+			-- Line
+			surface.SetDrawColor(Color(255, 255, 255)) -- white line
+			surface.DrawRect(10, 35, width - 20, 1)
+
+			-- Options
 			local i = 1
 			for index = start, finish do
-				-- No option
-				if (not self.options[index]) then break end
+				if not self.options[index] then break end
 
 				local option = self.options[index]
-				draw.SimpleText(i .. ". " .. option.name, "hud.numberedui.kawaii1", 10, 25 + (i * 20), option.col and option.col or text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+				draw.SimpleText(
+					i .. ". " .. option.name,
+					"hud.numberedui.kawaii1",
+					10, 35 + (i * 25),
+					option.col or text,
+					TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER
+				)
 				i = i + 1
 			end
 
-			-- Index
 			local index = self.hasPages and 7 or #self.options
+			draw.SimpleText(
+				"0. Exit",
+				"hud.numberedui.kawaii1",
+				10, 35 + ((index + (self.hasPages and 3 or 1)) * 25),
+				text,
+				TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER
+			)
 
-			-- Exit
-			draw.SimpleText("0. Exit", "hud.numberedui.kawaii1", 10, 35 + ((index + (self.hasPages and 3 or 1)) * 20), text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-
-			-- Pages?
-			if (self.hasPages) then
-				draw.SimpleText("8. Previous", "hud.numberedui.kawaii1", 10, 35 + ((index + 1) * 20), text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-				draw.SimpleText("9. Next", "hud.numberedui.kawaii1", 10, 35 + ((index + 2) * 20), text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			if self.hasPages then
+				draw.SimpleText("8. Previous", "hud.numberedui.kawaii1", 10, 35 + ((index + 1) * 25), text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+				draw.SimpleText("9. Next", "hud.numberedui.kawaii1", 10, 35 + ((index + 2) * 25), text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 			end
 		end
 	end
@@ -332,7 +346,7 @@ function UI:NumberedUIPanel(title, ...)
 		-- Name
 		local o1 = self.options[optionId].customBool and self.options[optionId].customBool[1] or "ON"
 		local o2 = self.options[optionId].customBool and self.options[optionId].customBool[2] or "OFF"
-		self.options[optionId].name = self.options[optionId].defname .. ": [" .. (self.options[optionId].bool and o1 or o2) .. "] "
+		self.options[optionId].name = self.options[optionId].defname .. ": (" .. (self.options[optionId].bool and o1 or o2) .. ") "
 	end
 
 	-- On Think

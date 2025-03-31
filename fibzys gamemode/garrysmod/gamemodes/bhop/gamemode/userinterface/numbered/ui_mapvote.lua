@@ -44,12 +44,12 @@ local function StartRTV(info, isRevote)
         local mapName = v[1]
         local mapData = mapInfotier[mapName] or {tier = 1}
         local tierName = "Tier " .. mapData.tier
-        local name = "[0] " .. mapName .. " - " .. tierName .. " (" .. v[2] .. " points, " .. v[3] .. " plays)"
+        local name = "(0) " .. mapName .. " - " .. tierName .. " (" .. v[2] .. " points, " .. v[3] .. " plays)"
         table.insert(ui_options, {["name"] = name, ["function"] = Vote(k)})
     end
 
-    table.insert(ui_options, {["name"] = "[0] Extend the current map", ["function"] = Vote(6)})
-    table.insert(ui_options, {["name"] = "[0] Go to a randomly selected map", ["function"] = Vote(7)})
+    table.insert(ui_options, {["name"] = "(0) Extend the current map", ["function"] = Vote(6)})
+    table.insert(ui_options, {["name"] = "(0) Go to a randomly selected map", ["function"] = Vote(7)})
 
     UI.rtv = UI:NumberedUIPanel("", unpack(ui_options))
     RTVStart = isRevote and (RTVStart or CurTime() + 15) or CurTime() + 15
@@ -77,7 +77,7 @@ local function UpdatePanel(info)
     for k, v in pairs(info) do
         if UI.rtv.options and UI.rtv.options[k] then
             local name = UI.rtv.options[k].name
-            name = "[" .. v .. "] " .. (v <= 10 and name:sub(5) or name:sub(6))
+            name = "(" .. v .. ") " .. (v <= 10 and name:sub(5) or name:sub(6))
             surface.PlaySound("garrysmod/ui_click.wav")
             UI.rtv:UpdateOption(k, name, false, false)
         end
