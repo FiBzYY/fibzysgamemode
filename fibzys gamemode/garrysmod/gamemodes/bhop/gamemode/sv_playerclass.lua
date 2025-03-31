@@ -203,6 +203,14 @@ function TIMER:Load(ply)
     net.WriteString(ply:Nick())
     net.WriteInt(connectionCount, 32)
     net.Broadcast()
+
+    timer.Simple(1, function()
+        if not IsValid(ply) or not cachedVersionMsg then return end
+
+        net.Start("SendVersionData")
+        net.WriteString(cachedVersionMsg)
+        net.Send(ply)
+    end)
 end
 
 -- Load the style

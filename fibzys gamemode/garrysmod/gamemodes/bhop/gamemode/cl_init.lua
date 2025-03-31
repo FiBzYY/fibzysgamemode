@@ -197,6 +197,13 @@ net.Receive("SendConnectionCount", function()
     end
 end)
 
+net.Receive("SendVersionData", function()
+    if bhop_joindetails:GetBool() then
+      local msg = net.ReadString()
+      UTIL:AddMessage("Server", msg)
+    end
+end)
+
 local function JoinDetails()
     if bhop_joindetails:GetBool() then
         local currentMonth = os.date("%b")

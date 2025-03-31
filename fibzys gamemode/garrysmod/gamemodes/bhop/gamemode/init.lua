@@ -133,11 +133,60 @@ end
 
 util.AddNetworkString("MovementData")
 util.AddNetworkString("ToggleWeaponPickup")
+util.AddNetworkString("SendVersionData")
+util.AddNetworkString("SendVersionData")
 
 -- Cvars
 CreateConVar("bhop_version", tostring(BHOP.Version.GM), {FCVAR_ARCHIVE, FCVAR_NOTIFY, FCVAR_REPLICATED}, "Version number")
 CreateConVar("bhop_prediction", "1", {FCVAR_ARCHIVE, FCVAR_NOTIFY, FCVAR_REPLICATED}, "Prediction enabled")
 CreateConVar("bhop_remove_dustmotes", "1", {FCVAR_ARCHIVE, FCVAR_NOTIFY, FCVAR_REPLICATED}, "Toggle remove func_dustmotes")
+
+cachedVersionMsg = nil
+notifySent = false
+
+function FetchVersionData()
+    http.Fetch("http://77.93.141.26/latest_version.json?nocache=" .. os.time(),
+        function(body)
+            local data = util.JSONToTable(body)
+            if data and data.version then
+                local latestVersion = data.version
+                local currentVersion = BHOP.Version.GM or "unknown"
+                local date = BHOP.Version.LastUpdated or "unknown"
+
+                if currentVersion ~= latestVersion then
+                    cachedVersionMsg = "Gamemode is outdated! Current: " .. currentVersion .. " | Latest: " .. latestVersion
+
+                    if not notifySent then
+                        UTIL:Notify(Color(255, 0, 255), "Gamemode", cachedVersionMsg)
+                        notifySent = true
+                    end
+                else
+                    cachedVersionMsg = "Gamemode is up-to-date! Version: " .. currentVersion .. " | Date: " .. date
+
+                    if not notifySent then
+                        UTIL:Notify(Color(0, 255, 0), "Gamemode", cachedVersionMsg)
+                        notifySent = true
+                    end
+                end
+            else
+                cachedVersionMsg = "Failed to parse version data."
+                if not notifySent then
+                    UTIL:Notify(Color(255, 0, 0), "Gamemode", cachedVersionMsg)
+                    notifySent = true
+                end
+            end
+        end,
+        function(error)
+            cachedVersionMsg = "Failed to check for latest version: " .. error
+            if not notifySent then
+                UTIL:Notify(Color(255, 0, 0), "Gamemode", cachedVersionMsg)
+                notifySent = true
+            end
+        end
+    )
+end
+
+FetchVersionData()
 
 local nextNameChange, IsWhitelisted = 0, true
 local hook_Add, lp, Iv, ct, format = hook.Add, LocalPlayer, IsValid, CurTime, string.format
