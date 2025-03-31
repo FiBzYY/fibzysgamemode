@@ -134,7 +134,7 @@ end
 util.AddNetworkString("MovementData")
 util.AddNetworkString("ToggleWeaponPickup")
 util.AddNetworkString("SendVersionData")
-util.AddNetworkString("SendVersionData")
+util.AddNetworkString("SendVersionDataMenu")
 
 -- Cvars
 CreateConVar("bhop_version", tostring(BHOP.Version.GM), {FCVAR_ARCHIVE, FCVAR_NOTIFY, FCVAR_REPLICATED}, "Version number")

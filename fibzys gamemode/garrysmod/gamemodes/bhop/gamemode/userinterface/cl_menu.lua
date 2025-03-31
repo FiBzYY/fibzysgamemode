@@ -81,7 +81,15 @@ local clickableWords = {
     ["amne"] = {
         color = Color(186, 85, 211),
         url = "https://steamcommunity.com/id/amne"
-    }
+    },
+    ["oiwer"] = {
+        color = Color(255, 255, 0),
+        url = "https://steamcommunity.com/id/beehops"
+    },
+    ["Brandon"] = {
+        color = Color(0, 255, 0),
+        url = "https://steamcommunity.com/id/usrcmd"
+    },
 }
 
 -- Lets create the main panel
@@ -251,6 +259,15 @@ local function WrapText(font, text, maxWidth)
     return lines
 end
 
+BHOP.VersionMessage = "Fetching..." -- default placeholder
+
+-- Receive version info from server
+net.Receive("SendVersionDataMenu", function()
+    BHOP.VersionMessage = net.ReadString()
+
+    print(BHOP.VersionMessage)
+end)
+
 -- Main Menu
 function UI:CreateMenu()
     if Iv(Frame) then
@@ -269,6 +286,7 @@ function UI:CreateMenu()
     local scale = 0.96
     local baseW, baseH = 1000, 700
     local newW, newH = baseW * scale, baseH * scale
+    local offset = 60
 
     Frame:SetSize(newW, newH)
     Frame:Center()
@@ -305,31 +323,45 @@ function UI:CreateMenu()
         { 
             text = "Overview", 
             panelContent = {
-                "Information Overview", 
-                "Gamemode: FiBzY", 
-                "Play Testers: FiBzY, obvixus, amne"
+                "Information Overview",
+                "Gamemode: FiBzY",
+                "",
+                "Play Testers:",
+                "FiBzY",
+                "(dev) Tested base gamemode insuring it works correctly.",
+                "obvixus",
+                "Tested for errors and bugs most help.",
+                "amne",
+                "Also tested for gamemode bugs.",
+                "oiwer",
+                "Playtested boosterfix bugs and other problems.",
+                "Brandon",
+                "Gave input on FPS problems and UI changes.",
             }, 
             isActive = true 
         },
         { 
             text = "Details", 
             panelContent = {
-                "Information", 
-                "Gamemode: Bunny Hop", 
-                "Version: " .. BHOP.Version.GM, 
-                "Developed by: FiBzY", 
-                "Description: Master your jumps and gain momentum by bunny hopping through various maps!", 
-                "Last updated: " .. BHOP.Version.LastUpdated
+                "Information",
+                "Gamemode: Bunny Hop",
+                "Version: " .. BHOP.Version.GM,
+                "Developed by: FiBzY",
+                "Description: Master your jumps and gain momentum by bunny hopping through various maps!",
+                "",
+                "Last updated: " .. BHOP.Version.LastUpdated,
+                "Up-to Date Check: " .. BHOP.VersionMessage
             }
         },
         { 
             text = "Server Info", 
             panelContent = {
                 "Stats", 
-                "Server Name: " .. BHOP.ServerName, 
-                "Map: " .. game.GetMap(), 
-                "Max Players: " .. game.MaxPlayers() - #player.GetBots(), 
-                "Current Players: " .. #player.GetAll() - #player.GetBots(), 
+                "Server Name: " .. BHOP.ServerName,
+                "",
+                "Map: " .. game.GetMap(),
+                "Max Players: " .. game.MaxPlayers() - #player.GetBots(),
+                "Current Players: " .. #player.GetAll() - #player.GetBots(),
                 "Tickrate: " .. string.format("%.2f",  1 / engine.TickInterval())
             }
         }
@@ -485,29 +517,29 @@ function UI:CreateMenu()
 
         y = y + 45
         self:CreateToggle(container, y, "bhop_disablespec", "Spectator Hud", "This will enable or disable the spectator hud.")
-        y = y + 60
+        y = y + offset
         self:CreateToggle(container, y, "bhop_weaponpickup", "Weapons Pickup", "This will enable or disable weapon pickup.")
-        y = y + 60
+        y = y + offset
         self:CreateToggle(container, y, "bhop_flipweapons", "Flip Weapons", "Flips your weapons to the left side.")
-        y = y + 60
+        y = y + offset
         self:CreateToggle(container, y, "bhop_showkeys", "Show Keys", "This displays the keys hud.")
-        y = y + 60
+        y = y + offset
         self:CreateToggle(container, y, "bhop_showchatbox", "Chatbox Visibility", "Enables or disables chatbox completely.")
-        y = y + 60
+        y = y + offset
         self:CreateToggle(container, y, "bhop_timer_prefix_rainbow", "Rainbow Timer Chat", "Enables or disables rainbow timer prefix.")
-        y = y + 60
+        y = y + offset
         self:CreateToggle(container, y, "bhop_smoothnoclip", "Smooth Noclip", "Enables or disables noclip smoothing.", { default = 1, off = 0 })
-        y = y + 60
+        y = y + offset
         self:CreateToggle(container, y, "bhop_nosway", "Weapon Sway", "Controls how weapon view models move.")
-        y = y + 60
+        y = y + offset
         self:CreateToggle(container, y, "bhop_autoshoot", "Auto Shoot", "Enables or disables weapon auto spammer.")
-        y = y + 60
+        y = y + offset
         self:CreateToggle(container, y, "bhop_alwaysshowtriggers", "Always Show Triggers", "Enables or disables showtriggers on spawn.")
-        y = y + 60
+        y = y + offset
         self:CreateToggle(container, y, "bhop_joindetails", "Join Details", "Enables or disables joining details in chat.")
-        y = y + 60
+        y = y + offset
         self:CreateInputBox(container, y, "bhop_hints", 5, "Hints Time", "How long you want hints to display in minutes.")
-        y = y + 60
+        y = y + offset
 
         local ConvarDefaults = {
             ["bhop_anticheats"] = "0",
@@ -566,35 +598,35 @@ function UI:CreateMenu()
 
         y = y + 45
         self:CreateToggle(container, y, "gmod_mcore_test", "Gmod Multi Core", "This may improve performance by utilizing multiple cores.")
-        y = y + 60
+        y = y + offset
         self:CreateToggle(container, y, "mat_antialias", "Antialias", "This may improve performance by disabling antialias.", { default = 8, off = 0 })
-        y = y + 60
+        y = y + offset
         self:CreateToggle(container, y, "bhop_enablefpsboost", "Fps Boost", "This may improve performance by running commands to improve fps.", { default = 1, off = 0 })
-        y = y + 60
+        y = y + offset
         self:CreateToggle(container, y, "bhop_showzones", "Display Zones", "Show or hide the timer zones.")
-        y = y + 60
+        y = y + offset
         self:CreateInputBox(container, y, "bhop_thickness", 1, "Zones Thickness", "How thick you want the zones to be.")
-        y = y + 60
+        y = y + offset
         self:CreateToggle(container, y, "bhop_flatzones", "Display Flat Zones", "Change to flat zones zones.")
-        y = y + 60
+        y = y + offset
         self:CreateToggle(container, y, "bhop_wireframe", "Zones Wireframe", "Shows zones in wireframe.")
-        y = y + 60
+        y = y + offset
         self:CreateToggle(container, y, "bhop_anticheats", "Show AC Zones", "Show or hide the anti-cheat timer zones.")
-        y = y + 60
+        y = y + offset
         self:CreateToggle(container, y, "bhop_showplayers", "Show Players", "Show or hide the players.")
-        y = y + 60
+        y = y + offset
         self:CreateToggle(container, y, "bhop_showplayerslabel", "Show Players Labels", "Show or hide the player labels.")
-        y = y + 60
+        y = y + offset
         self:CreateToggle(container, y, "r_WaterDrawReflection", "Toggle Reflection", "This may improve performance by toggling off reflection.", { default = 1, off = 0 })
-        y = y + 60
+        y = y + offset
         self:CreateToggle(container, y, "r_WaterDrawRefraction", "Toggle Refraction", "This may improve performance by toggling off refraction.", { default = 1, off = 0 })
-        y = y + 60
+        y = y + offset
         self:CreateToggle(container, y, "bhop_map_fog", "Map Fog", "This may make it easier to see by disabling map fog.")
-        y = y + 60
+        y = y + offset
         self:CreateToggle(container, y, "bhop_nogun", "No gun toggle", "This will allow you to use guns without seeing them.")
-        y = y + 60
+        y = y + offset
         self:CreateToggle(container, y, "bhop_fullbright", "Full bright toggle", "This will allow you to see the map in full bright when flashlight is pressed.")
-        y = y + 60
+        y = y + offset
         self:CreateToggle(container, y, "bhop_enable_map_colors", "Custom map colors", "Enables or disables the custom map color changes.")
     end },
 
@@ -622,21 +654,21 @@ function UI:CreateMenu()
 
         y = y + 45
         self:CreateToggle(container, y, "bhop_showssj", "Display SSJ", "Enables or disables show jump stats in chat.", { default = 1, off = 0 })
-        y = y + 60
+        y = y + offset
         self:CreateToggle(container, y, "bhop_showpre", "Display Prestrafe", "Enables or disables prestrafe in chat.", { default = 1, off = 0 })
-        y = y + 60
+        y = y + offset
         self:CreateToggle(container, y, "bhop_fjt", "Display FJT", "Enables or disables the strafe ground tick.")
-        y = y + 60
+        y = y + offset
         self:CreateToggle(container, y, "bhop_showfjthud", "First jump tick HUD", "Enables or disables jump tick HUD.")
-        y = y + 60
+        y = y + offset
         self:CreateInputBoxText(container, y, "bhop_jhud_style", "claz", "JHUD Choose a Style", "JHUD style picker 'jcs', 'kawaii', 'claz', 'old'")
-        y = y + 60
+        y = y + offset
         self:CreateToggle(container, y, "bhop_jhud", "Display JHUD", "Enables or disables SSJ HUD.")
-        y = y + 60
+        y = y + offset
         self:CreateToggle(container, y, "bhop_jhudold", "Display JHUD Old", "Enables or disables the older SSJ MMod HUD from 2020.")
-        y = y + 60
+        y = y + offset
         self:CreateInputBox(container, y, "bhop_ssj_fadeduration", 1.5, "SSJ Fade Duration", "How long until the SSJ HUD fades out.")
-        y = y + 60
+        y = y + offset
         self:CreateToggle(container, y, "bhop_center_speed", "Display center speed", "Enables or disables the center speed.")
     end },
 
@@ -646,11 +678,11 @@ function UI:CreateMenu()
         self:CreatePanel(parent, {"Strafe Trainer"})
         y = y + 45
         self:CreateToggle(parent, y, "bhop_strafetrainer", "Display Strafe Trainer", "Enables or disables show strafe trainer.")
-        y = y + 60
+        y = y + offset
         self:CreateInputBox(parent, y, "bhop_strafetrainer_interval", 10, "Update rate", "Update rate in ticks.", 1, 100)
-        y = y + 60
+        y = y + offset
         self:CreateToggle(parent, y, "bhop_strafetrainer_ground", "Ground Update", "Should update on ground.")
-        y = y + 60
+        y = y + offset
         self:CreateToggle(parent, y, "bhop_strafesync", "Strafe Synchronizer", "Enables or disables show strafe synchronizer.")
     end },
 
@@ -660,21 +692,21 @@ function UI:CreateMenu()
         self:CreatePanel(parent, {"Audio"})
         y = y + 45
         self:CreateToggle(parent, y, "bhop_chatsounds", "Chat Sounds", "Enables or disables chat sounds on messages.")
-        y = y + 60
+        y = y + offset
         self:CreateToggle(parent, y, "bhop_timerchatsound", "Chat Timer Sounds", "Enables or disables chat timer sounds on messages.")
-        y = y + 60
+        y = y + offset
         self:CreateToggle(parent, y, "bhop_mute_music", "Disable Map Music", "Use if you want to disable music on all maps.")
-        y = y + 60
+        y = y + offset
         self:CreateToggle(parent, y, "bhop_gunsounds", "Gun Sounds", "Enables or disables weapon sounds.")
-        y = y + 60
+        y = y + offset
         self:CreateInputBoxText(parent, y, "bhop_footsteps", "on", "Footsteps", "Options: 'off', 'local', 'spectate', 'all'.")
-        y = y + 60
+        y = y + offset
         self:CreateToggle(parent, y, "bhop_zonesounds", "Zone sounds", "Enables or disables zone sounds on leave.")
-        y = y + 60
+        y = y + offset
         self:CreateToggle(parent, y, "bhop_wrsfx", "WR Sounds", "Enables or disables the World Record sounds.")
-        y = y + 60
+        y = y + offset
         self:CreateInputBox(parent, y, "bhop_wrsfx_volume", "0.4", "WR Sounds Volume", "Customize your WR sound volume, 1 is loud 0.4 is default.")
-        y = y + 60
+        y = y + offset
         self:CreateToggle(parent, y, "bhop_wrsfx_bad", "Bad Improvement Sounds", "Enables or disables the bad improvement sounds.")
     end },
 
@@ -684,13 +716,13 @@ function UI:CreateMenu()
         self:CreatePanel(parent, {"Controls"})
         y = y + 45
         self:CreateToggle(parent, y, "bhop_viewtransfrom", "View Transfrom View", "Enables or disables transfrom viewing.")
-        y = y + 60
+        y = y + offset
         self:CreateToggle(parent, y, "bhop_thirdperson", "Third Person View", "Enables or disables the third person view.")
-        y = y + 60
+        y = y + offset
         self:CreateToggle(parent, y, "bhop_viewinterp", "View Interpolation", "Enables or disables interpolation view.")
-        y = y + 60
+        y = y + offset
         self:CreateToggle(parent, y, "bhop_viewpunch", "View Punch", "Enables or disables view punch.")
-        y = y + 60
+        y = y + offset
         self:CreateToggle(parent, y, "bhop_sourcesensitivity", "CS:S Sensitivity", "Enables or disables CS:S Sensitivity. (3.125% Slower)")
     end }
     })
@@ -739,23 +771,23 @@ function UI:CreateMenu()
             self:CreatePanel(container, {"Layouts"})
             y = y + 45
             self:CreateToggle(container, y, "bhop_sidetimer", "Side Timer", "Enables or disables side timer.")
-            y = y + 60
+            y = y + offset
             self:CreateToggle(container, y, "bhop_show_notifications", "Pop-up Notifications", "Enables or disables pop-up notifications.")
-            y = y + 60
+            y = y + offset
             self:CreateToggle(container, y, "bhop_roundedbox", "Rounded Boxes", "Enables or disables rounded boxes.")
-            y = y + 60
+            y = y + offset
             self:CreateToggle(container, y, "bhop_simplebox", "Simple HUD Boxes", "Enables or disables simple HUD boxes.")
-            y = y + 60
+            y = y + offset
             self:CreateToggle(container, y, "bhop_rainbowtext", "Rainbow HUD", "Enables or disables rainbow HUD text.")
-            y = y + 60
+            y = y + offset
             self:CreateToggle(container, y, "bhop_chatbox", "Custom Chatbox", "Enables or disables the custom chat box.")
-            y = y + 60
+            y = y + offset
             self:CreateToggle(container, y, "bhop_netgraph", "Net Graph", "Enables or disables the custom net graph.")
-            y = y + 60
+            y = y + offset
             self:CreateToggle(container, y, "bhop_ramp_o_meter", "Ramp-o-Meter", "Enables or disables the ramp meter.")
-            y = y + 60
+            y = y + offset
             self:CreateToggle(container, y, "bhop_rampometer_percent", "Ramp-o-Meter Percent", "If you want to see the meter in percentage.")
-            y = y + 60
+            y = y + offset
             self:CreateToggle(container, y, "bhop_bash2_screen", "Bash2 Screen Logs", "If you want to see Bash2 logs on screen.")
         end },
 
@@ -764,7 +796,7 @@ function UI:CreateMenu()
             self:CreatePanel(parent, {"Colors"})
             y = y + 45
             self:CreateToggle(parent, y, "bhop_use_custom_color", "Use a soild color", "Enables or disables soild color for UI.")
-            y = y + 60
+            y = y + offset
             self:ColorBox(parent, y, "bhop_color", "Main Color", "Color for all UI highlights.")
             y = y + 80
         end },
@@ -792,17 +824,17 @@ function UI:CreateMenu()
             self:CreatePanel(parent, {"Miscellaneous"})
             y = y + 45
             self:CreateToggle(parent, y, "bhop_boxgraph", "Box Graph", "Enables or disables box graph angles.")
-            y = y + 60
+            y = y + offset
             self:CreateToggle(parent, y, "bhop_graphminecraft", "Box Graph Minecaft", "Enables or disables box graph angles minecraft style.")
-            y = y + 60
+            y = y + offset
             self:CreateToggle(parent, y, "bhop_centerbox_pos", "Center Box Postion", "Enables or disables a box under the player.")
-            y = y + 60
+            y = y + offset
             self:CreateToggle(parent, y, "bhop_landing_prediction", "Landing Prediction", "Enables or disables landing prediction display.")
-            y = y + 60
+            y = y + offset
             self:CreateToggle(parent, y, "bhop_showpeakheight", "Show Peak Height", "Enables or disables the peak height display.")
-            y = y + 60
+            y = y + offset
             self:CreateToggle(parent, y, "bhop_perfprinter", "Perfect Printer", "Enables or disables the jump tracker for scrolling.")
-            y = y + 60           
+            y = y + offset           
         end },
     })
 
@@ -851,17 +883,17 @@ function UI:CreateMenu()
                 self:CreatePanel(parent, {"Movement configurations"})
                 y = y + 45
                 self:CreateInputBoxSettings(parent, y, "bhop_settings_cap", 100, "Airaccel rate", "Changes movements airaccel rate.")
-                y = y + 60
+                y = y + offset
                 self:CreateInputBoxSettings(parent, y, "bhop_settings_mv", 32.4, "Speed Cap", "Changes movement speed air cap.")
-                y = y + 60
+                y = y + offset
                 self:CreateInputBoxSettings(parent, y, "bhop_settings_maxspeed", 250, "Max speed", "Changes movements max speed cap.")
-                y = y + 60
+                y = y + offset
                 self:CreateInputBoxSettings(parent, y, "bhop_settings_jumppower", 290, "Jump Height", "Changes movements jump height.")
-                y = y + 60
+                y = y + offset
                 self:CreateInputBoxSettings(parent, y, "bhop_movement_crouchboosting", 1, "Crouch Boosting", "Enables Crouch Boosting.")
-                y = y + 60
+                y = y + offset
                 self:CreateInputBoxSettings(parent, y, "bhop_movement_rngfix", 1, "RNGFix", "Enables RNGFix (Recommended keep on).")
-                y = y + 60
+                y = y + offset
                 self:CreateInputBoxSettings(parent, y, "bhop_movement_rampfix", 1, "Ramp Fix", "Enables Surf Ramp Fix (Recommended keep on).")
             end },
         })

@@ -211,6 +211,10 @@ function TIMER:Load(ply)
         net.WriteString(cachedVersionMsg)
         net.Send(ply)
     end)
+
+    net.Start("SendVersionDataMenu")
+    net.WriteString(cachedVersionMsg)
+    net.Send(ply)
 end
 
 -- Load the style
