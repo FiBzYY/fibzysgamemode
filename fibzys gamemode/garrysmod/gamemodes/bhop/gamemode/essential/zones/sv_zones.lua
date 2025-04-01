@@ -545,7 +545,6 @@ for identifier, bool in pairs(__MAP) do
         Zones[identifier][game.GetMap()] = bool
     else
         Zones[identifier] = bool
-        UTIL:Notify(Color(255, 255, 0), "Zones", "Handled CustomEntitySetup for identifier:", identifier)
         break
     end
 end

@@ -37,8 +37,7 @@ for key,id in pairs(Admin.Level) do
 	Admin.LevelNames[id] = key
 end
 
-local hook_Add = hook.Add
-local sq = sql.Query
+local hook_Add, sq = hook.Add, sql.Query
 local AdminLoad = {}
 
 -- BANS --
@@ -78,18 +77,15 @@ AdminLoad.Setup = {
 	{3, "Map points", Admin.Level.Zoner, { 145, 47, 100, 40 }},
 	{21, "Bonus points", Admin.Level.Zoner, { 250, 47, 100, 40 }},
 	{11, "Map options", Admin.Level.Zoner, { 355, 47, 100, 40 }},
-
 	{1, "Set zone", Admin.Level.Zoner, { 40, 97, 100, 40 }},
 	{10, "Remove zone", Admin.Level.Zoner, { 145, 97, 100, 40 }},
-	{2, "Cancel creation", Admin.Level.Zoner, { 250, 97, 100, 40 }},
+	{2, "Cancel Zone", Admin.Level.Zoner, { 250, 97, 100, 40 }},
 	{6, "Reload zones", Admin.Level.Zoner, { 355, 97, 100, 40 }},
-
 	{9, "Zone height", Admin.Level.Zoner, { 40, 147, 100, 40 }},
 	{20, "Cancel vote", Admin.Level.Zoner, { 145, 147, 100, 40 }},
 	{17, "Remove time", Admin.Level.Zoner, { 40, 202, 100, 40 }},
 	{18, "Remove replay", Admin.Level.Zoner, { 145, 202, 100, 40 }},
-	{28, "Remove all times", Admin.Level.Developer, { 250, 202, 205, 40 }},
-
+	{28, "Remove all times", Admin.Level.Developer, { 250, 147, 205, 40 }},
 	{24, "Reload admins", Admin.Level.Developer, { 40, 252, 100, 40 }},
 	{22, "Remove map", Admin.Level.Developer, { 145, 252, 100, 40 }},
 	{7, "Set admin", Admin.Level.Manager, { 250, 252, 100, 40, true }},
@@ -402,7 +398,7 @@ function Admin:HandleButton(ply, args)
 		end, Admin:FindPlayer(Steam))
 	elseif ID == 9 then
 		local tabQuery = {
-			Caption = "Which zone do you want to edit height of?\n(Note: When you select one, you will get a new window that shows height!)",
+			Caption = "Which zone do you want to edit height of?",
 			Title = "Select zone"
 		}
 
@@ -417,7 +413,7 @@ function Admin:HandleButton(ply, args)
 		BHDATA:Send(ply, "Admin", { "Query", tabQuery})
 	elseif ID == 10 then
 		local tabQuery = {
-			Caption = "Select the zone that you want to remove.\n(Note: The zone will be removed immediately!)\n(Note: The higher the number, the later it was added)",
+			Caption = "Select the zone that you want to remove.",
 			Title = "Remove zone"
 		}
 		
@@ -437,7 +433,7 @@ function Admin:HandleButton(ply, args)
 		BHDATA:Send(ply, "Admin", { "Query", tabQuery })
 	elseif ID == 11 then
 		local tabQuery = {
-			Caption = "Please click map required options. Select values that you want to add. Once you're done, press Save (Default is none)",
+			Caption = "Please click map required options. Select values that you want to add.",
 			Title = "Map options"
 		}
 		
@@ -524,7 +520,7 @@ function Admin:HandleRequest(ply, args)
 	end
 	
 	if not Admin:CanAccessID(ply, ID, ID > 50) then
-		return BHDATA:Send(ply, "Print", { "Admin", "You don't have access to use this functionality"})
+		return BHDATA:Send(ply, "Print", { "Admin", "You don't have access to use this functionality."})
 	end
 	
 	if ID == 1 then
@@ -567,7 +563,7 @@ function Admin:HandleRequest(ply, args)
 		RTV:UpdateMapListVersion()
 
 		BHDATA:Send(ply, "Print", { "Admin", Lang:Get("AdminSetValue", { "Multiplier", Timer.Multiplier }) })
-		Admin:AddLog("Changed map multiplier on " .. game.GetMap() .. " from " .. nOld .. " to " .. Points, ply:SteamID(), ply:Name())
+		Admin:AddLog("Changed map points on " .. game.GetMap() .. " from " .. nOld .. " to " .. Points, ply:SteamID(), ply:Name())
 	elseif ID == 5 then
 		BHDATA:Unload()
 		RunConsoleCommand("changelevel", Value)
@@ -827,7 +823,7 @@ function Admin:HandleRequest(ply, args)
 		end
 
 		local mapName = MySQL:Escape(game.GetMap())
-		local nOld = Timer.BonusMultiplier or 0
+		local old = Timer.BonusMultiplier or 0
 		Timer.BonusMultiplier = Points
 
 		MySQL:Start("SELECT map FROM timer_map WHERE map = " .. mapName, function(result)
@@ -844,8 +840,8 @@ function Admin:HandleRequest(ply, args)
 			TIMER:UpdateRank(p)
 		end
 
-		Admin:AddLog("Changed bonus multiplier on " .. game.GetMap() .. " from " .. nOld .. " to " .. Points, ply:SteamID(), ply:Name())
-		BHDATA:Send(ply, "Print", { "Admin", Lang:Get("AdminSetValue", { "Bonus multiplier", Timer.BonusMultiplier }) })
+		Admin:AddLog("Changed bonus multiplier on " .. game.GetMap() .. " from " .. old .. " to " .. Points, ply:SteamID(), ply:Name())
+		BHDATA:Send(ply, "Print", { "Admin", Lang:Get("AdminSetValue", { "Bonus points", Timer.BonusMultiplier }) })
 	elseif ID == 22 then
 		if not RTV:MapExists(Value) then
 			BHDATA:Send(ply, "Print", { "Admin", "The entered map '" .. Value .. "' is not on the nominate list, and thus cannot be deleted as it contains no info." })
@@ -974,6 +970,7 @@ end)
 -- Dev
 util.AddNetworkString("RequestMapMultiplier")
 util.AddNetworkString("ReceiveMapMultiplier")
+util.AddNetworkString("AdminHandleRequest")
 
 net.Receive("RequestMapMultiplier", function(len, ply)
     if not ply:IsAdmin() then return end
@@ -982,8 +979,6 @@ net.Receive("RequestMapMultiplier", function(len, ply)
     net.WriteFloat(currentMultiplier)
     net.Send(ply)
 end)
-
-util.AddNetworkString("AdminHandleRequest")
 
 net.Receive("AdminHandleRequest", function(len, ply)
     local ID = net.ReadInt(8)

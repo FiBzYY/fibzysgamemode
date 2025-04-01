@@ -1,37 +1,14 @@
-﻿PreviousPos = PreviousPos or {}
-PreviousVelocity = PreviousVelocity or {}
-WasOnGround = WasOnGround or {}
-Landed = Landed or {}
-Jumped = Jumped or {}
-GroundTrace = GroundTrace or {}
-OnRamp = OnRamp or {}
-
-local math_max = math.max
+﻿local math_max = math.max
 local math_min = math.min
-
-local HullTrace, LineTrace = util.TraceHull, util.TraceLine
+local HullTrace = util.TraceHull
 local Hook_Add = hook.Add
+
 local BOUNDARY_MIN = Vector(-16, -16, 0)
 local BOUNDARY_MAX = Vector(16, 16, 62)
 
-if SERVER then
-    Hook_Add("PlayerInitialSpawn", "FixSurf_SetupData", function(ply)
-        if not IsValid(ply) then return end
-        PreviousPos[ply] = Vector()
-        PreviousVelocity[ply] = Vector()
-        WasOnGround[ply] = true
-        Landed[ply] = false
-        Jumped[ply] = false
-        GroundTrace[ply] = {}
-        OnRamp[ply] = false
-    end)
-end
-
-local function ModifyVelocity(vel, norm, bounceFactor)
+local function ClipVelocity(vel, norm, bounceFactor)
     local reduction = vel:Dot(norm) * bounceFactor
-    local adjustedVel = vel - (norm * reduction)
-
-    return adjustedVel
+    return vel - (norm * reduction)
 end
 
 local function InitializePlayerState(player)
@@ -39,14 +16,43 @@ local function InitializePlayerState(player)
     player.prevVelocity = Vector(0, 0, 0)
     player.prevMoveAngles = Angle(0, 0, 0)
     player.prevLossPercent = 0
-    player.traceRecords = {}
+end
+
+local function FindRampNormal(ply)
+    local pos = ply:GetPos()
+    local forward = ply:GetForward()
+    local right = ply:GetRight()
+    local directions = {
+        forward * 30,
+        -forward * 30,
+        Vector(0, 0, -100),
+        -right * 30,
+        right * 30
+    }
+
+    for _, dir in ipairs(directions) do
+        local tr = HullTrace({
+            start = pos,
+            endpos = pos + dir,
+            mins = BOUNDARY_MIN,
+            maxs = BOUNDARY_MAX,
+            filter = ply,
+            mask = MASK_PLAYERSOLID_BRUSHONLY + CONTENTS_DETAIL
+        })
+
+        if tr.Hit and tr.HitNormal[3] < 0.7 and tr.HitNormal[3] > 0.1 then
+            return tr.HitNormal
+        end
+    end
+
+    return nil
 end
 
 local function RampLossFix(ply, mv)
     if not IsValid(ply) or not ply:Alive() then return end
     if ply:Team() == TEAM_SPECTATOR or ply:GetMoveType() == MOVETYPE_NOCLIP then return end
     if not ply.prevSpeed then InitializePlayerState(ply) end
-    if ply:OnGround() then InitializePlayerState(ply) return end
+    if ply:IsOnGround() then InitializePlayerState(ply) return end
 
     local baseVel = ply:GetBaseVelocity()
     local vel = mv:GetVelocity() + baseVel
@@ -58,29 +64,14 @@ local function RampLossFix(ply, mv)
 
         if lossPercent == 100 then InitializePlayerState(ply) return end
         if lossPercent > 96 and lossPercent ~= ply.prevLossPercent then
-            local pos = ply:GetPos()
-            local fwd, bwd, left, right = ply:GetForward(), -ply:GetForward(), -ply:GetRight(), ply:GetRight()
-            local directions = {fwd, bwd, Vector(0, 0, -100), left, right}
-            local foundNormal
+            local normal = FindRampNormal(ply)
+            if not normal then InitializePlayerState(ply) return end
 
-            for _, dir in ipairs(directions) do
-                local tr = util.TraceHull({
-                    start = pos,
-                    endpos = pos + dir * 30,
-                    mins = BOUNDARY_MIN,
-                    maxs = BOUNDARY_MAX,
-                    filter = ply,
-                    mask = MASK_PLAYERSOLID_BRUSHONLY + CONTENTS_DETAIL
-                })
+            local corrected = ClipVelocity(ply.prevVelocity + baseVel, normal, 1.0)
+            corrected[1] = math.Clamp(corrected[1], -10000, 10000)
+            corrected[2] = math.Clamp(corrected[2], -10000, 10000)
+            corrected[3] = math.Clamp(corrected[3], -10000, 10000)
 
-                if tr.Hit and tr.HitNormal.z < 0.7 and tr.HitNormal.z > 0.1 then
-                    foundNormal = tr.HitNormal
-                    break
-                end
-            end
-
-            if not foundNormal then InitializePlayerState(ply) return end
-            local corrected = ModifyVelocity(ply.prevVelocity + baseVel, foundNormal, 1.0)
             mv:SetVelocity(corrected)
             mv:SetOrigin(mv:GetOrigin() + Vector(0, 0, 1))
             mv:SetMoveAngles(ply.prevMoveAngles)
@@ -93,4 +84,4 @@ local function RampLossFix(ply, mv)
     ply.prevVelocity = mv:GetVelocity()
     ply.prevMoveAngles = mv:GetMoveAngles()
 end
-hook.Add("Move", "RampLossFix", RampLossFix)
+Hook_Add("Move", "RampLossFix", RampLossFix)

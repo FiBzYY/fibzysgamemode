@@ -2,7 +2,7 @@
     Name = "RNGFix",
     Author = "rio ported by FiBzY",
     Description = "Fixes physics bugs in movement game modes",
-    Version = "2.2.8",
+    Version = "2.2.9",
     URL = "",
 }
 
@@ -35,9 +35,6 @@ local MapTeleportedSequentialTicks = {}
 local iLastCollisionTick = {}
 local iLastLandTick = {}
 local iLastGroundEnt = {}
-
-local vAngles = {}
-local vVel = {}
 local collisionPoint = {}
 local collisionNormal = {}
 
@@ -62,7 +59,7 @@ local duckdelta = unducked[3] - ducked[3] -- 17 units simple height difference
 local gravity = GetConVar("sv_gravity")
 local maxVelocity = GetConVar("sv_maxvelocity")
 
-RNGFixHudDetect = false
+RNGFixHudDetect = RNGFixHudDetect or {}
 
 -- CVars
 local isSurfMap = string.StartWith(sl(game.GetMap()), "surf_")
@@ -76,9 +73,7 @@ local rngfix_telehop = CreateConVar("bhop_rngfix_telehop", "1", CV_FLAGS, "Enabl
 local rngfix_triggerjump = CreateConVar("bhop_rngfix_triggerjump", "0", CV_FLAGS, "Enable trigger jump fix. (not needed on gmod)", 0, 1)
 
 if SERVER then
-    if isSurfMap then
-        rngfix_stairs:SetBool(true)
-    end
+    if isSurfMap then rngfix_stairs:SetBool(true) end
 end
 
 -- Utils
@@ -303,16 +298,32 @@ local function FinishGravity(ply, velocity)
 	return CheckVelocity(velocity)
 end
 
+local function GetSurfaceJumpFactor(ply)
+    local trace = util.TraceLine({
+        start = ply:GetPos(),
+        endpos = ply:GetPos() - Vector(0, 0, 8),
+        filter = ply
+    })
+
+    if trace.Hit and trace.SurfaceProps then
+        local surfaceData = util.GetSurfaceData(trace.SurfaceProps)
+        if surfaceData and surfaceData.jumpFactor then
+            return surfaceData.jumpFactor
+        end
+    end
+
+    return 1
+end
+
 local function CheckJumpButton(ply, velocity)
 	-- Skip dead and water checks since we already did them.
-
     -- We need to check for ground somewhere so stick it here.
     if not ply:IsFlagSet(FL_ONGROUND) then return velocity end
     if not CanJump(ply) then return velocity end
 
     local jumpPower = ply:GetJumpPower()
-
-	-- TODO Incorporate surfacedata jump factor
+    local jumpFactor = GetSurfaceJumpFactor(ply)
+    jumpPower = jumpPower * jumpFactor
 
 	-- This conditional is why jumping while crouched jumps higher! Bad!
     if ply:IsFlagSet(FL_DUCKING) then
@@ -321,7 +332,6 @@ local function CheckJumpButton(ply, velocity)
         velocity[3] = velocity[3] + jumpPower
     end
 
-    -- Jumping does an extra half tick of gravity! Bad!
     return FinishGravity(ply, velocity)
 end
 
@@ -392,12 +402,8 @@ local function DoPreTickChecks(ply, mv, cmd)
     iOldButtons[ply] = mv:GetOldButtons()
     LastTickPredicted[ply] = iTick[ply]
 
-    vVel[ply] = Vector(mv:GetForwardSpeed(), mv:GetSideSpeed(), mv:GetUpSpeed())
-    vAngles[ply] = mv:GetAngles()
-
     local origin = mv:GetOrigin()
     local mins, maxs = playermins, unducked
-
     local nextOrigin = Duck(ply, Vector(origin), mins, maxs)
 
     -- These replicate their CGameMovement equivalents.
@@ -459,7 +465,7 @@ local function DoPreTickChecks(ply, mv, cmd)
                 end
 
                 if not shouldDoDownhillFixInstead then
-                    RNGFixHudDetect = true
+                    RNGFixHudDetect[ply] = true
 
                     --This naturally prevents any edge bugs so we can skip the edge fix.
                     PreventCollision(ply, origin, collision, veltick, mv)
@@ -507,7 +513,7 @@ local function DoPreTickChecks(ply, mv, cmd)
                 end
             end
 
-            RNGFixHudDetect = true
+            RNGFixHudDetect[ply] = true
             PreventCollision(ply, origin, collision, veltick, mv)
         end
     end
@@ -559,7 +565,7 @@ local function DoInclineCollisionFixes(ply, mv, nrm)
 
     if newVelocity[1] * newVelocity[1] + newVelocity[2] * newVelocity[2] > velocity[1] * velocity[1] + velocity[2] * velocity[2] then
         downhillFixIsBeneficial = true
-        RNGFixHudDetect = true
+        RNGFixHudDetect[ply] = true
     end
 
     if dot < 0 then
@@ -694,16 +700,12 @@ local function DoStairsFix(ply, mv)
 
     local tr = TR_TraceHullFilter(collisionPoint[ply], endPos, mins, maxs, MASK_PLAYERSOLID_BRUSHONLY, ply)
 
-    if not tr.Hit then 
-        return false 
-    end
+    if not tr.Hit then return false end
 
     local nrm = tr.HitNormal
 
     -- Ground below is not walkable, not stairs
-    if nrm[3] < MIN_STANDABLE_ZNRM then 
-        return false 
-    end
+    if nrm[3] < MIN_STANDABLE_ZNRM then return false end
 
     -- Find triggers that we would trigger if we did touch the ground here.
 
@@ -714,9 +716,7 @@ local function DoStairsFix(ply, mv)
 
     tr = TR_TraceHullFilter(start, endPos, mins, maxs, MASK_PLAYERSOLID_BRUSHONLY, ply)
 
-    if tr.Hit then 
-        endPos = tr.HitPos 
-    end
+    if tr.Hit then endPos = tr.HitPos end
 
     -- Trace over (only 1 unit, just to find a stair step)
     start = endPos
@@ -742,9 +742,7 @@ local function DoStairsFix(ply, mv)
     nrm = tr.HitNormal
 
     -- Ground atop "stair" is not walkable, not stairs
-    if nrm[3] < MIN_STANDABLE_ZNRM then 
-        return false 
-    end
+    if nrm[3] < MIN_STANDABLE_ZNRM then return false end
 
     endPos = tr.HitPos
 
@@ -765,9 +763,7 @@ end
 local function RNGFix_SetupMove(ply, mv, cmd)
     if not Iv(ply) then return end
 
-    if not iTick[ply] then 
-        iTick[ply] = 0
-    end 
+    if not iTick[ply] then iTick[ply] = 0 end 
 
     DoTelehopFix(ply, mv)
 
@@ -779,7 +775,7 @@ local function RNGFix_SetupMove(ply, mv, cmd)
     iFrameTime[ply] = tickinterval * lagged
 
     MapTeleportedSequentialTicks[ply] = false
-    RNGFixHudDetect = false
+    RNGFixHudDetect[ply] = false
 
     -- If we are actually not doing ANY of the fixes that rely on pre-tick collision prediction, skip all this.
     if rngfix_downhill:GetBool() or rngfix_uphill:GetBool() or rngfix_edgefix:GetBool() or rngfix_stairs:GetBool() or rngfix_telehop:GetBool() then
@@ -790,15 +786,13 @@ hook.Add("SetupMove", "RNGFix", RNGFix_SetupMove)
 
 -- PostThink works a little better than a ProcessMovement post hook because we need to wait for ProcessImpacts (trigger activation)
 local function PlayerPostThink(ply, mv)
-    if not Iv(ply) or not ply:Alive() or ply:GetMoveType() ~= MOVETYPE_WALK or ply:WaterLevel() ~= 0 then
-        return
-    end
+    if not Iv(ply) or not ply:Alive() or ply:GetMoveType() ~= MOVETYPE_WALK or ply:WaterLevel() ~= 0 then return end
 
     local origin = mv:GetOrigin()
-    local vMins, vMaxs = ply:OBBMins(), ply:OBBMaxs()
-    local vEndPos = Vector(origin[1], origin[2], origin[3] - vMaxs[3])
+    local mins, maxs = ply:OBBMins(), ply:OBBMaxs()
+    local originBelow = Vector(origin[1], origin[2], origin[3] - maxs[3])
 
-    local tr = TR_TraceHullFilter(origin, vEndPos, vMins, vMaxs, MASK_PLAYERSOLID, ply)
+    local tr = TR_TraceHullFilter(origin, originBelow, mins, maxs, MASK_PLAYERSOLID, ply)
 
     local wasOnGround = iLastGroundEnt[ply] or false
     local isOnGround = ply:IsOnGround()
@@ -834,7 +828,7 @@ local function PlayerPostThink(ply, mv)
 
 		-- landingMins and landingMaxs will contain the final values used to find the ground after returning.
         if nrm[3] < MIN_STANDABLE_ZNRM then
-            local tr2 = TracePlayerBBoxForGround(origin, vEndPos, vMins, vMaxs, ply)
+            local tr2 = TracePlayerBBoxForGround(origin, originBelow, mins, maxs, ply)
             if tr2 and tr2.Hit then
                 nrm = tr2.HitNormal
             else

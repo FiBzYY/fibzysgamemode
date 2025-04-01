@@ -11,14 +11,6 @@
 local activeButtonSideNav, activeButtonTopNav, f1Pressed, f4Pressed = nil, nil, false, false
 local lp, Iv, DrawText, Text, hook_Add = LocalPlayer, IsValid, draw.SimpleText, draw.DrawText, hook.Add
 local bhopMenuOpen = CreateConVar("bhop_menu_open", "0", FCVAR_ARCHIVE, "Tracks whether the bhop menu is open.")
-local selectedTheme = GetConVar("bhop_hud") and GetConVar("bhop_hud"):GetInt() or 0
-local selectedFOV = GetConVar("bhop_set_fov") and GetConVar("bhop_set_fov"):GetInt() or GetConVar("default_fov"):GetInt()
-
--- silly cvar saves
-function UI:SaveSettings()
-    RunConsoleCommand("bhop_hud", tostring(selectedTheme))
-    RunConsoleCommand("bhop_set_fov", tostring(selectedFOV))
-end
 
 -- Lets create the main button
 function UI:CreateButton(parent, text, dock, dockMargin, isTopNav, font)
@@ -92,7 +84,14 @@ local clickableWords = {
     },
 }
 
--- Lets create the main panel
+local colorWords = {
+    ["Cheating"] = Color(255, 100, 0),
+    ["Good"] = Color(0, 255, 0),
+    ["luck"] = Color(0, 255, 0),
+    ["+"] = Color(0, 255, 0),
+}
+
+-- Create UI Panel
 function UI:CreatePanel(parent, textLines)
     if not Iv(parent) then return nil end
 
@@ -106,35 +105,25 @@ function UI:CreatePanel(parent, textLines)
         self.clickables = {}
 
         for i, line in ipairs(textLines) do
-            local font = i == 1 and "ui.mainmenu.button" or "ui.mainmenu.button"
-            local hasClickable = false
+            local font = "ui.mainmenu.button"
+            local x = 10
 
             for word in string.gmatch(line, "%S+") do
+                local spacing = " "
                 local wordClean = word:gsub("[,%s]", "")
+                local wordW, wordH = surface.GetTextSize(word .. spacing)
+
                 if clickableWords[wordClean] then
-                    hasClickable = true
-                    break
+                    local info = clickableWords[wordClean]
+                    draw.SimpleText(word .. spacing, font, x, y, info.color, TEXT_ALIGN_LEFT)
+                    table.insert(self.clickables, {x = x, y = y, w = wordW, h = wordH, url = info.url})
+                elseif colorWords[wordClean] then
+                    draw.SimpleText(word .. spacing, font, x, y, colorWords[wordClean], TEXT_ALIGN_LEFT)
+                else
+                    draw.SimpleText(word .. spacing, font, x, y, colors.text, TEXT_ALIGN_LEFT)
                 end
-            end
 
-            local x = 10
-            if hasClickable then
-                for word in string.gmatch(line, "%S+") do
-                    local spacing = " "
-                    local wordClean = word:gsub("[,%s]", "")
-                    local wordW, wordH = surface.GetTextSize(word .. spacing)
-
-                    if clickableWords[wordClean] then
-                        local info = clickableWords[wordClean]
-                        draw.SimpleText(word .. spacing, font, x, y, info.color, TEXT_ALIGN_LEFT)
-                        table.insert(self.clickables, {x = x, y = y, w = wordW, h = wordH, url = info.url})
-                    else
-                        draw.SimpleText(word .. spacing, font, x, y, colors.text, TEXT_ALIGN_LEFT)
-                    end
-                    x = x + wordW
-                end
-            else
-                draw.SimpleText(line, font, 10, y, colors.text, TEXT_ALIGN_LEFT)
+                x = x + wordW
             end
 
             y = y + 25
@@ -259,13 +248,10 @@ local function WrapText(font, text, maxWidth)
     return lines
 end
 
-BHOP.VersionMessage = "Fetching..." -- default placeholder
+BHOP.VersionMessage = "Fetching..."
 
--- Receive version info from server
 net.Receive("SendVersionDataMenu", function()
     BHOP.VersionMessage = net.ReadString()
-
-    print(BHOP.VersionMessage)
 end)
 
 -- Main Menu
@@ -440,26 +426,32 @@ function UI:CreateMenu()
                 local btn = styleList:Add("DButton")
                 btn:SetText("")
 
-                local textWrapW = 380
+                local textWrapW = 250
                 local descLines = WrapText("ui.mainmenu.button", description, textWrapW)
                 local buttonHeight = 20 + (#descLines * 15) + 10
 
-                btn:SetSize(400, math.max(50, buttonHeight))
+                btn:SetSize(350, math.max(50, buttonHeight))
 
                 btn.Paint = function(self, w, h)
                     local hoverCol = self:IsHovered() and Color(60, 60, 60, 255) or Color(40, 40, 40, 255)
-                    draw.RoundedBox(6, 0, 0, w, h, hoverCol)
+                    draw.RoundedBox(0, 0, 0, w, h, hoverCol)
                     draw.SimpleText(styleName, "ui.mainmenu.button", 10, 5, color_white, TEXT_ALIGN_LEFT)
 
                     local yOffset = 25
                     for _, line in ipairs(descLines) do
                         draw.SimpleText(line, "ui.mainmenu.button", 10, yOffset, Color(200, 200, 200), TEXT_ALIGN_LEFT)
-                        yOffset = yOffset + 15
+                        yOffset = yOffset + 44
                     end
                 end
 
                 btn.DoClick = function()
-                    LocalPlayer():ConCommand("say !" .. command)
+                    lp():ConCommand("say !" .. command)
+    
+                    if Iv(Frame) then
+                        Frame:SetVisible(false)
+                        Frame:Remove()
+                    end
+
                     RunConsoleCommand("bhop_menu_open", "0")
                 end
             end
@@ -729,44 +721,46 @@ function UI:CreateMenu()
     
     -- Now lets to Interface Tab
     local InterfaceButton = self:CreateTopNavButton("User Interface", {
+
+        -- Themes
         { text = "Themes", panelContent = function(parent)
             local x, y = 10, 0
             self:CreatePanel(parent, {"Themes"})
             y = y + 45
-           self:CreateCustomDropdown(parent, y, "hud.main", "Select HUD Theme", {
+            local options = {
                 ["hud.css"] = "CS:S Kawaii",
                 ["hud.flow"] = "Flow Network",
                 ["hud.momentum"] = "Momentum Hud",
                 ["hud.simple"] = "Simple HUD",
                 ["hud.stellar"] = "Stellar Mod HUD",
                 ["hud.shavit"] = "CS:S Shavit HUD"
-            })
+            }
+
+            self:CreateCustomDropdown(parent, y, "Select HUD Theme", "Choose a style for your HUD you want to use", options)
+
             y = y + 300
             self:CreateThemeToggle(parent, y, 0, "Disable UI")
         end, isActive = true },
 
+        -- UI Layouts
         { text = "Layouts", panelContent = function(parent)
-        local scrollPanel = vgui.Create("DScrollPanel", parent)
-        scrollPanel:Dock(FILL)
+            local scrollPanel = vgui.Create("DScrollPanel", parent)
+            scrollPanel:Dock(FILL)
 
-        local vBar = scrollPanel:GetVBar()
-        UI:MenuScrollbar(vBar)
+            local vBar = scrollPanel:GetVBar()
+            UI:MenuScrollbar(vBar)
+            local x, y = 10, 0
 
-        local container = vgui.Create("DPanel", scrollPanel)
-        container:SetSize(parent:GetWide() - 20, 650)
-        container:SetPos(0, 0)
-        container.Paint = function(self, w, h)
-            surface.SetDrawColor(colors.content)
-            surface.DrawRect(0, 0, w, h)
-        end
+            local container = vgui.Create("DPanel", scrollPanel)
+            container:SetSize(parent:GetWide() - 20, 650)
+            container:SetPos(0, 0)
+            container.Paint = function(self, w, h)
+                surface.SetDrawColor(colors.content)
+                surface.DrawRect(0, 0, w, h)
+            end
 
-        local x, y = 10, 0
-        self:CreatePanel(container, {"SSJ"})
-    
             surface.SetDrawColor(120, 120, 120)
             surface.DrawRect(10, y + 35, container:GetWide() - 20, 1)
-
-            local x, y = 10, 0
 
             self:CreatePanel(container, {"Layouts"})
             y = y + 45
@@ -791,6 +785,7 @@ function UI:CreateMenu()
             self:CreateToggle(container, y, "bhop_bash2_screen", "Bash2 Screen Logs", "If you want to see Bash2 logs on screen.")
         end },
 
+        -- Colors to pick
         { text = "Colors", panelContent = function(parent)
         local x, y = 10, 0
             self:CreatePanel(parent, {"Colors"})
@@ -801,24 +796,31 @@ function UI:CreateMenu()
             y = y + 80
         end },
 
+        -- Preset themes
         { text = "Presets", panelContent = function(parent)
             local x, y = 10, 0
             self:CreatePanel(parent, {"Presets Picker"})
             y = y + 45
-           self:CreateCustomDropdownPreset(parent, y, "nui.kawaii", "Set Menu theme", {
+
+            local optionsnui = {
                 ["nui.kawaii"] = "Kawaii",
                 ["nui.css"] = "CS:S"
-            })
+            }
 
-            y = y + 120
+            self:CreateCustomDropdownPreset(parent, y, "Select Nui Theme", "Choose a style for your nui you want to use", optionsnui)
 
-           self:CreateCustomDropdownSB(parent, y, "bhop_scoreboard", "Set Scoreboard theme", {
+            y = y + 80
+
+            local optionsnsb = {
                 ["default"] = "Default",
                 ["kawaii"] = "Kawaii",
-                ["flow"] = "Flow"
-            })
+                ["flow"] = "Flow Network"
+            }
+
+            self:CreateCustomDropdownSB(parent, y, "bhop_scoreboard", "Select Scoreboard", "Choose a style for your scoreboard you want to use", optionsnsb)
         end },
 
+        -- Misc stuff
         { text = "Misc", panelContent = function(parent)
             local x, y = 10, 0
             self:CreatePanel(parent, {"Miscellaneous"})
@@ -847,6 +849,7 @@ function UI:CreateMenu()
                 self:UpdatePlayerList(parent)
             end, isActive = true },
 
+            -- Show all logs
             { text = "Logs", panelContent = function(parent)
                 local x, y = 10, 0
                 self:CreatePanel(parent, {"View server logs"})
@@ -869,6 +872,7 @@ function UI:CreateMenu()
                 UI:UpdateAdminSettings(parent)
             end },
 
+            -- Admin Settings
             { text = "Settings", panelContent = function(parent)
                 local x, y = 10, 0
                 self:CreatePanel(parent, {"Admin settings"})
@@ -876,8 +880,11 @@ function UI:CreateMenu()
                 self:CreateInputBoxSettings(parent, y, "bhop_settings_zonecap", 290, "Zone speed cap", "Changes speed cap in start zones.")
                 y = y + 60
                 self:CreateInputBoxSettings(parent, y, "bhop_admin_mapmultiplier", 15, "Set map points", "Sets or changes the points for the map.")
+                y = y + 60
+                self:CreateInputBox(parent, y, "bhop_snap_grid_size", 2, "Set Snap Grid Size", "Sets the snapping of the live zone placement.")
             end },
 
+            -- Movement Settings
             { text = "Movement Settings", panelContent = function(parent)
                 local x, y = 10, 0
                 self:CreatePanel(parent, {"Movement configurations"})
@@ -1017,7 +1024,7 @@ function UI:CreateRankPanel(parent)
         Text("Displaying " .. rankCount .. " Ranks", "ui.mainmenu.button", 15, y - 10, Color(200, 200, 200), TEXT_ALIGN_LEFT)
         y = y + 25
 
-        -- DO TO: Finish Dropdowns here
+        -- DO TO: Finish Dropdowns here for pl.mode
 
         local tableMargin = 20
         local tableX, tableY = tableMargin, y
@@ -1141,8 +1148,6 @@ net.Receive("WRList", function()
     if Iv(ContentPanel) then
         ContentPanel:Clear()
         UI:CreateWRPanel(ContentPanel)
-    else
-        print("ERROR: ContentPanel missing!")
     end
 end)
 

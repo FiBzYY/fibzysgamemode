@@ -91,6 +91,7 @@ function TIMER:Spawn(ply)
     self:SpawnChecks(ply)
 end
 
+-- Called on restart for resetting style move types
 function TIMER:ResetPlayerAttributes(ply, previous, start)
     if ply.style == TIMER:GetStyleID("LG") then
         ply:SetGravity(0.6)
@@ -98,21 +99,23 @@ function TIMER:ResetPlayerAttributes(ply, previous, start)
         ply:SetGravity(1.4)
     elseif ply.style == TIMER:GetStyleID("MOON") then
         ply:SetGravity(0.1)
-    elseif ply:GetGravity() != 0 then
+    elseif ply:GetGravity() ~= 0 then
         ply:SetGravity(0)
     end
 
     local style = TIMER:GetStyle(ply)
     local enableStamina = style == TIMER:GetStyleID("L") or 
-        style == TIMER:GetStyleID("Stamina") or IsKZMap()
+    style == TIMER:GetStyleID("Stamina") or IsKZMap()
 
+    -- Reload stamina
     if enableStamina and ply:IsOnGround() and not ply:IsBot() then
-        ply.AirStam = 4
-        ply.Gset = nil
-        ply.Gtime = nil
+        ply.StaminaAirTicks = 4
+        ply.StaminaGroundFrames = nil
+        ply.StaminaGroundStartTime = nil
     end
 end
 
+-- Spawn checks for setspawn use
 function TIMER:SpawnChecks(ply)
     self:SetJumps(ply, 0)
     self:ResetPlayerAttributes(ply)
@@ -406,6 +409,7 @@ function TIMER:LoadRank(ply, update)
     end)
 end
 
+-- Sub Ranks
 function TIMER:SetSubRank(ply, rank, points)
     if rank >= #TIMER.Ranks then
         local targetRank = 10
@@ -580,19 +584,19 @@ end
 
 -- Load top times
 function TIMER:LoadTop()
-    local nNormal = self:GetRankType(self:GetStyleID("normal"), true)
-    local nAngled = self:GetRankType(self:GetStyleID("sideways"), true)
+    local normal = self:GetRankType(self:GetStyleID("normal"), true)
+    local angled = self:GetRankType(self:GetStyleID("sideways"), true)
 
-    self.TopCache[nNormal], self.TopCache[nAngled] = {}, {}
+    self.TopCache[normal], self.TopCache[angled] = {}, {}
 
-    MySQL:Start("SELECT player, SUM(points) as Sum, style FROM timer_times WHERE style IN (" .. nNormal .. ", " .. self:GetStyleID("bonus") .. ") GROUP BY uid ORDER BY Sum DESC LIMIT " .. self.TopLimit, function(Normal)
-        CacheTopPlayers(Normal, self.TopCache, nNormal)
-        TIMER:ClearOldCache(self.TopCache[nNormal], TIMER.TopLimit)
+    MySQL:Start("SELECT player, SUM(points) as Sum, style FROM timer_times WHERE style IN (" .. normal .. ", " .. self:GetStyleID("bonus") .. ") GROUP BY uid ORDER BY Sum DESC LIMIT " .. self.TopLimit, function(Normal)
+        CacheTopPlayers(Normal, self.TopCache, normal)
+        TIMER:ClearOldCache(self.TopCache[normal], TIMER.TopLimit)
     end)
 
     MySQL:Start("SELECT player, SUM(points) as Sum, style FROM timer_times WHERE style IN (" .. self:GetStyleID("sideways") .. ", " .. self:GetStyleID("halfsideways") .. ") GROUP BY uid ORDER BY Sum DESC LIMIT " .. self.TopLimit, function(Angled)
-        CacheTopPlayers(Angled, self.TopCache, nAngled)
-        TIMER:ClearOldCache(self.TopCache[nAngled], TIMER.TopLimit)
+        CacheTopPlayers(Angled, self.TopCache, angled)
+        TIMER:ClearOldCache(self.TopCache[angled], TIMER.TopLimit)
     end)
 end
 
@@ -632,8 +636,8 @@ function TIMER:GetMapsBeat(ply, callback)
             for _, d in pairs(List) do
                 table.insert(tab, {
                     d.map,
-                    tonumber(d.nTime),
-                    tonumber(d.nPoints)
+                    tonumber(d.time),
+                    tonumber(d.points)
                 })
             end
         end
@@ -645,13 +649,8 @@ end
 TIMER.RemoteWRCache = {}
 
 function TIMER:SendRemoteWRList(ply, mapName, styleID, page, isUpdate)
-    if not mapName or type(mapName) ~= "string" or not styleID or type(styleID) ~= "number" then 
-        return 
-    end
-
-    if mapName == game.GetMap() then
-        return UI:SendToClient(ply, "wr", self:GetRecordList(styleID, page), styleID, page, self:GetRecordCount(styleID))
-    end
+    if not mapName or type(mapName) ~= "string" or not styleID or type(styleID) ~= "number" then return end
+    if mapName == game.GetMap() then return UI:SendToClient(ply, "wr", self:GetRecordList(styleID, page), styleID, page, self:GetRecordCount(styleID)) end
 
     local remoteCache = self.RemoteWRCache[mapName]
     local pageSize = self.PageSize
@@ -740,6 +739,7 @@ function TIMER:Disconnect(ply)
         end
     end
 
+    -- Leave messages
     local connectMessage = Lang:Get("Disconnect", { ply:Nick(), ply:SteamID(), "left the game" })
     BHDATA:Broadcast("Print", { "Server", connectMessage })
 end

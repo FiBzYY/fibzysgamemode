@@ -1251,11 +1251,13 @@ end)
 util.AddNetworkString("OpenBhopMenu")
 util.AddNetworkString("OpenWorldRecords")
 
+-- F1
 function GM:ShowHelp(pl)
     net.Start("OpenBhopMenu")
     net.Send(pl)
 end
 
+-- F2
 function GM:ShowTeam(pl)
     NETWORK:StartNetworkMessage(pl, "OpenSpectateDialog", {})
 end

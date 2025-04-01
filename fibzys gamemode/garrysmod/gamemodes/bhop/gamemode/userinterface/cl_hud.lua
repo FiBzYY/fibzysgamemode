@@ -454,7 +454,7 @@ HUD.Themes = {
 	    surface.DrawRect(xPos + 5, screenHeight - yPos - 30, width - 10, 25)
 
         local cp = mc(velocity, 0, 3500) / 3500
-        local RNGFixColor = RNGFixHudDetect
+        local RNGFixColor = RNGFixHudDetect[pl]
 
         local cp = mc(velocity, 0, 3500) / 3500
         local curTime = ct()
@@ -588,7 +588,7 @@ HUD.Themes = {
 
         local diff = velocity - pl.current
 
-        if RNGFixHudDetect then  
+        if RNGFixHudDetect[pl] then  
             pl.speedcol = RNGfixColor
 
             if not pl.rngFixTimer then

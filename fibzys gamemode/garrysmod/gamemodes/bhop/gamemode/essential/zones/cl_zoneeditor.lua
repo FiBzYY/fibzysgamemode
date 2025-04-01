@@ -1,7 +1,5 @@
-local hook_Add = hook.Add
-local InputCheck = LocalPlayer
-
--- bools
+-- Cache
+local hook_Add, InputCheck = hook.Add, LocalPlayer
 local isPlacing = false
 local isZoneFinalized = false
 local startPoint = nil
@@ -65,63 +63,84 @@ local function DrawDynamicZone()
     end
 end
 
-local function DrawPreviewCircle(playerPos)
-    if previewPos then
-        local segments = 60
-        local radius = 5
-        local circleColor = Color(0, 255, 0, 100)
-        local lineColor = Color(255, 255, 255, 200)
-        local lineHeight = 25
-        local sideLineLength = 25
+local ZoneColorMap = {
+    [0] = Color(0, 255, 0, 120),        -- Normal Start
+    [1] = Color(255, 0, 0, 120),        -- Normal End
+    [2] = Color(0, 80, 255, 120),       -- Bonus Start
+    [3] = Color(0, 80, 255, 80),        -- Bonus End
+    [4] = Color(153, 0, 153, 120),      -- Anti-Cheat
+    [5] = Color(80, 80, 255, 120),      -- Freestyle
+    [6] = Color(140, 140, 140, 120),    -- NormalAC
+    [7] = Color(0, 0, 153, 120),        -- BonusAC
+    [100] = Color(255, 200, 0, 120),    -- LegitSpeed
+    [122] = Color(255, 0, 128, 120),    -- Gravity Zone
+    [123] = Color(0, 255, 128, 120),    -- Step Size
+    [124] = Color(128, 128, 255, 120),  -- Restart Zone
+    [125] = Color(255, 128, 0, 120),    -- Booster
+    [126] = Color(255, 255, 255, 120),  -- Full Bright
+    [130] = Color(255, 0, 128, 120),    -- Helper
+}
 
-        local vertices = {}
-        for i = 0, segments do
-            local angle = math.rad((i / segments) * -360)
-            local x = math.cos(angle) * radius
-            local y = math.sin(angle) * radius
+local function DrawPreviewCircle(playerPos, circleColor)
+    if not previewPos then return end
 
-            table.insert(vertices, {
-                x = x,
-                y = y,
-                u = 0.5 + (x / radius) * 0.5,
-                v = 0.5 + (y / radius) * 0.5,
-            })
-        end
+    local segments = 60
+    local radius = 5
+    local lineColor = Color(255, 255, 255, 200)
+    local lineHeight = 25
+    local sideLineLength = 25
 
-        cam.Start3D2D(previewPos, Angle(0, 0, 0), 1)
-            surface.SetDrawColor(circleColor)
-            surface.DrawPoly(vertices)
-        cam.End3D2D()
+    local vertices = {}
+    for i = 0, segments do
+        local angle = math.rad((i / segments) * -360)
+        local x = math.cos(angle) * radius
+        local y = math.sin(angle) * radius
 
-        local startPos = previewPos
-        local endPos = previewPos + Vector(0, 0, lineHeight)
-        render.SetColorMaterial()
-        render.DrawLine(startPos, endPos, lineColor, false)
+        table.insert(vertices, {
+            x = x,
+            y = y,
+            u = 0.5 + (x / radius) * 0.5,
+            v = 0.5 + (y / radius) * 0.5,
+        })
+    end
 
-        local topStart = previewPos + Vector(0, 0, lineHeight)
-        local bottomStart = previewPos
+    cam.Start3D2D(previewPos, Angle(0, 0, 0), 1)
+        surface.SetDrawColor(circleColor or Color(0, 255, 0, 100))
+        surface.DrawPoly(vertices)
+    cam.End3D2D()
 
-        local topLeft = bottomStart + Vector(0, -sideLineLength, 0)
-        local topRight = bottomStart + Vector(0, sideLineLength, 0)
-        local bottomLeft = bottomStart + Vector(-sideLineLength, 0, 0)
-        local bottomRight = bottomStart + Vector(sideLineLength, 0, 0)
+    local startPos = previewPos
+    local endPos = previewPos + Vector(0, 0, lineHeight)
+    render.SetColorMaterial()
+    render.DrawLine(startPos, endPos, lineColor, false)
 
-        render.DrawLine(topLeft, topRight, lineColor, false)
-        render.DrawLine(bottomLeft, bottomRight, lineColor, false)
+    local topStart = previewPos + Vector(0, 0, lineHeight)
+    local bottomStart = previewPos
 
-        if playerPos then
-            local centerOfCircle = previewPos
-            render.DrawLine(playerPos, centerOfCircle, lineColor, false)
-        end
+    local topLeft = bottomStart + Vector(0, -sideLineLength, 0)
+    local topRight = bottomStart + Vector(0, sideLineLength, 0)
+    local bottomLeft = bottomStart + Vector(-sideLineLength, 0, 0)
+    local bottomRight = bottomStart + Vector(sideLineLength, 0, 0)
+
+    render.DrawLine(topLeft, topRight, lineColor, false)
+    render.DrawLine(bottomLeft, bottomRight, lineColor, false)
+
+    if playerPos then
+        render.DrawLine(playerPos, previewPos, lineColor, false)
     end
 end
 
-hook_Add("PostDrawOpaqueRenderables", "PreviewZone", function()
+hook.Add("PostDrawOpaqueRenderables", "PreviewZone", function()
     if not AdminLoad.Editor or not AdminLoad.Editor.Active then return end
+
     local player = LocalPlayer()
     local playerPos = player:GetPos() + Vector(0, 0, 32)
-    DrawPreviewCircle(playerPos)
-    DrawPreviewCircle()
+
+    local zoneType = AdminLoad.Editor.Type or 0
+    local zoneColor = ZoneColorMap[zoneType] or Color(255, 255, 255, 100)
+
+    DrawPreviewCircle(playerPos, zoneColor)
+    DrawPreviewCircle(nil, zoneColor)
     DrawDynamicZone()
 end)
 
@@ -167,33 +186,32 @@ hook.Add("Tick", "ZonePlace", function()
     end
 end)
 
-hook_Add("HUDPaint", "ZonePlacement", function()
-    if not AdminLoad.Editor or not AdminLoad.Editor.Active or not canPlaceZone then return end
-
-    local text = ""
-
-    if not zonePlacementEnabled then
-        text = "Press 1 to enable zone placement mode."
-    elseif not isPlacing then
-        text = "Left-click to set the start point."
-    elseif isPlacing and not isZoneFinalized then
-        text = "Right-click to set the end point and finalize the zone."
-    end
-
-    draw.SimpleText(text, "HUDFont", ScrW() / 2, ScrH() / 2, Color(255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
-end)
-
-hook_Add("HUDPaint", "GridSize", function()
+-- placement hud
+hook.Add("HUDPaint", "ZoneEditorHUD", function()
     if not AdminLoad.Editor or not AdminLoad.Editor.Active then return end
 
-    local snapSize = snapGridSize:GetInt()
-    draw.SimpleText(
-        "Snap Grid Size: " .. snapSize .. " units",
-        "HUDFont",
-        ScrW() / 2,
-        ScrH() / 2 + 50,
-        Color(255, 255, 255),
-        TEXT_ALIGN_CENTER,
-        TEXT_ALIGN_BOTTOM
-    )
+    local startX, startY = 10, 100
+    local lineSpacing = 20
+    local y = startY
+    local green = Color(0, 255, 0)
+    local white = Color(255, 255, 255)
+
+    local function DrawStep(stepLabel, stepInfo)
+        draw.SimpleText(stepLabel, "HUDFont", startX, y, green, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+        draw.SimpleText(stepInfo, "HUDFont", startX + 70, y, white, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+        y = y + lineSpacing
+    end
+
+    if canPlaceZone then
+        if not zonePlacementEnabled then
+            DrawStep("Step 1:", "Press 1 to enable zone placement mode.")
+        elseif not isPlacing then
+            DrawStep("Step 2:", "Left-click to set the start point.")
+        elseif isPlacing and not isZoneFinalized then
+            DrawStep("Step 3:", "Right-click to set the end point and finalize the zone.")
+        end
+    end
+
+    draw.SimpleText("Grid Size:", "HUDFont", startX, y, green, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+    draw.SimpleText(snapGridSize:GetInt() .. " units", "HUDFont", startX + 90, y, white, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
 end)

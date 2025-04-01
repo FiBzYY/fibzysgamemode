@@ -120,24 +120,44 @@ function UI:ColorBox(parent, y, convarName, labelText, infoText)
     return pnl, lbl, infoLbl
 end
 
-function UI:CreateCustomDropdown(parent, y, themeID, labelText, themeOptions)
+function UI:CreateCustomDropdown(parent, y, labelText, infoText, themeOptions)
     local pnl = vgui.Create("DPanel", parent)
-    pnl:SetSize(parent:GetWide(), 80)
+    pnl:SetSize(parent:GetWide(), 90)
     pnl:SetPos(0, y)
 
+    local selectedTheme = GetConVar("bhop_hud_hide"):GetBool() and "disabled" or Settings:GetValue("selected.hud", "hud.css")
+    local selectedText = selectedTheme == "disabled" and "Select an option" or (themeOptions[selectedTheme] or "Select an option")
+
+    -- background
     pnl.Paint = function(self, w, h)
-        draw.RoundedBox(0, 10, 5, w - 20, 70, Color(42, 42, 42, 250))
-        draw.SimpleText(labelText, "ui.mainmenu.button", 20, 15, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+        local bgW, bgH = w - 20, 70
+        -- draw.RoundedBox(0, 10, 5, bgW, bgH, Color(42, 42, 42, 250))
     end
 
-    local dropdownButton = vgui.Create("DButton", pnl)
-    dropdownButton:SetPos(20, 40)
-    dropdownButton:SetSize(200, 25)
-    dropdownButton:SetText("")
+    local lbl = vgui.Create("DLabel", pnl)
+    lbl:SetPos(20, 10)
+    lbl:SetText(labelText)
+    lbl:SetTextColor(colors.text)
+    lbl:SetFont("ui.mainmenu.button")
+    lbl:SizeToContents()
 
-    local isHudHidden = GetConVar("bhop_hud_hide"):GetBool()
-    local selectedTheme = isHudHidden and "disabled" or Settings:GetValue("selected.hud", "hud.css")
-    local selectedText = isHudHidden and "Select an option" or (themeOptions[selectedTheme] or "Select an option")
+    local infoLbl = vgui.Create("DLabel", pnl)
+    infoLbl:SetPos(20, 30)
+    infoLbl:SetText(infoText or "")
+    infoLbl:SetTextColor(colors.infoText)
+    infoLbl:SetFont("ui.mainmenu.button")
+    infoLbl:SizeToContents()
+
+    local dropdownButton = vgui.Create("DButton", pnl)
+    local btnW, btnH = 200, 25
+    local btnX = pnl:GetWide() - btnW - 20
+    local btnY = 15
+
+    dropdownButton:SetSize(btnW, btnH)
+    dropdownButton:SetPos(btnX, btnY)
+
+    dropdownButton:SetText("")
+    dropdownButton:SetCursor("hand")
 
     local dropdownOpen = false
 
@@ -148,7 +168,6 @@ function UI:CreateCustomDropdown(parent, y, themeID, labelText, themeOptions)
         draw.SimpleText(selectedText, "ui.mainmenu.button", 10, h / 2, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
         surface.SetDrawColor(200, 200, 200, 255)
-        draw.NoTexture()
         surface.DrawPoly({
             { x = w - 20, y = h / 2 - 4 },
             { x = w - 10, y = h / 2 - 4 },
@@ -158,7 +177,7 @@ function UI:CreateCustomDropdown(parent, y, themeID, labelText, themeOptions)
 
     local dropdownMenu = vgui.Create("DPanel", parent)
     dropdownMenu:SetSize(200, 25 * table.Count(themeOptions))
-    dropdownMenu:SetPos(dropdownButton:LocalToScreen(20, 110))
+    dropdownMenu:SetPos(dropdownButton:LocalToScreen(535, 85))
     dropdownMenu:SetVisible(false)
 
     dropdownMenu.Paint = function(self, w, h)
@@ -171,6 +190,7 @@ function UI:CreateCustomDropdown(parent, y, themeID, labelText, themeOptions)
         option:SetSize(200, 25)
         option:SetPos(0, yOffset)
         option:SetText("")
+        option:SetCursor("hand")
 
         option.Paint = function(self, w, h)
             local bgColor = self:IsHovered() and Color(60, 60, 60, 255) or Color(35, 35, 35, 255)
@@ -205,23 +225,44 @@ function UI:CreateCustomDropdown(parent, y, themeID, labelText, themeOptions)
     return pnl, dropdownButton, dropdownMenu
 end
 
-function UI:CreateCustomDropdownPreset(parent, y, themeID, labelText, themeOptions)
+function UI:CreateCustomDropdownPreset(parent, y, labelText, infoText, themeOptions)
     local pnl = vgui.Create("DPanel", parent)
-    pnl:SetSize(parent:GetWide(), 80)
+    pnl:SetSize(parent:GetWide(), 90)
     pnl:SetPos(0, y)
 
-    pnl.Paint = function(self, w, h)
-        draw.RoundedBox(0, 10, 5, w - 20, 70, Color(42, 42, 42, 250))
-        draw.SimpleText(labelText, "ui.mainmenu.button", 20, 15, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
-    end
-
-    local dropdownButton = vgui.Create("DButton", pnl)
-    dropdownButton:SetPos(20, 40)
-    dropdownButton:SetSize(200, 25)
-    dropdownButton:SetText("")
-    
     local selectedTheme = Settings:GetValue('selected.nui', "nui.css")
     local selectedText = themeOptions[selectedTheme] or "Select an option"
+
+    -- background
+    pnl.Paint = function(self, w, h)
+        local bgW, bgH = w - 20, 70
+        -- draw.RoundedBox(0, 10, 5, bgW, bgH, Color(42, 42, 42, 250))
+    end
+
+    local lbl = vgui.Create("DLabel", pnl)
+    lbl:SetPos(20, 10)
+    lbl:SetText(labelText)
+    lbl:SetTextColor(colors.text)
+    lbl:SetFont("ui.mainmenu.button")
+    lbl:SizeToContents()
+
+    local infoLbl = vgui.Create("DLabel", pnl)
+    infoLbl:SetPos(20, 30)
+    infoLbl:SetText(infoText or "")
+    infoLbl:SetTextColor(colors.infoText)
+    infoLbl:SetFont("ui.mainmenu.button")
+    infoLbl:SizeToContents()
+
+    local dropdownButton = vgui.Create("DButton", pnl)
+    local btnW, btnH = 200, 25
+    local btnX = pnl:GetWide() - btnW - 20
+    local btnY = 15
+
+    dropdownButton:SetSize(btnW, btnH)
+    dropdownButton:SetPos(btnX, btnY)
+
+    dropdownButton:SetText("")
+    dropdownButton:SetCursor("hand")
 
     local dropdownOpen = false
 
@@ -232,7 +273,6 @@ function UI:CreateCustomDropdownPreset(parent, y, themeID, labelText, themeOptio
         draw.SimpleText(selectedText, "ui.mainmenu.button", 10, h / 2, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
         surface.SetDrawColor(200, 200, 200, 255)
-        draw.NoTexture()
         surface.DrawPoly({
             { x = w - 20, y = h / 2 - 4 },
             { x = w - 10, y = h / 2 - 4 },
@@ -242,7 +282,7 @@ function UI:CreateCustomDropdownPreset(parent, y, themeID, labelText, themeOptio
 
     local dropdownMenu = vgui.Create("DPanel", parent)
     dropdownMenu:SetSize(200, 25 * table.Count(themeOptions))
-    dropdownMenu:SetPos(dropdownButton:LocalToScreen(20, 110))
+    dropdownMenu:SetPos(dropdownButton:LocalToScreen(535, 85))
     dropdownMenu:SetVisible(false)
 
     dropdownMenu.Paint = function(self, w, h)
@@ -255,11 +295,12 @@ function UI:CreateCustomDropdownPreset(parent, y, themeID, labelText, themeOptio
         option:SetSize(200, 25)
         option:SetPos(0, yOffset)
         option:SetText("")
+        option:SetCursor("hand")
 
         option.Paint = function(self, w, h)
             local bgColor = self:IsHovered() and Color(60, 60, 60, 255) or Color(35, 35, 35, 255)
             draw.RoundedBox(0, 0, 0, w, h, bgColor)
-            draw.SimpleText(name, "hud.subtitle", 10, h / 2, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+            draw.SimpleText(name, "ui.mainmenu.button", 10, h / 2, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
         end
 
         option.DoClick = function()
@@ -288,22 +329,40 @@ function UI:CreateCustomDropdownPreset(parent, y, themeID, labelText, themeOptio
     return pnl, dropdownButton, dropdownMenu
 end
 
-function UI:CreateCustomDropdownSB(parent, y, cvarName, labelText, options)
+function UI:CreateCustomDropdownSB(parent, y, cvarName, labelText, infoText, options)
     local pnl = vgui.Create("DPanel", parent)
-    pnl:SetSize(parent:GetWide(), 200)
+    pnl:SetSize(parent:GetWide(), 90)
     pnl:SetPos(0, y)
 
-    pnl.Paint = function(self, w, h)
-        draw.RoundedBox(0, 10, 5, w - 20, 70, Color(42, 42, 42, 250))
-        draw.SimpleText(labelText, "ui.mainmenu.button", 20, 15, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
-    end
+    pnl.Paint = function(self, w, h) end
 
+    local lbl = vgui.Create("DLabel", pnl)
+    lbl:SetPos(20, 10)
+    lbl:SetText(labelText)
+    lbl:SetTextColor(colors.text)
+    lbl:SetFont("ui.mainmenu.button")
+    lbl:SizeToContents()
+
+    -- label
+    local infoLbl = vgui.Create("DLabel", pnl)
+    infoLbl:SetPos(20, 30)
+    infoLbl:SetText(infoText or "")
+    infoLbl:SetTextColor(colors.infoText)
+    infoLbl:SetFont("ui.mainmenu.button")
+    infoLbl:SizeToContents()
+
+    -- dropdown
     local dropdownButton = vgui.Create("DButton", pnl)
-    dropdownButton:SetPos(20, 40)
-    dropdownButton:SetSize(200, 25)
-    dropdownButton:SetText("")
+    local btnW, btnH = 200, 25
+    local btnX = pnl:GetWide() - btnW - 20
+    local btnY = 15
 
-    local selectedTheme = GetConVar(cvarName):GetString()
+    dropdownButton:SetSize(btnW, btnH)
+    dropdownButton:SetPos(btnX, btnY)
+    dropdownButton:SetText("")
+    dropdownButton:SetCursor("hand")
+
+    local selectedTheme = GetConVar(cvarName) and GetConVar(cvarName):GetString() or "default"
     local selectedText = options[selectedTheme] or "Select an option"
     local dropdownOpen = false
 
@@ -313,7 +372,6 @@ function UI:CreateCustomDropdownSB(parent, y, cvarName, labelText, options)
         draw.SimpleText(selectedText, "ui.mainmenu.button", 10, h / 2, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
         surface.SetDrawColor(200, 200, 200, 255)
-        draw.NoTexture()
         surface.DrawPoly({
             { x = w - 20, y = h / 2 - 4 },
             { x = w - 10, y = h / 2 - 4 },
@@ -321,9 +379,10 @@ function UI:CreateCustomDropdownSB(parent, y, cvarName, labelText, options)
         })
     end
 
-    local dropdownMenu = vgui.Create("DPanel", pnl)
+    -- Dropdown menu
+    local dropdownMenu = vgui.Create("DPanel", parent)
     dropdownMenu:SetSize(200, 25 * table.Count(options))
-    dropdownMenu:SetPos(20, 70)
+    dropdownMenu:SetPos(dropdownButton:LocalToScreen(535, 164))
     dropdownMenu:SetVisible(false)
 
     dropdownMenu.Paint = function(self, w, h)
@@ -336,6 +395,7 @@ function UI:CreateCustomDropdownSB(parent, y, cvarName, labelText, options)
         option:SetSize(200, 25)
         option:SetPos(0, yOffset)
         option:SetText("")
+        option:SetCursor("hand")
 
         option.Paint = function(self, w, h)
             local bgColor = self:IsHovered() and Color(60, 60, 60, 255) or Color(35, 35, 35, 255)
@@ -920,6 +980,33 @@ function UI:UpdatePlayerList(parent)
             surface.SetDrawColor(255, 255, 255, 100)
             surface.DrawLine(0, h - 1, w, h - 1)
         end
+
+        -- playerPanel clickable
+        playerPanel:SetCursor("hand")
+        playerPanel.OnMousePressed = function()
+            local frame = vgui.Create("DFrame")
+            frame:SetTitle("Set Rank for " .. ply:Nick())
+            frame:SetSize(300, 140)
+            frame:Center()
+            frame:MakePopup()
+
+            local textEntry = vgui.Create("DTextEntry", frame)
+            textEntry:SetPos(20, 40)
+            textEntry:SetSize(260, 30)
+            textEntry:SetText("Enter rank name...")
+
+            local confirmBtn = vgui.Create("DButton", frame)
+            confirmBtn:SetPos(20, 80)
+            confirmBtn:SetSize(260, 30)
+            confirmBtn:SetText("Set Rank")
+
+            confirmBtn.DoClick = function()
+                local newRank = textEntry:GetValue()
+                print("Set " .. ply:Nick() .. " to rank: " .. newRank)
+
+                frame:Close()
+            end
+        end
     end
 end
 
@@ -938,10 +1025,7 @@ net.Receive("SendAdminLogs", function()
     end
 
     if UI and UI.UpdateServerLogs and IsValid(UI.CurrentLogsPanel) then
-        print("[Client] Updating logs into panel.")
         UI:UpdateServerLogs(UI.CurrentLogsPanel, logs)
-    else
-        print("[Client] Panel not valid or missing")
     end
 end)
 
@@ -988,10 +1072,6 @@ function CreateCustomButton(parent, buttonText, onClickFunc)
     button:SetSize(100, 30)
 
     button.Paint = function(self, w, h)
-        local bgColor = self:IsHovered() and Color(32, 32, 32) or Color(100, 100, 100)
-        surface.SetDrawColor(bgColor)
-        surface.DrawRect(0, 0, w, h)
-
         DrawText(buttonText, "ui.mainmenu.button", w / 2, h / 2, Color(255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
     end
 
@@ -1137,6 +1217,12 @@ function UI:UpdateAdminSettings(parent)
         net.WriteInt(1, 8)
         net.WriteInt(0, 8)
         net.SendToServer()
+
+        if IsValid(Frame) then
+            Frame:SetVisible(false)
+            Frame:Remove()
+        end
+        RunConsoleCommand("bhop_menu_open", "0")
     end)
 
     CreateSettingRow("Normal End", "Set End", self.PlayerListPanel, function()
@@ -1144,6 +1230,12 @@ function UI:UpdateAdminSettings(parent)
         net.WriteInt(1, 8)  
         net.WriteInt(1, 8)
         net.SendToServer()
+
+        if IsValid(Frame) then
+            Frame:SetVisible(false)
+            Frame:Remove()
+        end
+        RunConsoleCommand("bhop_menu_open", "0")
     end)
 
     CreateSettingRow("Bonus Start", "Set Start", self.PlayerListPanel, function()
@@ -1151,6 +1243,12 @@ function UI:UpdateAdminSettings(parent)
         net.WriteInt(1, 8)  
         net.WriteInt(2, 8)
         net.SendToServer()
+
+        if IsValid(Frame) then
+            Frame:SetVisible(false)
+            Frame:Remove()
+        end
+        RunConsoleCommand("bhop_menu_open", "0")
     end)
 
     CreateSettingRow("Bonus End", "Set End", self.PlayerListPanel, function()
@@ -1158,6 +1256,12 @@ function UI:UpdateAdminSettings(parent)
         net.WriteInt(1, 8)  
         net.WriteInt(3, 8)
         net.SendToServer()
+
+        if IsValid(Frame) then
+            Frame:SetVisible(false)
+            Frame:Remove()
+        end
+        RunConsoleCommand("bhop_menu_open", "0")
     end)
 
     CreateSettingRow("Change Map", "Change", self.PlayerListPanel, function() 
@@ -1165,6 +1269,7 @@ function UI:UpdateAdminSettings(parent)
     end)
 end
 
+-- Dev
 function UI:OpenChangeMapUI()
     local frame = vgui.Create("DFrame")
     frame:SetTitle("Change Map")

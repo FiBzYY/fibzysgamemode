@@ -40,11 +40,11 @@ function Window:Open(identifier, args, force)
 
         ActiveUI.Paint = function(self, w, h)
             local titleBarHeight = 30
-            local bgColor = Color(60, 60, 60)
-            local titleColor = Color(80, 80, 80) 
+            local bgColor = Color(42, 42, 42)
+            local titleColor = Color(32, 32, 32) 
 
-            draw.RoundedBox(3, 0, 0, w, h, bgColor)
-            draw.RoundedBoxEx(3, 0, 0, w, titleBarHeight, titleColor, true, true, false, false)
+            draw.RoundedBox(0, 0, 0, w, h, bgColor)
+            draw.RoundedBoxEx(0, 0, 0, w, titleBarHeight, titleColor, true, true, false, false)
             draw.SimpleText(identifier or "Window", "HUDFontSmall", 10, titleBarHeight / 2, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
         end
     end
@@ -93,11 +93,11 @@ WindowDrawer = function()
     if not IsValid(ActiveUI) then return end
 
     local w, h = ActiveUI:GetWide(), ActiveUI:GetTall()
-    surface.SetDrawColor(Color(30, 30, 30))
+    surface.SetDrawColor(Color(42, 42, 42))
     surface.DrawRect(0, 0, w, h)
     
     local title = ActiveUI.Data and ActiveUI.Data.Title or ""
-    draw.SimpleText(title, "CustomTitle", 10, 5, Color(30, 30, 30), TEXT_ALIGN_LEFT)
+    draw.SimpleText(title, "CustomTitle", 10, 5, Color(255, 255, 255), TEXT_ALIGN_LEFT)
 end
 
 WindowThinker = function()
@@ -168,11 +168,11 @@ function Window:CreateLabel(params)
     lbl:SizeToContents()
     
     lbl.TextColor = params.color or color_white
-    lbl.BgColor = params.bgColor or Color(50, 50, 50, 0)
+    lbl.BgColor = params.bgColor or Color(32, 32, 32, 0)
 
     lbl.Paint = function(self, w, h)
         if self.BgColor.a > 0 then
-            draw.RoundedBox(3, 0, 0, w, h, self.BgColor)
+            draw.RoundedBox(0, 0, 0, w, h, self.BgColor)
         end
         
         draw.SimpleText(self:GetText(), self:GetFont(), 0, 0, self.TextColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
@@ -191,8 +191,8 @@ function Window:CreateButton(params)
     btn.DoClick = params.onclick
 
     btn.Paint = function(self, w, h)
-        local bgColor = self:IsHovered() and Color(100, 100, 100) or Color(80, 80, 80)
-        draw.RoundedBox(3, 0, 0, w, h, bgColor)
+        local bgColor = self:IsHovered() and Color(100, 100, 100) or Color(32, 32, 32)
+        draw.RoundedBox(0, 0, 0, w, h, bgColor)
         draw.SimpleText(params.text, "HUDFontSmall", w / 2, h / 2, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
     end
 
@@ -209,11 +209,11 @@ function Window:CreateTextBox(params)
     txt:SetCursorColor(color_white)
 
     txt.Paint = function(self, w, h)
-        local bgColor = self:IsEditing() and Color(100, 100, 100) or Color(80, 80, 80)
-        local borderColor = self:IsEditing() and Color(120, 120, 120) or Color(60, 60, 60)
+        local bgColor = self:IsEditing() and Color(100, 100, 100) or Color(42, 42, 42)
+        local borderColor = self:IsEditing() and Color(120, 120, 120) or Color(42, 42, 42)
 
-        draw.RoundedBox(3, 0, 0, w, h, borderColor)
-        draw.RoundedBox(3, 1, 1, w - 2, h - 2, bgColor)
+        draw.RoundedBox(0, 0, 0, w, h, borderColor)
+        draw.RoundedBox(0, 1, 1, w - 2, h - 2, bgColor)
         
         self:DrawTextEntryText(color_white, Color(30, 130, 255), color_white)
     end
@@ -221,6 +221,7 @@ function Window:CreateTextBox(params)
     return txt
 end
 
+-- Clicking Menu
 function Window.MakeQuery(caption, title, ...)
     local args = { ... }
     local numArgs = #args
@@ -233,7 +234,7 @@ function Window.MakeQuery(caption, title, ...)
     frame:MakePopup()
 
     frame.Paint = function(self, w, h)
-        draw.RoundedBox(6, 0, 0, w, h, Color(50, 50, 50))
+        draw.RoundedBox(0, 0, 0, w, h, Color(42, 42, 42))
         draw.SimpleText(title, "HUDFontSmall", w / 2, 20, color_white, TEXT_ALIGN_CENTER)
         draw.SimpleText(caption, "HUDFontSmall", w / 2, 40, color_white, TEXT_ALIGN_CENTER)
     end
@@ -254,8 +255,8 @@ function Window.MakeQuery(caption, title, ...)
         end
 
         btn.Paint = function(self, w, h)
-            local bgColor = self:IsHovered() and Color(70, 130, 180) or Color(60, 60, 60)
-            draw.RoundedBox(4, 0, 0, w, h, bgColor)
+            local bgColor = self:IsHovered() and Color(70, 130, 180) or Color(55, 55, 55)
+            draw.RoundedBox(0, 0, 0, w, h, bgColor)
             draw.SimpleText(btnText, "HUDFontSmall", w / 2, h / 2, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
         end
 
@@ -268,6 +269,7 @@ function Window.MakeQuery(caption, title, ...)
     end
 end
 
+-- Map UI
 function Window.MakeRequest(c, t, d, f, l)
     local frame = vgui.Create("DFrame")
     frame:SetTitle("")
@@ -276,7 +278,7 @@ function Window.MakeRequest(c, t, d, f, l)
     frame:MakePopup()
 
     frame.Paint = function(self, w, h)
-        draw.RoundedBox(3, 0, 0, w, h, Color(60, 60, 60))
+        draw.RoundedBox(3, 0, 0, w, h, Color(32, 32, 32))
         draw.SimpleText(t, "HUDFontSmall", 10, 20, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
     end
 
@@ -303,7 +305,6 @@ function Window.MakeRequest(c, t, d, f, l)
         frame:Close()
     end
 end
-
 
 Admin = Admin or {}
 Admin.Protocol = "Admin"
@@ -421,10 +422,10 @@ local function CreateElement(data, parent)
         elem:SetText("")
 
         elem.Paint = function(self, w, h)
-            local bgColor = self:IsHovered() and Color(42, 42, 42) or Color(42, 42, 42)
+            local bgColor = self:IsHovered() and Color(55, 55, 55) or Color(55, 55, 55)
             local textColor = self:IsHovered() and Color(255, 255, 255) or Color(200, 200, 200)
 
-            draw.RoundedBox(3, 0, 0, w, h, bgColor)
+            draw.RoundedBox(0, 0, 0, w, h, bgColor)
             if self.CustomText then
                 draw.SimpleText(self.CustomText, "HUDFontSmall", w / 2, h / 2, textColor, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
             end

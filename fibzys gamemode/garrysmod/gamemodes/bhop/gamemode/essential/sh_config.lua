@@ -135,6 +135,8 @@ if not CONFIG_LOADED then
         ["STEAM_0:0:87749794"] = false -- obvixus
     }
 
+    BHOP.ReplayFov = 90
+
     -- Zone colors
     BHOP.Zone = {
         HelperColour = Color(255, 255, 0),

@@ -333,13 +333,20 @@ local ILLEGAL_STYLE_IDS = {
     ["WTF"] = true,
     ["AS"] = true,
     ["Swift"] = true,
-    ["Speedrun"] = true,
+    ["SPEED"] = true,
     ["LG"] = true,
+    ["Pre"] = true,
+    ["MOON"] = true,
+    ["Stamina"] = true,
+    ["Segment"] = true
 }
 
 local function IsIllegalStyle(style)
     for name in pairs(ILLEGAL_STYLE_IDS) do
-        if style == TIMER:GetStyleID(name) then return true end
+        local id = TIMER:GetStyleID(name)
+        if style == id then
+            return true
+        end
     end
     return false
 end
@@ -545,9 +552,18 @@ local function SSJ_PrintStats(ply, lastSpeed, jumpTimeDiff)
     NETWORK:StartNetworkMessageSSJ(ply, "SSJ", jumpCount, coeffsum, velocity, strafes, efficiency, sync, lastSpeed or 0, g_speedDiff[ply])
 
     -- Illegal Check
-    if jumpCount == 1 and velocity > 290 or IsIllegalStyle(style) or ply:GetNWInt("inPractice", true) then
-        gB_IllegalSSJ[ply] = true
+    local illegal = false
+
+    local style = TIMER:GetStyle(ply)
+    if jumpCount == 1 and velocity > 290 then
+        illegal = true
+    elseif IsIllegalStyle(style) then
+        illegal = true
+    elseif ply:GetNWInt("inPractice", true) then
+        illegal = true
     end
+
+    gB_IllegalSSJ[ply] = illegal
 
     -- SSJ TOP Record
     if SSJTOP and jumpCount == 6 and not gB_IllegalSSJ[ply] then
@@ -612,14 +628,10 @@ local function Player_Jump(ply)
     -- Notify spectators about jump count update immediately
     local specs = {ply}
 
-    for _, v in ipairs(player.GetAll()) do
-        if v.Spectating and IsValid(v:GetObserverTarget()) and v:GetObserverTarget() == ply then
-            table.insert(specs, v)
+    for _, v in ipairs(player.GetHumans()) do
+        if v:GetObserverMode() ~= OBS_MODE_NONE and v:GetObserverTarget() == ply then
+            NETWORK:StartNetworkMessageTimer(v, "JumpUpdate", {ply, jumpCount})
         end
-    end
-
-    for _, v in ipairs(specs) do
-        NETWORK:StartNetworkMessage(v, "jump_update", {ply, jumpCount})
     end
 
     -- Print stats & update stats

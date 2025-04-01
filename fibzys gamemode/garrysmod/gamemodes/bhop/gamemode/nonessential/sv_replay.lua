@@ -5,10 +5,6 @@ CreateConVar("bhop_replay_simplenames", "1", {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 
 local hook_Add, sq, st, Iv = hook.Add, sql.Query, SysTime, IsValid
 
 Replay = Replay or {
-    RecordAll = true,
-    AlwaysDisplayFirst = true,
-    Maximum = 32,
-    MinimumTime = 90,
     BotPlayer = {},
     BotFrame = {},
     BotFrames = {},
@@ -20,11 +16,11 @@ Replay = Replay or {
     Frame = {},
     StartedFrame = {},
     EndedFrame = {},
-    RecordingFinished = {},
+    RecordingFinished = {}
 }
 
 -- Types
-BotType = { Main = 1, Multi = 2 }
+BotType = {Main = 1, Multi = 2}
 
 function Replay:Setup()
     self.BotPlayer = {}
@@ -75,14 +71,14 @@ function Replay:StartRecording(ply)
 end
 
 -- Stop Recording
-function Replay:StopRecording(ply, nTime, nRecord)
-    if not IsValid(ply) or not nTime then return end
+function Replay:StopRecording(ply, time, record)
+    if not IsValid(ply) or not time then return end
     if not self.Recording[ply] or self.Frame[ply] <= 1 then return end
-    if nRecord and nRecord ~= 0 and nRecord < nTime then return end
+    if record and record ~= 0 and record < time then return end
 
     local tempStyle = ply.style
     local botInfo = self.BotInfo[tempStyle] and self.BotInfo[tempStyle].Time
-    if botInfo and botInfo < nTime then return end
+    if botInfo and botInfo < time then return end
 
     local endFrame = math.max(self.Frame[ply] - 1, 1)
     for i = 1, 6 do
@@ -98,16 +94,19 @@ function Replay:StopRecording(ply, nTime, nRecord)
 
     self.BotInfo[tempStyle] = {
         Name = ply:Name(),
-        Time = nTime,
+        Time = time,
         Style = tempStyle,
         SteamID = ply:SteamID(),
-        Date = os.date("%Y-%m-%d %H:%M:%S", os.time()),
+        Date = os.date("%Y-%m-%d %H:%M:%S", os.time()), -- date
         Saved = false,
-        Start = CurTime(),
+        Start = CurTime(), -- run time
         Frame = {self.StartedFrame[ply], self.EndedFrame[ply]}
     }
 
-    self:CheckEndFrames(ply)
+    -- to see more of end run
+    timer.Simple(0.5, function()
+	    self:CheckEndFrames(ply)
+    end)
 end
 
 -- Trim frames
@@ -117,7 +116,7 @@ function Replay:TrimRecording(ply)
     local tempFrame = self.Frame[ply]
     self.StartedFrame[ply] = tempFrame
 
-    local trimtime = 300
+    local trimtime = 300 -- trim 300 frames
     if tempFrame < trimtime then return end
 
     local tempRecording = {
@@ -214,20 +213,17 @@ function Replay:ClearStyle(replay)
     self.BotInfo[replay] = nil
 end
 
--- Multi Replays
 function Replay:SetMultiBot(replay)
+    local normalStyleID = TIMER:GetStyleID("Normal")
     local target = nil
+
     for _, Replay in pairs(player.GetBots()) do
-        if replay == TIMER:GetStyleID("Normal") then
-            if Replay.Style == TIMER:GetStyleID("Normal") and not Replay.Temporary then
-                target = Replay
-                break
-            end
-        else
-            if Replay.Style != TIMER:GetStyleID("Normal") and not Replay.Temporary then
-                target = Replay
-                break
-            end
+        local isNormal = replay == normalStyleID
+        local matchesStyle = (isNormal and Replay.Style == normalStyleID) or (not isNormal and Replay.Style != normalStyleID)
+
+        if matchesStyle and not Replay.Temporary then
+            target = Replay
+            break
         end
     end
 
@@ -242,8 +238,8 @@ function Replay:SetMultiBot(replay)
 end
 
 -- Spawn replay
-function Replay:Spawn(bMulti, replay, bNone)
-    replay = bMulti and replay or TIMER:GetStyleID("Normal")
+function Replay:Spawn(multi, replay, none)
+    replay = multi and replay or TIMER:GetStyleID("Normal")
 
     for _, Replay in pairs(player.GetBots()) do
         if Replay.Temporary then
@@ -253,7 +249,7 @@ function Replay:Spawn(bMulti, replay, bNone)
     end
 
     if #player.GetBots() < 2 then
-        self:CreateBot(bMulti, replay, bNone)
+        self:CreateBot(multi, replay, none)
     end
 end
 
@@ -263,9 +259,7 @@ function Replay:InitializeBot(Replay, replay)
     Replay:SetCollisionGroup(COLLISION_GROUP_IN_VEHICLE)
     Replay.Style = replay
 
-    --Replay:StripWeapons()
-    Replay:Give("weapon_glock")
-    Replay:SetFOV(104, 0)
+    Replay:SetFOV(BHOP.ReplayFov, 0)
     Replay:SetGravity(0)
 
     Replay.Temporary = nil
@@ -320,8 +314,8 @@ local function ShortenName(name, maxLength)
 end
 
 -- Create replays
-function Replay:CreateBot(bMulti, replay, bNone)
-    local botType = bMulti and BotType.Multi or BotType.Main
+function Replay:CreateBot(multi, replay, bNone)
+    local botType = multi and BotType.Multi or BotType.Main
     local info = self.BotInfo[replay]
 
     local maxNameLength = 10
@@ -354,46 +348,44 @@ function Replay:CreateBot(bMulti, replay, bNone)
     end
 
     player.CreateNextBot(displayName)
-    self:Spawn(bMulti, replay)
+    self:Spawn(multi, replay)
 end
 
 -- Check Status
 function Replay:CheckStatus()
-    if self.IsStatusCheck then
-        return true
-    end
+    if self.IsStatusCheck then return true end
 
     self.IsStatusCheck = true
 
-    local nCount = 0
-    local bNormal, bMulti
+    local tick = 0
+    local normal, multi
 
     for _, Replay in pairs(player.GetBots()) do
         if Replay.Style == TIMER:GetStyleID("Normal") then
-            bNormal = true
+            normal = true
         else
-            bMulti = true
+            multi = true
         end
 
-        nCount = nCount + 1
+        tick = tick + 1
     end
 
-    if nCount < 2 then
-        if not bNormal then
+    if tick < 2 then
+        if not normal then
             self:Spawn()
         end
 
-        if not bMulti then
-            local replay, bSet = 0, true
+        if not multi then
+            local replay, set = 0, true
             for style, _ in pairs(self.BotData) do
                 if style ~= TIMER:GetStyleID("Normal") then
                     replay = style
-                    bSet = nil
+                    set = nil
                     break
                 end
             end
 
-            self.SpawnData = {replay, bSet}
+            self.SpawnData = {replay, set}
             if self and self.Spawn and self.SpawnData then
                 self:Spawn(true, self.SpawnData[1], self.SpawnData[2])
             end
@@ -508,68 +500,44 @@ end
 function Replay:GetMultiStyle()
 	for _, bot in pairs(player.GetAll()) do
 		if bot:IsBot() then
-			print("Found replay with Style: ", bot.Style)
 			if bot.Style ~= TIMER:GetStyleID("Normal") then
-				print("Returning replay style: ", bot.Style)
 				return bot.Style
 			end
 		end
 	end
 
-	print("No non-normal replay style found, returning 0")
 	return 0
 end
 
 function Replay:ChangeMultiBot(style)
-	print("Requested style to change to: ", style)
 	local current = self:GetMultiStyle()
-	print("Current Multi Style: ", current)
 
-	if not TIMER:IsValidStyle(current) then 
-		print("Current style invalid!")
-		return "None" 
-	end
-
-	if not TIMER:IsValidStyle(style) then 
-		print("Target style invalid!")
-		return "Invalid" 
-	end
-
-	if style == TIMER:GetStyleID("Normal") then 
-		print("Trying to switch to Normal - blocked")
-		return "Exclude" 
-	end
-
-	if current == style then 
-		print("Same style requested as current")
-		return "Same" 
-	end
+	if not TIMER:IsValidStyle(current) then  return "None" end
+	if not TIMER:IsValidStyle(style) then return "Invalid" end
+	if style == TIMER:GetStyleID("Normal") then return "Exclude" end
+	if current == style then return "Same" end
 
     if self.BotInfo[style] and self.BotData[style] then
         if self.BotInfo[current].CompletedRun then
-            print("Changing bot from style ", current, " to ", style)
             local ply = Replay:GetPlayer(current)
             if not ply then 
-                print("Could not find bot player for style ", current)
                 return "NoBot"
             end
-            print("Replay player found: ", ply)
 
             ply.style = style
             Replay:SetInfo(ply, style, true)
             self.BotFrame[style] = 1
             self.BotInfo[style].CompletedRun = nil
-            self.BotInfo[style].Start = CurTime()
+            self.BotInfo[style].Start = nil
+            self.BotInfo[style].Waiting = true
             self.BotPlayer[ply] = style
             Replay:NotifyRestart(style)
 
 			return "The replay is now displaying " .. self.BotInfo[style].Name .. "'s " .. TIMER:StyleName(self.BotInfo[style].Style) .. " run!"
 		else
-			print("CompletedRun missing for current style")
 			return "Wait"
 		end
 	else
-		print("BotInfo or BotData missing for style: ", style)
 		return "Error"
 	end
 end
@@ -577,25 +545,23 @@ end
 function Replay:GetMultiBots()
 	local tabStyles = {}
 	for style, data in pairs(self.BotData) do
-		print("Checking BotData for style: ", style)
 		if style != TIMER:GetStyleID("Normal") then
 			local styleName = TIMER:StyleName(style)
-			print("Adding style to MultiBots list: ", styleName)
 			table.insert(tabStyles, styleName)
 		end
 	end
-	print("Final list of MultiBots: ", table.concat(tabStyles, ", "))
+
 	return tabStyles
 end
 
 function Replay:SaveBot(ply)
-    local bSave = false
+    local saved = false
     local savedCount = 0
 
     for styleID, info in pairs(self.BotInfo) do
         if info.SteamID == ply:SteamID() then
             if not info.Saved then
-                bSave = true
+                saved = true
                 self:Save()
                 savedCount = savedCount + 1
             end
@@ -603,7 +569,7 @@ function Replay:SaveBot(ply)
     end
 
     local message
-    if bSave then
+    if saved then
         message = "Your replay has been saved, Total replays saved: " .. savedCount
     else
         message = "All your replays have already been saved or you have none."
@@ -619,10 +585,10 @@ end
 function Replay:NotifyRestart(replay)
     local ply = self:GetPlayer(replay)
     local info = self.BotInfo[replay]
-    local bEmpty = false
+    local empty = false
 
     if Iv(ply) and not info then
-        bEmpty = true
+        empty = true
     elseif not info or not info.Start or not Iv(ply) then
         return false
     end
@@ -636,7 +602,7 @@ function Replay:NotifyRestart(replay)
         end
     end
 
-    if not bEmpty then
+    if not empty then
         tab = {"Timer", true, info.Start, info.Name, info.Time, CurTime(), "Save"}
     end
 
@@ -650,7 +616,7 @@ end
 
 function Replay:GetPlayer(replay)
 	for _, ply in pairs(player.GetBots()) do
-		if ply.Style == replay and IsValid(ply) then
+		if ply.Style == replay and IsValid(ply) then -- dont use ply.style here
 			return ply
 		end
 	end
@@ -695,7 +661,8 @@ function Replay:SetInfo(ply, replay, bSet)
     end
 
     if bSet then
-        self.BotInfo[replay].Start = CurTime()
+        self.BotInfo[replay].Start = nil -- wait for actual start frame
+        self.BotInfo[replay].Waiting = true 
         self.Initialized = true
         self.BotPlayer[ply] = replay
     end
@@ -798,6 +765,11 @@ local function BotRecord(ply, data)
         local d = Replay.BotData[style]
         data:SetOrigin(Vector(d[1][frame], d[2][frame], d[3][frame]))
         ply:SetEyeAngles(Angle(d[4][frame], d[5][frame], 0))
+
+        if Replay.BotInfo[style].Frame and frame == Replay.BotInfo[style].Frame[1] then
+            Replay.BotInfo[style].Start = CurTime()
+            Replay:NotifyRestart(style)
+        end
 
         Replay.BotFrame[style] = frame + 1
     end

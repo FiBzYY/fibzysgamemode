@@ -8,21 +8,6 @@ function UTIL:DrawZoneTypes(min, max, colour, normal, pos, thickness, flatzone)
 
     local vec = Vector
     local drawbeams = render.DrawBeam
-
-    local set1 = {
-        vec(min.x, min.y, min.z),
-        vec(min.x, max.y, min.z),
-        vec(max.x, max.y, min.z),
-        vec(max.x, min.y, min.z)
-    }
-
-    local set2 = {
-        vec(min.x, min.y, max.z),
-        vec(min.x, max.y, max.z),
-        vec(max.x, max.y, max.z),
-        vec(max.x, min.y, max.z)
-    }
-
     local overlap = 0.5
 
     local function ExtendBeam(p1, p2)
@@ -31,24 +16,60 @@ function UTIL:DrawZoneTypes(min, max, colour, normal, pos, thickness, flatzone)
         return p1 - direction * overlap, p2 + direction * overlap
     end
 
+    local set1_1 = vec(min.x, min.y, min.z)
+    local set1_2 = vec(min.x, max.y, min.z)
+    local set1_3 = vec(max.x, max.y, min.z)
+    local set1_4 = vec(max.x, min.y, min.z)
+
+    local set2_1 = vec(min.x, min.y, max.z)
+    local set2_2 = vec(min.x, max.y, max.z)
+    local set2_3 = vec(max.x, max.y, max.z)
+    local set2_4 = vec(max.x, min.y, max.z)
+
     if flatzone then
         render.SetMaterial(normalmat)
-        for i = 1, 4 do
-            local i2 = (i == 4 and 1 or i + 1)
-            local start, endpos = ExtendBeam(set1[i], set1[i2])
-            drawbeams(start, endpos, thickness, 0, 1, colour)
-        end
+
+        local s1, e1 = ExtendBeam(set1_1, set1_2)
+        local s2, e2 = ExtendBeam(set1_2, set1_3)
+        local s3, e3 = ExtendBeam(set1_3, set1_4)
+        local s4, e4 = ExtendBeam(set1_4, set1_1)
+
+        drawbeams(s1, e1, thickness, 0, 1, colour)
+        drawbeams(s2, e2, thickness, 0, 1, colour)
+        drawbeams(s3, e3, thickness, 0, 1, colour)
+        drawbeams(s4, e4, thickness, 0, 1, colour)
+
     elseif normal then
         render.SetMaterial(normalmat)
-        for i = 1, 4 do
-            local i2 = (i == 4 and 1 or i + 1)
-            local start1, end1 = ExtendBeam(set1[i], set1[i2])
-            local start2, end2 = ExtendBeam(set2[i], set2[i2])
-            local start3, end3 = ExtendBeam(set1[i], set2[i])
-            drawbeams(start1, end1, thickness, 0, 1, colour)
-            drawbeams(start2, end2, thickness, 0, 1, colour)
-            drawbeams(start3, end3, thickness, 0, 1, colour)
-        end
+
+        local s1, e1 = ExtendBeam(set1_1, set1_2)
+        local s2, e2 = ExtendBeam(set1_2, set1_3)
+        local s3, e3 = ExtendBeam(set1_3, set1_4)
+        local s4, e4 = ExtendBeam(set1_4, set1_1)
+
+        local s5, e5 = ExtendBeam(set2_1, set2_2)
+        local s6, e6 = ExtendBeam(set2_2, set2_3)
+        local s7, e7 = ExtendBeam(set2_3, set2_4)
+        local s8, e8 = ExtendBeam(set2_4, set2_1)
+
+        local s9,  e9  = ExtendBeam(set1_1, set2_1)
+        local s10, e10 = ExtendBeam(set1_2, set2_2)
+        local s11, e11 = ExtendBeam(set1_3, set2_3)
+        local s12, e12 = ExtendBeam(set1_4, set2_4)
+
+        drawbeams(s1, e1, thickness, 0, 1, colour)
+        drawbeams(s2, e2, thickness, 0, 1, colour)
+        drawbeams(s3, e3, thickness, 0, 1, colour)
+        drawbeams(s4, e4, thickness, 0, 1, colour)
+        drawbeams(s5, e5, thickness, 0, 1, colour)
+        drawbeams(s6, e6, thickness, 0, 1, colour)
+        drawbeams(s7, e7, thickness, 0, 1, colour)
+        drawbeams(s8, e8, thickness, 0, 1, colour)
+        drawbeams(s9, e9, thickness, 0, 1, colour)
+        drawbeams(s10, e10, thickness, 0, 1, colour)
+        drawbeams(s11, e11, thickness, 0, 1, colour)
+        drawbeams(s12, e12, thickness, 0, 1, colour)
+
     else
         render.DrawWireframeBox(pos, Angle(0, 0, 0), min, max, colour, true)
     end
@@ -176,7 +197,7 @@ function UTIL:DrawBlurRect(x, y, w, h, rep, c)
 end
 
 function UTIL:Notify(c, p, m)
-    MsgC(c, p, " | ", color_white, m, "\n")
+    MsgC(c, p, color_white, " | ", m, "\n")
 end
 
 function UTIL:FindValueInTable(var, tab)

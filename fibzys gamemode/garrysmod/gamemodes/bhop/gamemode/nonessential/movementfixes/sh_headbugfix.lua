@@ -31,7 +31,9 @@ local function UpdateCollisionBounds(ply, mv)
 end
 
 hook_Add("SetupMove", "HeadBugFixUpdateCollisionBounds", function(ply, mv, cmd)
-    if not Iv(ply) or not ply:Alive() or not IsFirstTimePredicted() then return end
+    if not Iv(ply) or not ply:Alive() then return end
+    if CLIENT and not IsFirstTimePredicted() then return end
+
     UpdateCollisionBounds(ply, mv)
 end)
 

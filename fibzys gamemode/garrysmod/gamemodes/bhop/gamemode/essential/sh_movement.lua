@@ -9,7 +9,7 @@
 
 -- Cache
 local clamp, ft, ct, currentMap = math.Clamp, FrameTime, CurTime, game.GetMap()
-local bn, ba, bo, math_floor = bit.bnot, bit.band, bit.bor, math.floor
+local bn, ba, bo, math_floor, min = bit.bnot, bit.band, bit.bor, math.floor, math.min
 local timer_Simple, Vector, hook_Add, Iv = timer.Simple, Vector, hook.Add, IsValid
 local math_sin, math_cos, math_rad, bit_band = math.sin, math.cos, math.rad, bit.band
 local LastBaseVelocity, duckspeed, unduckspeed = {}, 0.4, 0.2
@@ -20,7 +20,7 @@ local scrollpower, normpower = 268.4, 290
 -- CVars
 CV_FLAGSMV = FCVAR_ARCHIVE + FCVAR_NOTIFY + FCVAR_REPLICATED
 
--- Settings
+-- Save Settings
 movementspeed = CreateConVar("bhop_settings_mv", "32.4", CV_FLAGSMV, "Change air movement speed", 0, 10000)
 movementspeedunreal = CreateConVar("bhop_settings_mv_unreal", "49.2", CV_FLAGSMV, "Change air movement speed for unreal", 0, 10000)
 movementcap = CreateConVar("bhop_settings_cap", "100", CV_FLAGSMV, "Change air movement speed cap", 0, 10000)
@@ -32,7 +32,9 @@ zonecap = CreateConVar("bhop_settings_zonecap", "290", CV_FLAGSMV, "Change zone 
 -- Client Cvars
 CreateClientConVar("bhop_smoothnoclip", "0", true, true, "Toggle smooth noclipping on or off")
 CreateClientConVar("bhop_footsteps", "all", true, true, "Control footstep sounds. Options: 'off', 'local', 'spectate', 'all'")
+CreateClientConVar("bhop_kzsidefix", "0", true, false, "Enable stamina style for no side on kz maps")
 
+-- Noclip Cvars
 local noclipSpeedConVar = GetConVar("sv_noclipspeed")
 local noclipAccelConVar = GetConVar("sv_noclipaccelerate")
 
@@ -50,7 +52,13 @@ local function UpdateStyleInfo(client, style)
         StyleInfo.cap = movementcap:GetFloat()
     elseif style == TIMER:GetStyleID("L") then
         StyleInfo.mv = movementspeed:GetFloat()
-        StyleInfo.cap = 30
+
+        -- Legit crouching air caps
+        if client:Crouching() then
+            StyleInfo.cap = 10
+        else
+            StyleInfo.cap = 30
+        end
     else
         StyleInfo.mv = movementspeed:GetFloat()
         StyleInfo.cap = movementcap:GetFloat()
@@ -74,7 +82,7 @@ local function TickVelocity(vel, dir)
             wishspeed = StyleInfo.maxspeed
         end
 
-        local cappedcurrent = math.min(StyleInfo.cap * FrameTime() * wishspeed, current)
+        local cappedcurrent = min(StyleInfo.cap * ft() * wishspeed, current)
         vel = vel + (dir * cappedcurrent)
     end
 
@@ -87,6 +95,7 @@ local function PredictVelocity(pl, mv)
     local moveAngles = mv:GetMoveAngles()
     local forwardSpeed, sideSpeed = mv:GetForwardSpeed(), mv:GetSideSpeed()
 
+    -- W-Only check
     local style = TIMER:GetStyle(pl)
     if style == TIMER:GetStyleID("W") then
         sideSpeed = 0
@@ -126,7 +135,7 @@ local function GravityChange(ply, grav)
             ply:SetGravity(grav)
         elseif currentGravity == 1 then
             timer_Simple(0, function()
-                if IsValid(ply) then
+                if Iv(ply) then
                     ply:SetGravity(grav)
                 end
             end)
@@ -134,17 +143,15 @@ local function GravityChange(ply, grav)
     end
 end
 
+-- Jump Velocity used for styles
 hook.Add("SetupMove", "JumpVelocity", function(ply, mv, cmd)
-    if not IsValid(ply) or not ply:Alive() then return end
+    if not Iv(ply) or not ply:Alive() then return end
 
     local style = TIMER:GetStyle(ply)
     if style ~= TIMER:GetStyleID("SPEED") then return end
 
     if ply:IsOnGround() and mv:KeyDown(IN_JUMP) and not ply.JumpedThisFrame then
         ply.JumpedThisFrame = true
-        if SERVER then
-            IncrementJumpCounter(ply)
-        end
     elseif not ply:IsOnGround() then
         ply.JumpedThisFrame = false
     end
@@ -175,28 +182,27 @@ hook.Add("SetupMove", "JumpVelocity", function(ply, mv, cmd)
     end
 end)
 
--- Main Movement
+-- SetupMove Movement
 function GM:SetupMove(client, data, cmd)
     if not Iv(client) or client:IsBot() or not client:Alive() then return end
 
-    -- Movement Sidespeeds and Speed caps
+    -- Movement cache
     local velocity = data:GetVelocity()
     local velocity2d = velocity:Length2D()
     local style = TIMER:GetStyle(client)
-
     local sidespeed = 10000 -- 450
     local speedModifier = (client:OnGround() or client:GetMoveType() == MOVETYPE_NOCLIP) and sidespeed or 10000
-
     local buttons = data:GetButtons()
     local moveRight = bit.band(buttons, IN_MOVERIGHT) ~= 0
     local moveLeft = bit.band(buttons, IN_MOVELEFT) ~= 0
     local moveForward = bit.band(buttons, IN_FORWARD) ~= 0
     local moveBack = bit.band(buttons, IN_BACK) ~= 0
-
+     
+    -- Movement speeds
     data:SetSideSpeed((moveRight and speedModifier) or (moveLeft and -speedModifier) or 0)
     data:SetForwardSpeed((moveForward and speedModifier) or (moveBack and -speedModifier) or 0)
 
-    -- Zone
+    -- Zone Cap Settings
     if client.InStartZone and not client:GetNWInt("inPractice", false) and style ~= TIMER:GetStyleID("SPEED") and style ~= TIMER:GetStyleID("Prespeed") then
         local speedcap = zonecap:GetFloat()
 
@@ -209,7 +215,7 @@ function GM:SetupMove(client, data, cmd)
         end
     end
 
-    -- Hud
+    -- Speed Tick for Hud
     client.ctick = (client.ctick or 0) + 1
     if client.ctick >= 1 then
         client.current = velocity2d
@@ -219,7 +225,7 @@ function GM:SetupMove(client, data, cmd)
     -- Top Speed
     client.topspeed = math.max(client.topspeed or 0, velocity2d)
 
-    -- Auto Hop
+    -- Auto Hop by fibzy
     local buttons = cmd:GetButtons()
     local onGround = client:IsOnGround()
     local style = TIMER:GetStyle(client)
@@ -232,7 +238,7 @@ function GM:SetupMove(client, data, cmd)
         end
     end
 
-    -- Crouch Boost
+    -- Crouch Boosting by fibzy
     local DisableCrouch = -1
     local isCrouching = client:Crouching()
 
@@ -249,18 +255,18 @@ function GM:SetupMove(client, data, cmd)
     -- Air Movement
     if client:GetMoveType() ~= MOVETYPE_WALK or (client:IsFlagSet(FL_ONGROUND) and not data:KeyDown(IN_JUMP)) then return end
 
+    -- Update style info
     local style = TIMER:GetStyle(client)
     UpdateStyleInfo(client, style)
 
+    -- Input cache
     local buttons = cmd:GetButtons()
     local forwardPressed, backPressed = bit_band(buttons, IN_FORWARD) ~= 0, bit_band(buttons, IN_BACK) ~= 0
     local rightPressed, leftPressed = bit_band(buttons, IN_MOVERIGHT) ~= 0, bit_band(buttons, IN_MOVELEFT) ~= 0
-
     local viewAngles = cmd:GetViewAngles()
     local yawAngle = math_rad(viewAngles[2])
     local lookVector = Vector(math_cos(yawAngle), math_sin(yawAngle), 0)
     local sideVector = Vector(math_cos(yawAngle - math_rad(90)), math_sin(yawAngle - math_rad(90)), 0)
-
     local forwardInput, sideInput = 0, 0
 
     -- Gravity styles
@@ -274,7 +280,7 @@ function GM:SetupMove(client, data, cmd)
         end
     end
 
-    -- Styles
+    -- Move Input Styles
     if style == TIMER:GetStyleID("W") then
         forwardInput = forwardPressed and 3 or 0
     elseif style == TIMER:GetStyleID("SW") then
@@ -295,6 +301,7 @@ function GM:SetupMove(client, data, cmd)
         local viewAngle = cmd:GetViewAngles()[2]
         local diff = math.AngleDifference(viewAngle, velAngle)
 
+        -- Backwards Input
         if math.abs(diff) < 100 then
             forwardInput = 0
             sideInput = 0
@@ -308,6 +315,7 @@ function GM:SetupMove(client, data, cmd)
                 sideInput = strafeDirection * 3
             end
 
+            -- Trick Auto-Strafe to work on input
             if CLIENT then
                 local strafeDirection = moveX > 0 and 1 or (moveX < 0 and -1 or 0)
 
@@ -337,10 +345,11 @@ function GM:SetupMove(client, data, cmd)
            style == TIMER:GetStyleID("SPEED") or style == TIMER:GetStyleID("E") or 
            style == TIMER:GetStyleID("Stamina") or style == TIMER:GetStyleID("Prespeed") or 
            style == TIMER:GetStyleID("Swift") then
-        forwardInput = (forwardPressed and 3 or 0) - (backPressed and 3 or 0)
-        sideInput = (rightPressed and 3 or 0) - (leftPressed and 3 or 0)
+           forwardInput = (forwardPressed and 3 or 0) - (backPressed and 3 or 0)
+           sideInput = (rightPressed and 3 or 0) - (leftPressed and 3 or 0)
     end
 
+    -- Input sets
     local accelForward = lookVector * (forwardInput * 0.3)
     local accelSide = sideVector * (sideInput * 2)
 
@@ -351,6 +360,7 @@ function GM:SetupMove(client, data, cmd)
     local vel = data:GetVelocity()
     local base = client:GetBaseVelocity() or Vector(0, 0, 0)
 
+    -- Add base velocity
 	vel:Add(base)
 	LastBaseVelocity[client] = base
 
@@ -395,68 +405,71 @@ function GM:SetupMove(client, data, cmd)
     end
 end
 
-CreateClientConVar("bhop_kzsidefix", "0", true, false, "Enable stamina style for no side on kz maps")
-
 function IsKZMap()
     local map = game.GetMap():lower()
     return string.sub(map, 1, 3) == "kz_"
 end
 
-hook.Add("SetupMove", "Stamina", function(client, data, cmd)
-    if not IsValid(client) or not client:Alive() then return end
-
+-- Stamina System
+hook.Add("SetupMove", "StaminaSystem", function(client, data, cmd)
+    if not Iv(client) or not client:Alive() then return end
     local style = TIMER:GetStyle(client)
     local onGround = client:IsOnGround()
     local velocity = data:GetVelocity()
     local velocity2d = velocity:Length2D()
-    local c = CurTime()
+    local currentTime = CurTime()
 
+    -- Enable stamina
     local enableStamina = style == TIMER:GetStyleID("L") or 
-    style == TIMER:GetStyleID("Stamina") or IsKZMap()
+    style == TIMER:GetStyleID("Stamina") or 
+    IsKZMap()
 
     if enableStamina and onGround and not client:IsBot() then
-        if client.AirStam then
+        if client.StaminaAirTicks then
             if style == TIMER:GetStyleID("L") then
-			    data:SetVelocity(velocity - (0.04 * velocity))
+  
+                data:SetVelocity(velocity - (0.04 * velocity))
             else
                 data:SetVelocity(velocity)
             end
 
-            if client.AirStam == 4 then
-                client.Gtime = c
+            if client.StaminaAirTicks == 4 then
+                client.StaminaGroundStartTime = currentTime
             end
-            client.AirStam = client.AirStam - 1
-            if client.AirStam < 0 then
-                client.AirStam = nil
+
+            client.StaminaAirTicks = client.StaminaAirTicks - 1
+            if client.StaminaAirTicks < 0 then
+                client.StaminaAirTicks = nil
             end
         end
 
-        if client.Gtime then
-            if client.Gtime == c then
-                client.Gset = 0
-            elseif client.Gset then
-                if client.Gset < 4 then
-                    client.Gset = client.Gset + 1
+        if client.StaminaGroundStartTime then
+            if client.StaminaGroundStartTime == currentTime then
+                client.StaminaGroundFrames = 0
+            elseif client.StaminaGroundFrames then
+                if client.StaminaGroundFrames < 4 then
+                    client.StaminaGroundFrames = client.StaminaGroundFrames + 1
                     return
                 end
-                local dt = c - client.Gtime
-                if dt < 1 then
-                    local p = (1 - dt) / 16
-                    data:SetVelocity(velocity - (p * velocity))
+
+                local delta = currentTime - client.StaminaGroundStartTime
+                if delta < 1 then
+                    local reductionFactor = (1 - delta) / 16
+                    data:SetVelocity(velocity - (reductionFactor * velocity))
                 else
-                    client.Gtime = nil
-                    client.Gset = nil
+                    client.StaminaGroundStartTime = nil
+                    client.StaminaGroundFrames = nil
                 end
             end
         end
     end
 
     if enableStamina and not onGround then
-        if not client.AirStam or client.AirStam < 4 then 
-            client.AirStam = 4 
+        if not client.StaminaAirTicks or client.StaminaAirTicks < 4 then 
+            client.StaminaAirTicks = 4 
         end
-        if client.Gset then 
-            client.Gset = nil 
+        if client.StaminaGroundFrames then 
+            client.StaminaGroundFrames = nil 
         end
     end
 end)
@@ -480,9 +493,9 @@ function GM:PlayerFootstep(ply, pos, foot, sound, volume, rf)
     return false
 end
 
--- Hulls
+-- View Hulls Stuff
 function GM:FinishMove(ply, mv)
-    if not IsValid(ply) then return end
+    if not Iv(ply) then return end
 
     if ply:IsOnGround() and mv:KeyDown(IN_DUCK) then
         ply:SetNWBool("duckUntilOnGround", true)
@@ -528,7 +541,7 @@ function GM:FinishMove(ply, mv)
             if NotDucked(ply) then
                 offset[3] = est
             else
-                offset[3] = math.min(est, offset[3])
+                offset[3] = min(est, offset[3])
             end
 
             ply:SetCurrentViewOffset(offset)
@@ -557,16 +570,17 @@ function GM:OnPlayerHitGround(client, isWater, onFloater, Speed)
     if style == TIMER:GetStyleID("L") or style == TIMER:GetStyleID("E") or style == TIMER:GetStyleID("Stamina") then 
         client:SetJumpPower(scrollpower)
         timer.Simple(0.333333333, function() 
-            if not IsValid(client) or not client.SetJumpPower or not normpower then return end 
+            if not Iv(client) or not client.SetJumpPower or not normpower then return end 
             client:SetJumpPower(normpower) 
         end)
     end
 end
 
+-- Main Move
 function GM:Move(ply, mv)
-    if not IsValid(ply) or not ply:Alive() then return end
+    if not Iv(ply) or not ply:Alive() then return end
 
-    -- Noclip
+    -- Smooth Noclip
     if ply:GetMoveType() == MOVETYPE_NOCLIP then
         local smoothnoclip = ply:GetInfoNum("bhop_smoothnoclip", 0) == 1
         if smoothnoclip then
@@ -584,7 +598,7 @@ function GM:Move(ply, mv)
             if mv:GetForwardSpeed() == 0 and mv:GetSideSpeed() == 0 and mv:GetUpSpeed() == 0 then
                 mv:SetVelocity(Vector(0, 0, 0))
             else
-                local accelSpeed = math.min(acceleration:Length(), ply:GetMaxSpeed())
+                local accelSpeed = min(acceleration:Length(), ply:GetMaxSpeed())
                 local accelDir = acceleration:GetNormalized()
                 acceleration = accelDir * accelSpeed * speedValue
 
@@ -610,32 +624,6 @@ function GM:Move(ply, mv)
         ply.JumpedThisFrame = false
     end
 end
-
--- Auto Strafer for CreateMove
---[[function GM:CreateMove(cmd)
-    local ply = LocalPlayer()
-    if not IsValid(ply) or not ply:Alive() then return end
-
-    local moveX = cmd:GetMouseX()
-    local strafeDirection = 0
-
-    if moveX ~= 0 then
-        strafeDirection = moveX > 0 and 1 or -1
-    end
-
-    if strafeDirection == 0 then
-        RunConsoleCommand("-moveleft")
-        RunConsoleCommand("-moveright")
-    end
-
-    if strafeDirection == -1 then
-        RunConsoleCommand("+moveleft")
-        cmd:SetSideMove(-450)
-    elseif strafeDirection == 1 then
-        RunConsoleCommand("+moveright")
-        cmd:SetSideMove(450)
-    end
-end--]]
 
 -- No recoil
 function GM:PreRegisterSWEP(swep, class)
