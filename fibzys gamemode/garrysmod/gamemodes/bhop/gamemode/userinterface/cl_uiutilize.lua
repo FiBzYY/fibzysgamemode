@@ -370,7 +370,8 @@ function UI:CreateThemeToggle(parent, y, themeID, labelText)
 
     pnl.Paint = function(self, w, h)
         local isHudHidden = GetConVar("bhop_hud_hide"):GetBool()
-        local isActive = (not isHudHidden and selectedTheme == themeID) or (themeID == 0 and isHudHidden)
+        local isActive = (themeID == 0 and selectedTheme == "disabled") or (themeID ~= 0 and selectedTheme == themeID)
+
 
         if themeID == 0 then
             local boxColor = isActive and Color(50, 205, 50) or Color(255, 69, 0)
@@ -398,17 +399,25 @@ function UI:CreateThemeToggle(parent, y, themeID, labelText)
     end
 
     pnl.OnMousePressed = function()
-        if themeID == 0 then
-            RunConsoleCommand("bhop_hud_hide", "1")
-            Settings:SetValue('selected.hud', "disabled")
-            Theme:DisableHUD()
+        local isHudHidden = GetConVar("bhop_hud_hide"):GetBool()
 
-            selectedTheme = "disabled"
+        if themeID == 0 then
+            if isHudHidden then
+                -- Enable HUD
+                RunConsoleCommand("bhop_hud_hide", "0")
+                selectedTheme = Settings:GetValue("selected.nui", "nui.css")
+                Settings:SetValue("selected.hud", selectedTheme)
+            else
+                -- Disable HUD
+                RunConsoleCommand("bhop_hud_hide", "1")
+                selectedTheme = "disabled"
+                Settings:SetValue("selected.hud", "disabled")
+                Theme:DisableHUD()
+            end
         else
             RunConsoleCommand("bhop_hud_hide", "0")
-            Settings:SetValue('selected.hud', themeID)
-
             selectedTheme = themeID
+            Settings:SetValue("selected.nui", themeID)
         end
 
         parent:InvalidateLayout(true)

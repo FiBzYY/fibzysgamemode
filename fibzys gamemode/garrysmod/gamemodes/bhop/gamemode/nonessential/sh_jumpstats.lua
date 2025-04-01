@@ -649,7 +649,7 @@ local function SSJ_GetStats(ply, cmd)
     local velocity = ply:GetAbsVelocity() or zeroVec
     local lagged = ply:GetLaggedMovementValue()
     local yaw = cmd:GetViewAngles()[2]
-
+    local style = TIMER:GetStyle(ply)
     velocity[3] = 0
 
     local tickrateMulti = g_fTickrate * lagged
@@ -665,28 +665,65 @@ local function SSJ_GetStats(ply, cmd)
 
     g_fTrajectory[ply] = (g_fTrajectory[ply] or 0) + (velocity:Length2D() * tickrateMulti)
 
-    -- movement inputs
-    local inputDirections = { forward = 0, side = 0 }
-    if band(buttons, IN_FORWARD) ~= 0 then inputDirections.forward = 3 end
-    if band(buttons, IN_BACK) ~= 0 then inputDirections.forward = -3 end
-    if band(buttons, IN_MOVERIGHT) ~= 0 then inputDirections.side = 3 end
-    if band(buttons, IN_MOVELEFT) ~= 0 then inputDirections.side = -3 end
+    local buttons = cmd:GetButtons()
+    local forwardPressed, backPressed = bit_band(buttons, IN_FORWARD) ~= 0, bit_band(buttons, IN_BACK) ~= 0
+    local rightPressed, leftPressed = bit_band(buttons, IN_MOVERIGHT) ~= 0, bit_band(buttons, IN_MOVELEFT) ~= 0
 
-    -- movement vectors
-    local yawAngle = math_rad(yaw)
+    local viewAngles = cmd:GetViewAngles()
+    local yawAngle = math_rad(viewAngles[2])
     local lookVector = Vector(math_cos(yawAngle), math_sin(yawAngle), 0)
-    local sideVector = Vector(math_cos(yawAngle - MATH_PI / SIDE_SCALE), math_sin(yawAngle - MATH_PI / SIDE_SCALE), 0)
+    local sideVector = Vector(math_cos(yawAngle - math_rad(90)), math_sin(yawAngle - math_rad(90)), 0)
 
-    -- acceleration vector
-    local accel = (lookVector * (inputDirections.forward * FORWARD_SCALE)) + (sideVector * (inputDirections.side * SIDE_SCALE))
-    if accel:IsZero() then return end
-    accel:Normalize()
+    local forwardInput, sideInput = 0, 0
+
+    -- Styles
+    if style == TIMER:GetStyleID("W") then
+        forwardInput = forwardPressed and 3 or 0
+    elseif style == TIMER:GetStyleID("SW") then
+        forwardInput = (forwardPressed and 3 or 0) - (backPressed and 3 or 0)
+    elseif style == TIMER:GetStyleID("HSW") then
+        forwardInput = forwardPressed and 2 or 0
+    elseif style == TIMER:GetStyleID("A") then
+        forwardInput = 0
+        sideInput = leftPressed and -3 or 0
+    elseif style == TIMER:GetStyleID("D") then
+        forwardInput = 0
+        sideInput = rightPressed and 3 or 0
+    elseif style == TIMER:GetStyleID("Backwards") then
+        forwardInput = (forwardPressed and 3 or 0) - (backPressed and 3 or 0)
+        sideInput = (rightPressed and 3 or 0) - (leftPressed and 3 or 0)
+
+        local velAngle = velocity:Angle()[2]
+        local viewAngle = cmd:GetViewAngles()[2]
+        local diff = math.AngleDifference(viewAngle, velAngle)
+
+        if math.abs(diff) < 100 then
+            forwardInput = 0
+            sideInput = 0
+        end
+    elseif style == TIMER:GetStyleID("Normal") or style == TIMER:GetStyleID("Unreal") or
+           style == TIMER:GetStyleID("WTF") or style == TIMER:GetStyleID("Legit") or 
+           style == TIMER:GetStyleID("Bonus") or style == TIMER:GetStyleID("Segment") or style == TIMER:GetStyleID("LG") or 
+           style == TIMER:GetStyleID("HG") or style == TIMER:GetStyleID("MM") or 
+           style == TIMER:GetStyleID("SPEED") or style == TIMER:GetStyleID("E") or 
+           style == TIMER:GetStyleID("Stamina") or style == TIMER:GetStyleID("Prespeed") or 
+           style == TIMER:GetStyleID("Swift") or style == TIMER:GetStyleID("AS") then
+        forwardInput = (forwardPressed and 3 or 0) - (backPressed and 3 or 0)
+        sideInput = (rightPressed and 3 or 0) - (leftPressed and 3 or 0)
+    end
+
+    local accelForward = lookVector * (forwardInput * 0.3)
+    local accelSide = sideVector * (sideInput * 2)
+    if accelForward:IsZero() and accelSide:IsZero() then return end
+
+    local accel = accelForward + accelSide
+    local dir = accel:GetNormalized()
 
     -- wish velocity
     local wishvel = accel * 250
     wishvel[3] = 0
-    local wishspeed = wishvel:Length()
 
+    local wishspeed = wishvel:Length()
     if wishspeed > 250 then
         wishvel:Mul(250 / wishspeed)
     end

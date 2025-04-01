@@ -916,7 +916,7 @@ HUD.Themes = {
      local jumps = pl.player_jumps or 0
      local sync = pl.sync or 0
 
-     local base = Color(0, 0, 0, 70)
+    local base = Color(0, 0, 0, 70)
     local isInPractice = pl:GetNWInt("inPractice", false)
     local isInStart = pl.InStartZone and not isInPractice
     local isFinished = pl.finished or pl.bonusfinised
@@ -979,7 +979,6 @@ HUD.Themes = {
      if activity == 1 then
          DrawText("Sync: " .. sync .. "%", "HUDcssBottom", screenWidth / 2.002, text_y_css + yPos + 79, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
      end
-
 
      if activity == 1 then
          local TimeText = "Time: " .. currentf
@@ -1056,7 +1055,7 @@ HUD.Themes = {
         insert(texts, "")
         insert(texts, "Speed: " .. velocity .. " u/s")
         insert(texts, "Style: " .. stylename)
-        insert(texts, "Jumps: " .. jumps .. " | " .. "Strafes: " .. (data.strafes or 0) .. " (" .. sync .. "%)")
+        insert(texts, "Jumps: " .. jumps .. " | " .. "Strafes: " .. (HUDData[pl].strafes or 0) .. " (" .. sync .. "%)")
 
         surface.SetFont("sm_mod")
 

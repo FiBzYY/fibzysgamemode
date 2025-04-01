@@ -56,6 +56,8 @@ hook.Add("KeyPress", "FJT_DetectJump", function(ply, key)
             local currentTick = engine.TickCount()
             local jumpTick = (currentTick - tickcount[ply]) + 1
 
+            if jumpTick > 150 then return end
+
             playerFJT[ply] = jumpTick
 
             local ColorSSJ = ply.DynamicColor or Color(255, 255, 255)
@@ -92,7 +94,10 @@ function JUMPTICK:HandleEndZone(ply)
     local currentTick = engine.TickCount()
 
     if playerJumpedInsideZone[ply] and tickcount[ply] then
-        local negativeTick = -(currentTick - (tickcount[ply] or currentTick))
+       local negativeTick = -(currentTick - (tickcount[ply] or currentTick))
+
+        -- Ignore absurd negative values
+        if math.abs(negativeTick) > 150 then return end
 
         playerFJT[ply] = negativeTick
 

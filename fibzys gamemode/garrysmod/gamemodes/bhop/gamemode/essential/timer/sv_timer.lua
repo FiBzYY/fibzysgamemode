@@ -285,7 +285,6 @@ end)
 function TIMER:StartTimer(ply)
     if not self:ValidTimer(ply) then return end
     if ply.outsideSpawn then TIMER:Disable(ply) return end
-    if (ply.groundTicks or 0) < g_groundticks then return end
 
     -- Tick based
     ply.iFractionalTicks = 0
@@ -321,6 +320,9 @@ end
 function TIMER:ResetTimer(ply)
     ply:SetNWBool("inPractice", false)
     if not self:ValidTimer(ply) then return end
+
+    -- Don’t allow resets if groundTicks is too low
+    if (ply.groundTicks or 0) < g_groundticks then return end
     if not ply.time then return end
 
     -- Tick based reset
@@ -423,7 +425,6 @@ end
 function TIMER:BonusStart(ply)
     if not self:ValidTimer(ply, true) then return end
     if ply.outsideSpawn then TIMER:Disable(ply) return end
-    if (ply.groundTicks or 0) < g_groundticks then return end
 
     ply.bonustime = engine.TickCount()
     ply.iFractionalTicksBonus = 0
@@ -479,6 +480,9 @@ end
 -- Bonus Reset
 function TIMER:BonusReset(ply)
     if not self:ValidTimer(ply, true) then return end
+
+    -- Don’t allow resets if groundTicks is too low
+    if (ply.groundTicks or 0) < g_groundticks then return end
 
     ply.bonustime = nil
     ply.bonusfinished = nil
