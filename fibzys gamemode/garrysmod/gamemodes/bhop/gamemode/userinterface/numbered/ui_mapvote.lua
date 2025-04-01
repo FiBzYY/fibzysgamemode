@@ -92,9 +92,15 @@ end
 
 local function Revote(info)
     if not UI.rtv or not UI.rtv.title then
-        DATA["rtv"](_, {"update", info}, true)
+        DATA["MapVote"](_, {"update", info}, true)
+
         if RTVSelected then
-            UI.rtv:UpdateOption(RTVSelected, false, RainbowTextEffect(text), false)
+            timer.Simple(0.01, function()
+                if UI.rtv and RTVSelected then
+                    local accent = UI.rtv.themec and UI.rtv.themec["Accent Colour"] or color_white
+                    UI.rtv:UpdateOption(RTVSelected, false, accent, false)
+                end
+            end)
         end
     end
 end

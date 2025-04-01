@@ -416,7 +416,12 @@ hook.Add("SetupMove", "Stamina", function(client, data, cmd)
 
     if enableStamina and onGround and not client:IsBot() then
         if client.AirStam then
-            data:SetVelocity(velocity)
+            if style == TIMER:GetStyleID("L") then
+			    data:SetVelocity(velocity - (0.04 * velocity))
+            else
+                data:SetVelocity(velocity)
+            end
+
             if client.AirStam == 4 then
                 client.Gtime = c
             end

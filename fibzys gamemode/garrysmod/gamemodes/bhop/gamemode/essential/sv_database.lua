@@ -88,7 +88,7 @@ function ReloadZonesOnMapLoad()
                 Zones:Setup()
                 UTIL:Notify(Color(255, 0, 0), "Database", "Zones successfully reloaded!")
             else
-                UTIL:Notify(Color(255, 0, 0), "Database", "Zones:Setup function does NOT exist!")
+                UTIL:Notify(Color(255, 0, 0), "Database", "Zones function does NOT exist!")
             end
         else
              UTIL:Notify(Color(255, 0, 0), "Database", "No zones found cannot reload!")
@@ -159,14 +159,14 @@ function TIMER:LoadZones(callback)
     local map = game.GetMap()
 
     if not SQL.Use then
-        UTIL:Notify(Color(255, 255, 0), "Database", "[Fallback] Skipping LoadZones — SQL is disabled.")
+        UTIL:Notify(Color(255, 255, 0), "Database", "[Fallback] Skipping Load Zones — MySQL is disabled.")
         if callback then callback(false) end
         return
     end
 
     local sanitizedMap = SQL:Prepare("{0}", {map})
     if not sanitizedMap.Query then
-        UTIL:Notify(Color(255, 0, 0), "Database", "[ERROR] Failed to prepare SQL query for zones!")
+        UTIL:Notify(Color(0, 255, 0), "Database", "Prepared Query SQL query for zones!")
         if callback then callback(false) end
         return
     end
@@ -290,7 +290,7 @@ function BHDATA:Optimize()
     clearUnusedData()
     optimizeNetwork()
 
-    UTIL:Notify(Color(255, 0, 0), "Database", "Optimization completed.")
+    UTIL:Notify(Color(0, 255, 0), "Database", "Optimization completed.")
 end
 
 local function PrintLuaMemoryUsage()
@@ -326,7 +326,7 @@ function TIMER:DBRetry(retryCount)
     end
 
     if SQL and not SQL.Use then
-        UTIL:Notify(Color(255, 0, 0), "Database", "[WARNING] SQL is disabled, using fallback mode.")
+        UTIL:Notify(Color(255, 0, 0), "Database", "[WARNING] MySQL is disabled, using fallback mode.")
         if SQL.LoadNoMySQL then
             SQL:LoadNoMySQL()
         end
@@ -337,21 +337,21 @@ function TIMER:DBRetry(retryCount)
         local success, err = pcall(function()
             if Zones.Setup then
                 Zones:Setup()
-                UTIL:Notify(Color(0, 255, 0), "Database", "[INFO] Zones successfully setup!")
+                UTIL:Notify(Color(0, 255, 0), "Database", "Zones successfully setup!")
             end
         end)
         if not success then
             retryCount = retryCount + 1
             if retryCount <= maxRetries then
-                UTIL:Notify(Color(255, 0, 0), "Database", "[DEBUG] Retrying zone setup... Attempt: " .. retryCount)
+                UTIL:Notify(Color(0, 255, 0), "Database", "Retrying zone setup... Attempt: " .. retryCount)
                 timer.Simple(2, function() self:DBRetry(retryCount) end)
             else
-                UTIL:Notify(Color(255, 0, 0), "Database", "[ERROR] Max retries reached for Zones:Setup()")
+                UTIL:Notify(Color(255, 0, 0), "Database", "Max retries reached for Zones")
             end
             return
         end
     else
-        UTIL:Notify(Color(255, 0, 0), "Database", "[WARNING] No zones found! Attempting zone load from DB...")
+        UTIL:Notify(Color(0, 255, 0), "Database", "Loading zones load from DB...")
         self:LoadZones(function(success)
             if success then
                 timer.Simple(0.5, function()
@@ -360,10 +360,10 @@ function TIMER:DBRetry(retryCount)
             else
                 retryCount = retryCount + 1
                 if retryCount <= maxRetries then
-                    UTIL:Notify(Color(255, 0, 0), "Database", "[DEBUG] Retrying zone load... Attempt: " .. retryCount)
+                    UTIL:Notify(Color(0, 255, 0), "Database", "Retrying zone load... Attempt: " .. retryCount)
                     timer.Simple(2, function() self:DBRetry(retryCount) end)
                 else
-                    UTIL:Notify(Color(255, 0, 0), "Database", "[ERROR] Max retries reached for LoadZones()")
+                    UTIL:Notify(Color(255, 0, 0), "Database", "Max retries reached for Load Zones")
                 end
             end
         end)
@@ -585,7 +585,6 @@ end
 
 function SQL:Prepare(query, args, noQuote)
     if not SQLObject or not SQL.Available or SQLObject:status() ~= mysqloo.DATABASE_CONNECTED then
-        UTIL:Notify(Color(255, 0, 0), "Database", "[ERROR] Database not connected! Skipping Prepare for query: " .. tostring(query))
         return {
             Query = nil,
             Execute = function(_, callback)
@@ -643,7 +642,7 @@ NETWORK:GetNetworkMessage("UI", function(cl, data)
     if DATA[id] then
         DATA[id](cl, data)
     else
-        UTIL:Notify(Color(255, 0, 0), "Database", "No listener found for UI ID " .. gs(id))
+        UTIL:Notify(Color(0, 255, 0), "Database", "No listener found for UI ID " .. gs(id))
     end
 end)
 

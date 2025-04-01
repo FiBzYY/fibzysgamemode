@@ -1457,40 +1457,61 @@ local function IsMoveUnSync(buttons, move, negative, positive)
 end
 
 local function CheckForIllegalMovement(data, vel, buttons)
-    local bInvalid, resetMove = false, false
+    local sidemove = vel[2]
+    local bInvalid = false
+    local resetMove = false
     local deltaYaw = data.fAngleDifference.yaw
 
     data.iLastInvalidButtonCount = data.InvalidButtonSidemoveCount
 
     local fMaxMove = tonumber(GetConVar("cl_sidespeed"):GetString()) or 400.0
 
-    -- invalid movement
-    if math.abs(vel.x) > fMaxMove or math.abs(vel.y) > fMaxMove then
-        bInvalid, data.sLastIllegalReason = true, ">max"
-    elseif not IsValidMove(vel.x) or not IsValidMove(vel.y) then
-        bInvalid, data.sLastIllegalReason = true, "invalid"
-    elseif bit.band(buttons, IN_MOVELEFT + IN_MOVERIGHT) == (IN_MOVELEFT + IN_MOVERIGHT) then
-        bInvalid, data.sLastIllegalReason = true, "unsync"
+    if sidemove > 0 and bit.band(buttons, IN_MOVELEFT) ~= 0 then
+        bInvalid = true
+        data.sLastIllegalReason = 1
+    elseif sidemove > 0 and bit.band(buttons, bit.bor(IN_MOVELEFT, IN_MOVERIGHT)) == bit.bor(IN_MOVELEFT, IN_MOVERIGHT) then
+        bInvalid = true
+        data.sLastIllegalReason = 2
+    elseif sidemove < 0 and bit.band(buttons, IN_MOVERIGHT) ~= 0 then
+        bInvalid = true
+        data.sLastIllegalReason = 3
+    elseif sidemove < 0 and bit.band(buttons, bit.bor(IN_MOVELEFT, IN_MOVERIGHT)) == bit.bor(IN_MOVELEFT, IN_MOVERIGHT) then
+        bInvalid = true
+        data.sLastIllegalReason = 4
+    elseif sidemove == 0.0 and (bit.band(buttons, bit.bor(IN_MOVELEFT, IN_MOVERIGHT)) == IN_MOVELEFT or bit.band(buttons, bit.bor(IN_MOVELEFT, IN_MOVERIGHT)) == IN_MOVERIGHT) then
+        bInvalid = true
+        data.sLastIllegalReason = 5
+    elseif sidemove ~= 0.0 and bit.band(buttons, bit.bor(IN_MOVELEFT, IN_MOVERIGHT)) == 0 then
+        bInvalid = true
+        data.sLastIllegalReason = 6
     end
 
-    data.InvalidButtonSidemoveCount = bInvalid and (data.InvalidButtonSidemoveCount + 1) or 0
+    if bInvalid then
+        data.InvalidButtonSidemoveCount = data.InvalidButtonSidemoveCount + 1
+    else
+        data.InvalidButtonSidemoveCount = 0
+    end
 
-    if data.InvalidButtonSidemoveCount >= g_cfg.min_stop_illegal_moves then
+    if data.InvalidButtonSidemoveCount >= 4 then
+        vel[1] = 0.0
+        vel[2] = 0.0
+        vel[3] = 0.0
         resetMove = true
     end
 
-    if data.InvalidButtonSidemoveCount == 0 and data.iLastInvalidButtonCount >= g_cfg.min_illegal_sidemoves then
+    if data.InvalidButtonSidemoveCount == 0 and data.iLastInvalidButtonCount >= 10 then
         ReasonLog(Reasons.ButtonsMove, LogLevel.HIGH, data.ply, data.sLastIllegalReason, data.iLastInvalidButtonCount)
     end
 
-    if math.floor(vel.x * 100.0) % 625 ~= 0 or math.floor(vel.y * 100.0) % 625 ~= 0 then
+    if math.floor(vel[1] * 100.0) % 625 ~= 0 or math.floor(vel[2] * 100.0) % 625 ~= 0 then
         data.iIllegalSidemoveCount = data.iIllegalSidemoveCount + 1
+        vel[1], vel[2], vel[3] = 0.0, 0.0, 0.0
         resetMove = true
 
         if math.abs(deltaYaw) > 0 then
             data.iYawChangeCount = data.iYawChangeCount + 1
         end
-    elseif (math.abs(vel.x) ~= fMaxMove and vel.x ~= 0.0) or (math.abs(vel.y) ~= fMaxMove and vel.y ~= 0.0) then
+    elseif (math.abs(vel[1]) ~= fMaxMove and vel[1] ~= 0.0) or (math.abs(vel[2]) ~= fMaxMove and vel[2] ~= 0.0) then
         data.iIllegalSidemoveCount = data.iIllegalSidemoveCount + 1
 
         if math.abs(deltaYaw) > 0 then
@@ -1501,13 +1522,14 @@ local function CheckForIllegalMovement(data, vel, buttons)
     end
 
     if data.iIllegalSidemoveCount >= 4 then
+        vel[1], vel[2], vel[3] = 0.0, 0.0, 0.0
         resetMove = true
     end
 
     if data.iIllegalSidemoveCount == 0 then
-        if data.iLastIllegalSidemoveCount >= g_cfg.min_illegal_consecutives then
-            local bBan = (data.iYawChangeCount / data.iLastIllegalSidemoveCount) > g_cfg.min_yaw_change_ratio
-                and data.cvar.joystick == false
+        if data.iLastIllegalSidemoveCount >= 10 then
+            local ratio = data.iYawChangeCount / data.iLastIllegalSidemoveCount
+            local bBan = ratio > g_cfg.min_yaw_change_ratio and data.cvar.joystick == false
             local level = bBan and LogLevel.HIGH_BAN or LogLevel.HIGH
             ReasonLog(Reasons.ConsecutiveMove, level, data.ply, data.cvar.joystick and 1 or 0,
                 data.iYawChangeCount, data.iLastIllegalSidemoveCount, bBan and "BAN" or "SUSPECT")
@@ -1517,12 +1539,6 @@ local function CheckForIllegalMovement(data, vel, buttons)
     end
 
     data.iLastIllegalSidemoveCount = data.iIllegalSidemoveCount
-
-    if resetMove then
-        vel.x = 0.0
-        vel.y = 0.0
-        vel.z = 0.0
-    end
 
     return resetMove
 end
