@@ -1,14 +1,10 @@
-local gB_OnGround = {}
+﻿local gB_OnGround = {}
 local gB_Jumped = {}
 local gI_LandingTick = {}
 local jumpTrackerCVar = CreateClientConVar("bhop_perfprinter", "0", true, false, "Toggle the Jump Tracker for scrolling")
 
-hook.Add("PlayerButtonDown", "PlayerJumpHook", function(ply, button)
-    if not GetConVar("bhop_perfprinter"):GetBool() then return end
-
-    if (button == KEY_SPACE or button == KEY_MWHEELUP or button == KEY_MWHEELDOWN) and ply:Alive() and not ply:IsBot() then
-        gB_Jumped[ply] = true
-    end
+hook.Add("OnPlayerHitGround", "TrackLandingTick", function(ply, inWater, onFloater, speed)
+    gB_Jumped[ply] = true
 end)
 
 local function StartCommand(ply, cmd)
