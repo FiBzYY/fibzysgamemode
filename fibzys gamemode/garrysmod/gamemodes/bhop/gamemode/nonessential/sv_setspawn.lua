@@ -10,16 +10,9 @@ local function isValidSpawnPoint(ply)
         return false
     end
 
-    if not ply:OnGround() then
+    if not ply:IsOnGround() then
         NETWORK:StartNetworkMessageTimer(ply, "Print", {"Timer", "You have to touch the ground to be able to use it"})
         SendPopupNotification(ply, "Notification", "You have to touch the ground to be able to use it", 2)
-
-        return false
-    end
-
-    if ply:GetVelocity():Length2D() > 0.01 then
-        NETWORK:StartNetworkMessageTimer(ply, "Print", {"Timer", "You have to stay still to be able to use it"})
-        SendPopupNotification(ply, "Notification", "You have to stay still to be able to use it", 2)
 
         return false
     end

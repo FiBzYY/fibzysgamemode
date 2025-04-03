@@ -638,7 +638,7 @@ end
 function Replay:SetInfo(ply, replay, bSet)
     local info = self.BotInfo[replay]
     if not info then
-        ply:SetNWString("BotName", "No Time Recorded")
+        ply:SetNWString("ReplayName", "No Time Recorded")
         ply:SetNWInt("Style", 0)
         return false
     end
@@ -648,7 +648,7 @@ function Replay:SetInfo(ply, replay, bSet)
     end
 
     if info.Start then
-        ply:SetNWString("BotName", info.Name)
+        ply:SetNWString("ReplayName", info.Name)
         ply:SetNWString("ProfileURI", self:SIDToProfile(info.SteamID))
         ply:SetNWFloat("Record", info.Time)
         ply:SetNWInt("Style", info.Style)
@@ -674,7 +674,7 @@ function Replay:SetWRPosition(replay)
 
     local info = self.BotInfo[replay]
     if not info then
-        ply:SetNWString("BotName", "No Time Recorded")
+        ply:SetNWString("ReplayName", "No Time Recorded")
         ply:SetNWInt("Style", 0)
         return false
     end

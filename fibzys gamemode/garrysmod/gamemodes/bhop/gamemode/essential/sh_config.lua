@@ -158,7 +158,8 @@ if not CONFIG_LOADED then
         VoteFailColour = Color(255, 0, 0),
         ExtendColour = Color(0, 132, 255),
         AmountNeeded = 2/3, -- 66% of the active players need to vote for a map change
-        ChangeMapTime = 10 -- 10 Seconds after RTV Menu
+        ChangeMapTime = 10, -- 10 Seconds after RTV Menu
+        RandomMap = false -- pick rng map on rtv
     }
 
     BHOP.AFKSystem = {

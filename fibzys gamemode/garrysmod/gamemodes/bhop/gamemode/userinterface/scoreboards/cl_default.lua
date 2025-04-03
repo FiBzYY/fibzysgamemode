@@ -49,6 +49,21 @@ function SecondsToClock(seconds)
     end
 end
 
+function SecondsToClockWR(seconds)
+    seconds = tonumber(seconds) or 0
+    local wholeSeconds = math_floor(seconds)
+    local milliseconds = math_floor((seconds - wholeSeconds) * 100)
+    local hours = math_floor(wholeSeconds / 3600)
+    local minutes = math_floor((wholeSeconds % 3600) / 60)
+    local secs = wholeSeconds % 60
+
+    if hours > 0 then
+        return str_format("%d:%02d:%02d.%02d", hours, minutes, secs, milliseconds)
+    else
+        return str_format("%02d:%02d.%02d", minutes, secs, milliseconds)
+    end
+end
+
 -- Time display
 local function cTime(ns)
     if ns > 3600 then
@@ -383,9 +398,9 @@ local function CreateScoreboard(shouldHide)
             local W = w / 2
 
             if Iv(v) then
-                local botName = v:Nick()
+                local ReplayName = v:Nick()
 
-                local replayCreatorName = v:GetNWString("BotName", "No Time Recorded")
+                local replayCreatorName = v:GetNWString("ReplayName", "No Time Recorded")
                 local botStyle = v:Nick()
                 local botRecord = v:GetNWFloat("Record", 0)
 
@@ -560,6 +575,7 @@ local function CreateScoreboard(shouldHide)
             local currentstyle = ply:GetNWInt("style", TIMER:GetStyleID("Normal"))
             local styles = TIMER:StyleName(currentstyle)
             
+			-- Shorten names
             if styles == "Normal" then styles = "N" end
             if styles == "Bonus" then styles = "B" end
             if styles == "Segment" then styles = "S" end                     
@@ -666,7 +682,7 @@ local function CreateScoreboard(shouldHide)
                     local tgt = ply:GetObserverTarget()
 
                     if tgt and Iv(tgt) and (tgt:IsPlayer() or tgt:IsBot()) then
-                        local nm = tgt:IsBot() and (tgt:GetNWString("BotName", "Loading...") .. " Replay") or tgt:Nick()
+                        local nm = tgt:IsBot() and (tgt:GetNWString("ReplayName", "Loading...") .. " Replay") or tgt:Nick()
 
                         if string.len(nm) > 26 then
                             nm = nm:Left(26) .. "..."
@@ -682,14 +698,14 @@ local function CreateScoreboard(shouldHide)
                     status = "Finished: " .. SecondsToClock(TIMER:Convert(curr, finished))
                 elseif curr and curr > 0 then
                     local runningTime = TIMER:Convert(curr, engine.TickCount())
-                    status = "Running: " .. SecondsToClock(runningTime)
+                    status = "Running: " .. SecondsToClockWR(runningTime)
                 end
 
                 local textColor = lp():IsAdmin() and Color(0, 255, 0) or Color(255, 0, 0)
                 local textToShow = lp():IsAdmin() and "Admin" or "Player"
             
                 if lp():IsAdmin() then
-                    DrawText("Playing", "ui.mainmenu.button", eX, eY, Color(0, 255, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+                    DrawText("Admin", "ui.mainmenu.button", eX, eY, Color(0, 255, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
                 end
             
                 DrawText(status, "ui.mainmenu.button", tw + x, eY, TEXT, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
@@ -1015,7 +1031,7 @@ local function CreateScoreboardKawaii()
 
 			draw.SimpleText(isBot and "WR Replay" or rankInfo[1], "hud.subtitle", 12, 20, isBot and text_colour or rankInfo[2], TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
-			local name = isBot and pl:GetNWString("BotName", "Loading...") or pl:Nick()
+			local name = isBot and pl:GetNWString("ReplayName", "Loading...") or pl:Nick()
 			if isBot and (name ~= "Loading..." and name <= "No Replay Available") then
 				local position = pl:GetNWInt("WRPos", 0)
 				name = ( ("#" .. position .. " run ") or "Run ") .. "by " .. name
@@ -1062,7 +1078,7 @@ local function CreateScoreboardKawaii()
 				local tgt = pl:GetObserverTarget()
 
 				if tgt and IsValid(tgt) and (tgt:IsPlayer() or tgt:IsBot()) then
-					local nm = (tgt:IsBot() and (tgt:GetNWString("BotName", "Loading...") .. "'s Replay") or tgt:Nick())
+					local nm = (tgt:IsBot() and (tgt:GetNWString("ReplayName", "Loading...") .. "'s Replay") or tgt:Nick())
 
 					if (string.len(nm) > 20) then
 						nm = nm:Left(20) .. "..."
@@ -1079,7 +1095,7 @@ local function CreateScoreboardKawaii()
                 status = "Finished: " .. SecondsToClock(TIMER:Convert(curr, finished))
 			elseif curr > 0 then
                local runningTime = TIMER:Convert(curr, engine.TickCount())
-               status = "Running: " .. SecondsToClock(runningTime)
+               status = "Running: " .. SecondsToClockWR(runningTime)
 			end
 
 			draw.SimpleText(status, "hud.subtitle", distance * 5.7, 20, text_colour, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
@@ -1144,7 +1160,7 @@ local function CreateScoreboardKawaii()
 
 						surface.SetFont "hud.title"
 
-						draw.SimpleText(scoreboard_playerrow.pl:IsBot() and scoreboard_playerrow.pl:GetNWString("BotName", "Loading...") or scoreboard_playerrow.pl:Nick(), "hud.title", 84, 26, text_colour, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+						draw.SimpleText(scoreboard_playerrow.pl:IsBot() and scoreboard_playerrow.pl:GetNWString("ReplayName", "Loading...") or scoreboard_playerrow.pl:Nick(), "hud.title", 84, 26, text_colour, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
 						local rank = scoreboard_playerrow.pl:GetNWInt("AccessIcon", 0)
 						rank = rank == 0 and "User" or ranks[rank]
@@ -1243,7 +1259,7 @@ local function CreateScoreboardKawaii()
 							SetClipboardText(scoreboard_playerrow.pl:SteamID())
 						end
 
-						UTIL:AddMessage("Server", "Player " .. (scoreboard_playerrow.pl:IsBot() and scoreboard_playerrow.pl:GetNWString("BotName", "Loading...") or scoreboard_playerrow.pl:Nick()) .. "'s SteamID has been copied to your clipboard.")
+						UTIL:AddMessage("Server", "Player " .. (scoreboard_playerrow.pl:IsBot() and scoreboard_playerrow.pl:GetNWString("ReplayName", "Loading...") or scoreboard_playerrow.pl:Nick()) .. "'s SteamID has been copied to your clipboard.")
 					end)
 
 					NewButton("Voice mute", 235, function()
@@ -1542,7 +1558,7 @@ local function PutPlayerItem(self, pList, ply, mw)
 			local PlayerName = ply:Name()
 
 			if ply:IsBot() then
-				local szName = ply:GetNWString("BotName", "No Time Recorded")
+				local szName = ply:GetNWString("ReplayName", "No Time Recorded")
     
 				if szName == "Awaiting playback..." then 
 					szName = "Waiting for replay..."
@@ -1866,11 +1882,12 @@ function GM:DoScoreboardActionPopup(ply)
 		if not ply:IsBot() then
 			local nAccess = ply:GetNWInt("AccessIcon", 0)
 			if nAccess > 0 then
-				local admin = actions:AddOption("User is a " .. rank_str[nAccess])
+				local rank = ranks[nAccess] or "Unknown Rank"
+				local admin = actions:AddOption("User is a " .. rank)
 				admin:SetMaterial(icon.access[nAccess])
 				actions:AddSpacer()
 			end
-		
+
 			local mute = actions:AddOption(ply:IsMuted() and "Unmute" or "Mute")
 			mute:SetIcon("icon16/sound_mute.png")
 			function mute:DoClick()
@@ -1937,7 +1954,7 @@ function GM:DoScoreboardActionPopup(ply)
 		local Option1 = actions:AddOption("Copy Name")
 		Option1:SetIcon("icon16/page_copy.png")
 		function Option1:DoClick()
-			local name = ply:IsBot() and ply:GetNWString("BotName", "Inconnu") or ply:Name()
+			local name = ply:IsBot() and ply:GetNWString("ReplayName", "Inconnu") or ply:Name()
 			SetClipboardText( name )
 		end
 		

@@ -26,7 +26,7 @@ util.AddNetworkString("WRSounds")
 util.AddNetworkString("BadImprovement")
 
 timer_sounds = {}
-local g_groundticks = 10
+local g_groundticks = 15
 
 local ok, loadedReqwest = pcall(require, "reqwest")
 if ok and loadedReqwest then

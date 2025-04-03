@@ -377,7 +377,7 @@ local function SSJ_PrintStats(ply, lastSpeed, jumpTimeDiff)
     local sync = strafeTicks > 0 and mc(floor((syncedTicks / strafeTicks) * 100), 0, 100) or 0
 
     -- Distance & Efficiency
-    local traveledDist = g_fTraveledDistance[ply]:Length2D()
+    local traveledDist = g_fTraveledDistance[ply]:Length2D() or Vector(0, 0, 0)
     local trajectory = g_fTrajectory[ply]
     local distance = min(traveledDist, trajectory)
 

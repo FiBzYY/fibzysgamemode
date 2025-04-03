@@ -136,7 +136,9 @@ function RTV:EndVote()
         end
     end
 
-    if max == 0 then
+    if BHOP.RTV.RandomMap then
+        won = RTV:TrueRandom(1, 5)
+    elseif max == 0 then
         won = 6
     end
 

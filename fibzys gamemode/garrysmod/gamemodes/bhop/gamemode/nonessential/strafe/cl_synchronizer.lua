@@ -42,7 +42,7 @@ local function AddToBuffer(buffer, value)
 end
 
 hook.Add("StartCommand", "CalculateYawRatio", function(ply, cmd)
-    if not IsValid(ply) or not ply:Alive() then return end
+    if not IsValid(ply) or ply ~= LocalPlayer() then return end
     if cmd:TickCount() == 0 then return end
 
     local lastYaw = g_fLastAngles[ply] or 0
@@ -72,10 +72,18 @@ local function GetSyncColor(syncRatio)
 end
 
 hook.Add("HUDPaint", "DrawStrafeSyncHUD", function()
-    local ply = LocalPlayer()
-    if not IsValid(ply) or hudEnabled:GetBool() == false then return end
+    local localPlayer = LocalPlayer()
+    if not IsValid(localPlayer) or not hudEnabled:GetBool() then return end
+
+    local ply = localPlayer:GetObserverTarget()
+    if not IsValid(ply) or not ply:IsPlayer() then
+        ply = localPlayer
+    end
+
+    if ply:IsBot() then return end
 
     if TIMER:GetStyle(ply) == TIMER:GetStyleID("AS") then return end
+
     local yawRatio = GetBufferedSum(g_yawRatioHistory)
     local gainRatio = GetBufferedSum(g_gainRatioHistory)
 

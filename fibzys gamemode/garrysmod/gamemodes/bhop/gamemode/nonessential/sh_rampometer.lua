@@ -104,8 +104,8 @@ if SERVER then
         end
 
         if isOnRamp then
-            local rampEntry = playerRampStartEnergy[ply] - playerRampPostStartEnergy[ply]
-            local rampLoss = playerRampPostStartEnergy[ply] - energy
+            local rampEntry = (playerRampStartEnergy[ply] or 0) - (playerRampPostStartEnergy[ply] or 0)
+            local rampLoss = (playerRampPostStartEnergy[ply] or 0) - (energy or 0)
 
             ply:SetNWFloat("RampEntry", rampEntry)
             ply:SetNWFloat("RampLoss", rampLoss)

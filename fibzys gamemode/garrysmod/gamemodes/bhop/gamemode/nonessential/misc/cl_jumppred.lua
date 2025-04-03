@@ -1,56 +1,75 @@
-local hook_Add = hook.Add
-local JUMP_POWER = 290
+if SERVER then return end
+
+CreateClientConVar("bhop_landing_prediction", "1", true, false, "Toggle landing prediction display.")
+
 local GRAVITY = 800
-local PREDICTION_INTERVAL = 0.02
-local BOX_SIZE = 32
-local MAX_HORIZONTAL_DISTANCE = 64
+local PREDICTION_TIME = 3
+local TIMESTEP = 0.01
+local JUMP_IMPULSE = 290
 
-CreateClientConVar("bhop_landing_prediction", "0", true, false, "Toggle landing prediction display.")
+local mins = Vector(-16, -16, 0)
+local maxs = Vector(16, 16, 64)
 
-local function PredictLandingPosition()
-    local ply = LocalPlayer()
-    if not IsValid(ply) then return end
+local landingModel = "models/hunter/plates/plate1x1.mdl" -- flat square
+local landingProp = nil
 
-    local startPosition = ply:GetPos()
-    local forwardDirection = ply:GetForward()
-    local horizontalVelocity = forwardDirection * math.min(ply:GetVelocity():Length2D(), MAX_HORIZONTAL_DISTANCE / PREDICTION_INTERVAL)
-    local verticalVelocity = JUMP_POWER
-    local position = startPosition
-    local landingPosition = nil
+-- Spawn prop once
+local function CreateLandingProp()
+    if IsValid(landingProp) then return end
 
-    for t = 0, 5, PREDICTION_INTERVAL do
-        local horizontalStep = horizontalVelocity * PREDICTION_INTERVAL
-        if position:Distance(startPosition + forwardDirection * MAX_HORIZONTAL_DISTANCE) > MAX_HORIZONTAL_DISTANCE then
-            horizontalStep = forwardDirection * (MAX_HORIZONTAL_DISTANCE - position:Distance(startPosition))
-        end
-        position = position + horizontalStep
+    landingProp = ents.CreateClientProp()
+    landingProp:SetModel(landingModel)
+    landingProp:SetMaterial("models/wireframe") -- optional, can be wireframe or custom
+    landingProp:SetColor(Color(255, 255, 0, 150))
+    landingProp:SetRenderMode(RENDERMODE_TRANSCOLOR)
+    landingProp:SetMoveType(MOVETYPE_NONE)
+    landingProp:SetSolid(SOLID_NONE)
+    landingProp:Spawn()
+end
 
-        position.z = position.z + verticalVelocity * PREDICTION_INTERVAL
-        verticalVelocity = verticalVelocity - (GRAVITY * PREDICTION_INTERVAL)
+local function SimulateLanding(ply)
+    local pos = ply:GetPos()
+    local vel = ply:GetVelocity()
 
-        local trace = util.TraceLine({
-            start = position,
-            endpos = position - Vector(0, 0, 5),
+    if ply:OnGround() then
+        vel.z = JUMP_IMPULSE
+    end
+
+    for t = 0, PREDICTION_TIME, TIMESTEP do
+        pos = pos + vel * TIMESTEP
+        vel.z = vel.z - GRAVITY * TIMESTEP
+
+        local tr = util.TraceHull({
+            start = pos,
+            endpos = pos - Vector(0, 0, 2),
+            mins = mins,
+            maxs = maxs,
             filter = ply,
             mask = MASK_PLAYERSOLID
         })
 
-        if trace.Hit then
-            landingPosition = trace.HitPos
-            break
+        if tr.Hit then
+            return tr.HitPos
         end
     end
-
-    return landingPosition
 end
 
-local function DrawLandingPrediction()
-    if not GetConVar("bhop_landing_prediction"):GetBool() then return end
+hook.Add("Think", "LandingPrediction_Think", function()
+    if not GetConVar("bhop_landing_prediction"):GetBool() then
+        if IsValid(landingProp) then landingProp:SetNoDraw(true) end
+        return
+    end
 
-    local landingPosition = PredictLandingPosition()
-    if not landingPosition then return end
+    local ply = LocalPlayer()
+    if not IsValid(ply) or not ply:Alive() then return end
 
-    render.SetColorMaterial()
-    render.DrawQuadEasy(landingPosition + Vector(0, 0, 1), Vector(0, 0, 1), BOX_SIZE, BOX_SIZE, Color(255, 0, 0, 150), 0)
-end
-hook_Add("PostDrawOpaqueRenderables", "DrawLandingPredictionBox", DrawLandingPrediction)
+    CreateLandingProp()
+
+    local predictedPos = SimulateLanding(ply)
+    if predictedPos and IsValid(landingProp) then
+        landingProp:SetNoDraw(false)
+        landingProp:SetPos(predictedPos + Vector(0, 0, 0.5))
+        landingProp:SetAngles(Angle(0, 0, 0))
+        landingProp:SetColor(Color(255, 255, 0, 150))
+    end
+end)

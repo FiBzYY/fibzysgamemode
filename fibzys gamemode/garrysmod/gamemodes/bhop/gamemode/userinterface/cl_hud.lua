@@ -7,6 +7,7 @@
 
 ]]--
 
+-- Cvars
 local selected_hud = CreateClientConVar("bhop_hud_hide", 0, true, false)
 local roundedBoxEnabled = CreateConVar("bhop_roundedbox", "1", {FCVAR_ARCHIVE}, "Enable rounded box drawing")
 local simpleBoxEnabled = CreateConVar("bhop_simplebox", "0", {FCVAR_ARCHIVE}, "Enable simple hud box drawing")
@@ -28,6 +29,7 @@ local velocityAlpha, velocityFadeTime, lastVelocityAboveThreshold, fadeThreshold
 local colour_white = Color(255, 255, 255)
 local startTick, endTick, fractionalTicks, timerActive = 0, 0, 0, false
 
+-- get the speed
 local function GetClientVelocity(ply)
     local velocity = ply:GetInternalVariable("m_vecVelocity")
     if not velocity then return 0 end
@@ -44,6 +46,7 @@ local function GetSpeed(vel, twoD)
     return vel:Length()
 end
 
+-- Last MS Only
 local function ConvertTimeMS(ns)
     if not ns or type(ns) ~= "number" or ns < 0 then
         return "000"
@@ -55,6 +58,7 @@ local function ConvertTimeMS(ns)
     return lastDigit
 end
 
+-- Update networking
 net.Receive("Timer_Update", function()
     local ply = LocalPlayer()
     startTick = net.ReadInt(32)
@@ -149,6 +153,7 @@ local function cTime(ticks, fractionalTicks)
     end
 end
 
+-- CS:S Top WR
 local function cTimeWR(ns)
 	if ns > 3600 then
 		return fo( "%d:%.2d:%.2d.%.1d", fl( ns / 3600 ), fl( ns / 60 % 60 ), fl( ns % 60 ), fl( ns * 10 % 10 ) )
@@ -174,13 +179,13 @@ CreateClientConVar("bhop_jhud_gain_bad", "255 128 0", true, false)
 -- Really Bad
 CreateClientConVar("bhop_jhud_gain_verybad", "255 0 0", true, false)
 
-
 local function GetGainColor(convar)
     local colStr = GetConVar(convar):GetString()
     local r, g, b = string.match(colStr, "(%d+)%s+(%d+)%s+(%d+)")
     return Color(tonumber(r) or 255, tonumber(g) or 255, tonumber(b) or 255)
 end
 
+-- Gain colors
 function getColorForGain(gain)
     if gain > 115 then
         return GetGainColor("bhop_jhud_gain_verybad")
@@ -203,12 +208,12 @@ function getColorForGain(gain)
     end
 end
 
-
 local RECORDS = {}
 net.Receive("SendAllRecords", function()
     RECORDS = net.ReadTable()
 end)
 
+-- Get the current live placement
 local function GetCurrentPlacement(nCurrent, s)
     local timetbl = RECORDS[s]
 
@@ -236,6 +241,7 @@ HUD = {
     }
 }
 
+-- Darker color based off speed
 local function DarkenColor(color, factor)
     factor = mc(factor, 0, 1)
     local r = mc(color.r * (1 - factor) + 0 * factor, 0, 255)
@@ -401,7 +407,7 @@ HUD.Themes = {
 				local header, pla
 				if ob:IsBot() then
 					header = "Spectating Replay"
-					pla =  ob:GetNWString("BotName", "Loading...") .. " (" .. stylename .. " style)"
+					pla =  ob:GetNWString("ReplayName", "Loading...") .. " (" .. stylename .. " style)"
 				else
 					header = "Spectating"
 					pla = ob:Name() .. " (" .. stylename .. ")"
@@ -459,6 +465,7 @@ HUD.Themes = {
         local cp = mc(velocity, 0, 3500) / 3500
         local curTime = ct()
 
+        -- RNGFix color
         if not pl.rngFixTimer and RNGFixColor then
             pl.rngFixTimer = curTime + 0.1
         elseif pl.rngFixTimer and curTime < pl.rngFixTimer then
@@ -498,8 +505,9 @@ HUD.Themes = {
         local highlightColor = DynamicColors.PanelColor
         local increaseColor = DynamicColors.PanelColor
         local decreaseColor = Color(200, 0, 0)
-
         local sync = pl.sync
+
+        -- Sync bar
         if sync ~= 0 and type(sync) == 'number' then
             local col = sync > 93 and increaseColor or textColor
             col = sync < 90 and decreaseColor or col
@@ -544,6 +552,7 @@ HUD.Themes = {
 
         local current = (data.current < 0 and 0 or data.current) or 0
 
+        -- Only update every 10 ticks
         if (currentTick - pl.lastTickUpdate) >= ticksBetweenUpdates then
             if pl:IsBot() then
                 time = cTimeWR(current)
@@ -642,7 +651,7 @@ HUD.Themes = {
 		if lp():Team() == TEAM_SPECTATOR then 
 			local name = pl:Nick()
 			if (pl:IsBot()) then 
-				name = (stylename .. " Replay (" .. (pl:GetNWString("BotName", "Waiting...") .. ")")) or "Waiting..."
+				name = (stylename .. " Replay (" .. (pl:GetNWString("ReplayName", "Waiting...") .. ")")) or "Waiting..."
 				if (pl:Nick() == "Unknown Replay") then 
 					DrawText("Press E to change replay", "HUDTimer", screenWidth / 2, screenHeight - 50, tc, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 				end
@@ -904,17 +913,17 @@ HUD.Themes = {
         DrawText("00:00", "HUDSpecHud", screenWidth - 184, (screenHeight / 17) - 1, Color(241, 176, 13), text, TEXT_ALIGN_RIGHT)
     end
 
-     local velocity = math.floor(tonumber(data.velocity) or (IsValid(pl) and pl:GetVelocity():Length2D()) or 0)
-     local time = "Time: "
-     local pb = "Best: "
-     local style = pl:GetNWInt("Style", 1)
-     local stylename = TIMER:StyleName(style) .. (pl:IsBot() and "" or "")
-     local personal = cTime(data.pb or 0)
-     local current = data.current < 0 and 0 or data.current
-     local currentf = cTime(current)
+    local velocity = math.floor(tonumber(data.velocity) or (IsValid(pl) and pl:GetVelocity():Length2D()) or 0)
+    local time = "Time: "
+    local pb = "Best: "
+    local style = pl:GetNWInt("Style", 1)
+    local stylename = TIMER:StyleName(style) .. (pl:IsBot() and "" or "")
+    local personal = cTime(data.pb or 0)
+    local current = data.current < 0 and 0 or data.current
+    local currentf = cTime(current)
 
-     local jumps = pl.player_jumps or 0
-     local sync = pl.sync or 0
+    local jumps = pl.player_jumps or 0
+    local sync = pl.sync or 0
 
     local base = Color(0, 0, 0, 70)
     local isInPractice = pl:GetNWInt("inPractice", false)
@@ -1109,6 +1118,7 @@ local function DrawTextTableSize(tab, font)
     return width, height
 end
 
+-- Helper left pos
 local function DrawTextTableLeft(x, y, tab, font, color)
     surface.SetFont(font or "VerdanaUI_B")
     surface.SetTextColor(color or color_white)
@@ -1120,7 +1130,7 @@ local function DrawTextTableLeft(x, y, tab, font, color)
     end
 end
 
--- Draw side bar
+-- Draw Timer Side Bar
 local function DrawSimpleSideTimer(pl, data)
     if not data then return end
     if not sidetimer:GetBool() then return end
@@ -1241,14 +1251,12 @@ local hudStyles = {
             if GetConVar("bhop_jhud_gain"):GetBool() then
                 DrawText(math.Round(data.gain, 2) .. "%", "JHUDMainBIG2", scrW / 2, scrH / 2 - 60, fadedWhite, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
             end
-        end
-
-        if data.strafes > 0 and GetConVar("bhop_jhud_strafes"):GetBool() then
-            DrawText(data.strafes, "JHUDEFF", scrW / 2, scrH / 2 - 30, fadedWhite, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-        end
-
-        if data.efficiency > 0 and GetConVar("bhop_jhud_efficiency"):GetBool() then
-            DrawText(math.Round(data.efficiency), "JHUDEFF", scrW / 2, scrH / 2 - 168, fadedWhite, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            if data.strafes > 0 and GetConVar("bhop_jhud_strafes"):GetBool() then
+                DrawText(data.strafes, "JHUDEFF", scrW / 2, scrH / 2 - 30, fadedWhite, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            end
+            if data.efficiency > 0 and GetConVar("bhop_jhud_efficiency"):GetBool() then
+                DrawText(math.Round(data.efficiency), "JHUDEFF", scrW / 2, scrH / 2 - 168, fadedWhite, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            end
         end
     end,
 
@@ -1349,6 +1357,7 @@ local size, halfSize, textSpacing = 4, 2, 6
 local maxTrainValue = 200
 local sideHeight = 68
 
+-- Cvars to change
 CreateClientConVar("bhop_trainer_verygood", "220 255 0", true, false)
 CreateClientConVar("bhop_trainer_good", "0 255 0", true, false)
 CreateClientConVar("bhop_trainer_ok", "0 200 0", true, false)
@@ -1361,6 +1370,7 @@ local function GetTrainerColor(convar)
     return Color(tonumber(r) or 255, tonumber(g) or 255, tonumber(b) or 255)
 end
 
+-- Trainer Colors
 local function GetColour(percent, velocity)
     local offset = math.abs(1 - percent)
     local whiteningRate = 0.2
@@ -1617,8 +1627,6 @@ function GM:HUDPaintBackground()
                 recTp = GetTimePiece(record, style),
                 velocity = vel
             })
-        else
-            --print("ERROR")
         end
     else
         local curremt = TIMER:GetTickCount()

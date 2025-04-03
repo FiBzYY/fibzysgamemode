@@ -1512,7 +1512,12 @@ local function CreateSSJTopMenu(data)
 	local sortedData = {}
 	for steamID64, ssjData in pairs(data) do
 		local playerName = UTIL:GetPlayerName(steamID64)
-		table.insert(sortedData, {playerName, ssjData.normal or 0, ssjData.duck or 0, steamID64})
+
+		if type(ssjData) == "number" then
+			table.insert(sortedData, {playerName, ssjData, 0, steamID64})
+		elseif type(ssjData) == "table" then
+			table.insert(sortedData, {playerName, ssjData.normal or 0, ssjData.duck or 0, steamID64})
+		end
 	end
 
     table.sort(sortedData, function(a, b)

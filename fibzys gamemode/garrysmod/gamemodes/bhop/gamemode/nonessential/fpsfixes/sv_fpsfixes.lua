@@ -146,7 +146,7 @@ local function isNonEssentialGlobal(key)
         ["SCHED_NEW_WEAPON"] = true, ["ACT_GESTURE_TURN_LEFT45"] = true, ["ACT_VM_CRAWL_EMPTY"] = true, 
         ["ACT_GESTURE_FLINCH_CHEST"] = true, ["AddConsoleCommand"] = true, 
         ["EF_NOFLASHLIGHT"] = true, ["ACT_RUN_RELAXED"] = false, ["MAT_CLIP"] = true, ["ACT_DOD_PRONE_AIM_GREASE"] = true, 
-        ["STEPSOUNDTIME_NORMAL"] = true, ["RENDERMODE_NORMAL"] = true,
+        ["STEPSOUNDTIME_NORMAL"] = true, ["RENDERMODE_NORMAL"] = false,
         ["CONTENTS_EMPTY"] = true, ["KEY_A"] = true, ["GetConVarString"] = false, ["Add_NPC_Class"] = true,  -- showhidden
         ["CLASS_SCANNER"] = true, ["ACT_MP_RELOAD_CROUCH_PRIMARY"] = true, ["Either"] = true, 
         ["ACT_SIGNAL_ADVANCE"] = true, ["IsFriendEntityName"] = true, ["MASK_VISIBLE"] = true, 
@@ -194,7 +194,7 @@ local function isNonEssentialGlobal(key)
         ["ACT_HL2MP_RUN_MAGIC"] = true, ["SND_SHOULDPAUSE"] = true, ["ACT_GESTURE_BIG_FLINCH"] = true, 
         ["ACT_READINESS_AGITATED_TO_STIMULATED"] = false, ["ACT_HL2MP_SWIM_IDLE_ZOMBIE"] = true, 
         ["ACT_MP_DEPLOYED_PRIMARY"] = true, ["SetGlobalFloat"] = true, ["ACT_HL2MP_SWIM_IDLE_PHYSGUN"] = true, 
-        ["SetGlobalInt"] = true, ["SetGlobalString"] = false, ["SCHED_FAIL"] = true, ["SetGlobalVar"] = true, --host
+        ["SetGlobalInt"] = false, ["SetGlobalString"] = false, ["SCHED_FAIL"] = true, ["SetGlobalVar"] = true, --host
         ["CONTENTS_TEAM2"] = true, ["ACT_PHYSCANNON_UPGRADE"] = true, ["ACT_HL2MP_IDLE_ANGRY"] = true, 
         ["ACT_RANGE_AIM_PISTOL_LW"] = true, ["ACT_VM_SWINGHIT"] = true, ["SCHED_RANGE_ATTACK2"] = true, 
         ["SF_NPC_GAG"] = true, ["ACT_MP_SECONDARY_GRENADE1_IDLE"] = true, ["TYPE_PARTICLESYSTEM"] = true, 
