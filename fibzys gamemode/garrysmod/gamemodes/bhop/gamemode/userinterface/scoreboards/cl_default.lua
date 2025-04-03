@@ -711,13 +711,12 @@ local function CreateScoreboard(shouldHide)
                     status = "Running: " .. SecondsToClockWR(runningTime)
                 end
 
-                local textColor = lp():IsAdmin() and Color(0, 255, 0) or Color(255, 0, 0)
-                local textToShow = lp():IsAdmin() and "Admin" or "Player"
-            
-                if lp():IsAdmin() then
-                    DrawText("Admin", "ui.mainmenu.button", eX, eY, Color(0, 255, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-                end
-            
+				local ranks = {"VIP", "VIP+", "Moderator", "Admin", "Zone Admin", "Super Admin", "Developer", "Manager", "Founder", "Owner"}
+				local rankIndex = lp():GetNWInt("AccessIcon", 0)
+				local rankName = rankIndex == 0 and "User" or ranks[rankIndex]
+				local textColor = rankName == "User" and Color(255, 0, 0) or Color(0, 255, 0)
+
+				DrawText(rankName, "ui.mainmenu.button", eX, eY, textColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
                 DrawText(status, "ui.mainmenu.button", tw + x, eY, TEXT, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
             end
         end
