@@ -315,9 +315,19 @@ local function CreateScoreboard(shouldHide)
             UTIL:AddMessage("Server", v:Nick(), "'s steamid copied to clipboard.")
         end)
 
-        menu:AddOption("Goto Profile", function() 
-            gui.OpenURL("http://www.steamcommunity.com/profiles/" .. (v:IsBot() and util.SteamIDTo64(v.steamid) or v:SteamID64()))
-        end)
+		menu:AddOption("Goto Profile", function()
+			local profileURL = "http://www.steamcommunity.com/profiles/"
+
+			if v:IsBot() then
+				local uri = v:GetNWString("ProfileURI", "")
+				if uri == "" then
+					return
+				end
+				gui.OpenURL(profileURL .. uri)
+			else
+				gui.OpenURL(profileURL .. v:SteamID64())
+			end
+		end)
 
         if not v:IsBot() then 
             menu:AddSpacer()

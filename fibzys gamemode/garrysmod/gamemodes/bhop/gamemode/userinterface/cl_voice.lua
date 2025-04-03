@@ -153,6 +153,10 @@ function PANEL:Think()
     if not self.ply:IsSpeaking() and not self.fadeAnim then
         self:FadeOut()
     end
+
+    if not Iv(self.ply) then
+        self:Remove()
+    end
 end
 derma.DefineControl("VoiceNotify", "", PANEL, "DPanel")
 
@@ -170,6 +174,9 @@ function GM:PlayerStartVoice(ply)
         pnl:Setup(ply)
 
         PlayerVoicePanels[ply] = pnl
+
+        pnl.fadeAnim = nil
+        pnl:SetAlpha(255)
     else
         GAMEMODE.BaseClass.PlayerStartVoice(self, ply)
     end
@@ -179,6 +186,7 @@ function GM:PlayerEndVoice(ply)
     if GetConVar("bhop_customvoice"):GetBool() then
         if Iv(PlayerVoicePanels[ply]) then
             PlayerVoicePanels[ply]:FadeOut()
+            PlayerVoicePanels[ply] = nil
         end
     else
         GAMEMODE.BaseClass.PlayerEndVoice(self, ply)
@@ -188,11 +196,11 @@ end
 local function VoiceClean()
     for ply, panel in pairs(PlayerVoicePanels) do
         if not Iv(ply) then
-            GM:PlayerEndVoice(ply)
+            if Iv(panel) then panel:Remove() end
+            PlayerVoicePanels[ply] = nil
         end
     end
 end
-timer.Create("VoiceClean", 1, 0, VoiceClean)
 
 local function CreateVoiceVGUI()
     g_VoicePanelList = vgui.Create("DPanel")
