@@ -380,7 +380,7 @@ function UI:NumberedUIPanel(title, ...)
 	-- Force next/previous
 	function pan:ForceNextPrevious(bool)
 		self.hasPages = true
-		self:SetTall(75 + 180)
+		self:SetTall(120 + 180)
 
 		local posx, posy = self:GetPos()
 		self:SetPos(posx, ScrH() / 2 - ((75 + 180) / 2))
