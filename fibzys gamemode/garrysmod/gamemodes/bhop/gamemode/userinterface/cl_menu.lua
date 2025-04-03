@@ -111,6 +111,8 @@ function UI:CreatePanel(parent, textLines)
             for word in string.gmatch(line, "%S+") do
                 local spacing = " "
                 local wordClean = word:gsub("[,%s]", "")
+
+                surface.SetFont(font)
                 local wordW, wordH = surface.GetTextSize(word .. spacing)
 
                 if clickableWords[wordClean] then
@@ -854,34 +856,60 @@ function UI:CreateMenu()
                 local x, y = 10, 0
                 self:CreatePanel(parent, {"View server logs"})
 
-                -- store the current panel reference so we can update later
-                UI.CurrentLogsPanel = parent
+                if lp():GetNWInt("PlayerRank", 0) == 64 then
+                    UI.CurrentLogsPanel = parent
 
-                -- request the logs
-                net.Start("RequestAdminLogs")
-                net.SendToServer()
+                    -- request the logs
+                    net.Start("RequestAdminLogs")
+                    net.SendToServer()
 
-                -- show loading or clear panel
-                UI:UpdateServerLogs(parent, {})
+                    UI:UpdateServerLogs(parent, {})
+                else
+                    local noAccess = vgui.Create("DLabel", parent)
+                    noAccess:SetText("You don’t have access to see logs.")
+                    noAccess:SetFont("ui.mainmenu.button")
+                    noAccess:SetColor(Color(255, 80, 80))
+                    noAccess:SetPos(10, 40)
+                    noAccess:SizeToContents()
+                end
             end },
 
             { text = "Timer", panelContent = function(parent)
                 local x, y = 10, 0
                 self:CreatePanel(parent, {"Admin Timer"})
 
-                UI:UpdateAdminSettings(parent)
+                if lp():GetNWInt("PlayerRank", 0) == 64 or 9 then
+                    UI:UpdateAdminSettings(parent)
+                else
+                    local noAccess = vgui.Create("DLabel", parent)
+                    noAccess:SetText("You don’t have timer access to this.")
+                    noAccess:SetFont("ui.mainmenu.button")
+                    noAccess:SetColor(Color(255, 80, 80))
+                    noAccess:SetPos(10, 40)
+                    noAccess:SizeToContents()
+                end
             end },
 
             -- Admin Settings
             { text = "Settings", panelContent = function(parent)
                 local x, y = 10, 0
                 self:CreatePanel(parent, {"Admin settings"})
+
                 y = y + 45
-                self:CreateInputBoxSettings(parent, y, "bhop_settings_zonecap", 290, "Zone speed cap", "Changes speed cap in start zones.")
-                y = y + 60
-                self:CreateInputBoxSettings(parent, y, "bhop_admin_mapmultiplier", 15, "Set map points", "Sets or changes the points for the map.")
-                y = y + 60
-                self:CreateInputBox(parent, y, "bhop_snap_grid_size", 2, "Set Snap Grid Size", "Sets the snapping of the live zone placement.")
+                if lp():GetNWInt("PlayerRank", 0) == 64 or 9 then
+                    self:CreateInputBoxSettings(parent, y, "bhop_settings_zonecap", 290, "Zone speed cap", "Changes speed cap in start zones.")
+                    y = y + 60
+                    self:CreateInputBoxSettings(parent, y, "bhop_admin_mapmultiplier", 15, "Set map points", "Sets or changes the points for the map.")
+                    y = y + 60
+                    self:CreateInputBox(parent, y, "bhop_snap_grid_size", 2, "Set Snap Grid Size", "Sets the snapping of the live zone placement.")
+                else
+                    local noAccess = vgui.Create("DLabel", parent)
+                    noAccess:SetText("You don’t have settings access to this.")
+                    noAccess:SetFont("ui.mainmenu.button")
+                    noAccess:SetColor(Color(255, 80, 80))
+                    noAccess:SetPos(10, 40)
+                    noAccess:SizeToContents()
+                end
             end },
 
             -- Movement Settings
@@ -889,19 +917,29 @@ function UI:CreateMenu()
                 local x, y = 10, 0
                 self:CreatePanel(parent, {"Movement configurations"})
                 y = y + 45
-                self:CreateInputBoxSettings(parent, y, "bhop_settings_cap", 100, "Airaccel rate", "Changes movements airaccel rate.")
-                y = y + offset
-                self:CreateInputBoxSettings(parent, y, "bhop_settings_mv", 32.4, "Speed Cap", "Changes movement speed air cap.")
-                y = y + offset
-                self:CreateInputBoxSettings(parent, y, "bhop_settings_maxspeed", 250, "Max speed", "Changes movements max speed cap.")
-                y = y + offset
-                self:CreateInputBoxSettings(parent, y, "bhop_settings_jumppower", 290, "Jump Height", "Changes movements jump height.")
-                y = y + offset
-                self:CreateInputBoxSettings(parent, y, "bhop_movement_crouchboosting", 1, "Crouch Boosting", "Enables Crouch Boosting.")
-                y = y + offset
-                self:CreateInputBoxSettings(parent, y, "bhop_movement_rngfix", 1, "RNGFix", "Enables RNGFix (Recommended keep on).")
-                y = y + offset
-                self:CreateInputBoxSettings(parent, y, "bhop_movement_rampfix", 1, "Ramp Fix", "Enables Surf Ramp Fix (Recommended keep on).")
+
+                if lp():GetNWInt("PlayerRank", 0) == 64 then
+                    self:CreateInputBoxSettings(parent, y, "bhop_settings_cap", 100, "Airaccel rate", "Changes movements airaccel rate.")
+                    y = y + offset
+                    self:CreateInputBoxSettings(parent, y, "bhop_settings_mv", 32.4, "Speed Cap", "Changes movement speed air cap.")
+                    y = y + offset
+                    self:CreateInputBoxSettings(parent, y, "bhop_settings_maxspeed", 250, "Max speed", "Changes movements max speed cap.")
+                    y = y + offset
+                    self:CreateInputBoxSettings(parent, y, "bhop_settings_jumppower", 290, "Jump Height", "Changes movements jump height.")
+                    y = y + offset
+                    self:CreateInputBoxSettings(parent, y, "bhop_movement_crouchboosting", 1, "Crouch Boosting", "Enables Crouch Boosting.")
+                    y = y + offset
+                    self:CreateInputBoxSettings(parent, y, "bhop_movement_rngfix", 1, "RNGFix", "Enables RNGFix (Recommended keep on).")
+                    y = y + offset
+                    self:CreateInputBoxSettings(parent, y, "bhop_movement_rampfix", 1, "Ramp Fix", "Enables Surf Ramp Fix (Recommended keep on).")
+                else
+                    local noAccess = vgui.Create("DLabel", parent)
+                    noAccess:SetText("You don’t have access to change movement settings.")
+                    noAccess:SetFont("ui.mainmenu.button")
+                    noAccess:SetColor(Color(255, 80, 80))
+                    noAccess:SetPos(10, 40)
+                    noAccess:SizeToContents()
+                end
             end },
         })
     end

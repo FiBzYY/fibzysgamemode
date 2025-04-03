@@ -236,9 +236,10 @@ function Command:Restart(pl)
 end
 
 -- Reload the map
-local authorizedSteamID = "STEAM_0:1:48688711"
+local AdminList = BHOP.Server.AdminList
+
 concommand.Add("reload_map", function(ply, cmd, args)
-    if Iv(ply) and ply:SteamID() ~= authorizedSteamID then
+    if Iv(ply) and not AdminList[ply:SteamID()] then
         SendPopupNotification(ply, "Notification", "You do not have permission to use this command.", 2)
         return
     end

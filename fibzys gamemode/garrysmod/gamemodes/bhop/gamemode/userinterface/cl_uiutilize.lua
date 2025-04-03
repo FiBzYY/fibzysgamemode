@@ -1043,6 +1043,11 @@ function UI:UpdateServerLogs(parent, logs)
     scrollPanel:Dock(FILL)
     scrollPanel:DockMargin(10, 5, 10, 10)
 
+    scrollPanel.Paint = function(self, w, h)
+        surface.SetDrawColor(30, 30, 30, 255)
+        surface.DrawRect(0, 0, w, h)
+    end
+
     if logs and #logs > 0 then
         for _, log in ipairs(logs) do
             local logPanel = vgui.Create("DPanel", scrollPanel)
