@@ -176,19 +176,11 @@ local tasStyleID = TIMER:GetStyleID("TAS")
 local msg = "You must be in Segmented to use this command."
 local msg2 = "To reopen the segment menu at any time, use this command again."
 
-Command:Register({"segment", "segmented", "seg"}, function(client)
-    if client.style ~= segmentStyleID then
-        Command.Style(client, nil, {segmentStyleID})
-        NETWORK:StartNetworkMessageTimer(client, "Print", {"Timer", msg2})
-    end
-
-    UI:SendToClient(client, "segment")
-end)
-
-Command:Register({"tas", "ts"}, function(client)
-    if client.style ~= tasStyleID then
-        Command.Style(client, nil, {tasStyleID})
-        NETWORK:StartNetworkMessageTimer(client, "Print", {"Timer", msg2})
+Command:Register({"segment", "segmented", "tas", "seg"}, function(client)
+    if client.style ~= TIMER:GetStyleID("Segment") then
+        Command.Style(client, nil, {TIMER:GetStyleID("Segment")})
+        NETWORK:StartNetworkMessageTimer(client, "Print", {"Timer", "To reopen the segment menu at any time, use this command again."})
+        SendPopupNotification(client, "Notification", "To reopen the segment menu at any time, use this command again.", 2)
     end
 
     UI:SendToClient(client, "segment")
@@ -224,16 +216,6 @@ concommand.Add("bhop_cpload", function(client)
     else
         NETWORK:StartNetworkMessageTimer(client, "Print", {"Timer", msg})
     end
-end)
-
-Command:Register({"segment", "segmented", "seg"}, function(client)
-    if client.style ~= segmentStyleID then
-        Command:RemoveLimit(client)
-        Command.Style(client, nil, {segmentStyleID})
-        NETWORK:StartNetworkMessageTimer(client, "Print", {"Timer", "To reopen the segment menu at any time, use this command again."})
-    end
-
-    UI:SendToClient(client, "segment")
 end)
 
 Command:Register({"cpsave"}, function(client)

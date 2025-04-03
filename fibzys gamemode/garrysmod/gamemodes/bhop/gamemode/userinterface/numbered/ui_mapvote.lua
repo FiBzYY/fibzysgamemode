@@ -75,10 +75,15 @@ UI:AddListener("rtv", function(_, data, isRevote)
         UI.rtv:SetCustomDelay(3)
     elseif id == "VoteList" then
         if not UI.rtv or not UI.rtv.title then return end
+
         for k, v in pairs(info) do
             local name = UI.rtv.options[k].name
             name = "[" .. v .. "] " .. (v <= 10 and name:Right(#name - 4) or name:Right(#name - 5))
-            surface.PlaySound("garrysmod/ui_click.wav")
+
+            if GetConVar("bhop_ui_sounds"):GetBool() then
+                surface.PlaySound("garrysmod/ui_click.wav")
+            end
+
             UI.rtv:UpdateOption(k, name, false, false)
         end
     elseif id == "InstantVote" then

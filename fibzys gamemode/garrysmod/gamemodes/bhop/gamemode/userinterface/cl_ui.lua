@@ -8,7 +8,9 @@ local Iv, lp = LocalPlayer, LocalPlayer
 local activeNotifications = {}
 local DrawText = draw.SimpleText
 
+-- CVars
 CreateClientConVar("bhop_show_notifications", 1, true, false, "Enable or disable the pop-up notifications", 0, 1)
+CreateClientConVar("bhop_ui_sounds", "1", true, false, "Enable or disable UI menu sounds.")
 
 -- Notifications
 function ShowPopupNotification(title, text, duration)
@@ -1183,6 +1185,7 @@ local function Nominate_Callback(mapName)
     end
 end
 
+-- Cache for nominate
 Cache = Cache or {
     M_Data = {},
     M_Version = 0,
@@ -1234,6 +1237,7 @@ local function VerifyList()
 end
 hook.Add("Initialize", "LoadDatas", VerifyList)
 
+-- Nominate Menu
 UI:AddListener("nominate_list", function(_, data)
     if data and #data > 0 and type(data[1]) == "table" and data[1].name then
         Cache.M_Data = data
@@ -1287,8 +1291,11 @@ UI:AddListener("nominate", function(_, data)
 end)
 
 local function SEGMENT_Callback(id)
-    return function() UI:SendCallback("segment", {id})
-        surface.PlaySound("garrysmod/ui_click.wav")
+    return function()
+        UI:SendCallback("segment", {id})
+        if GetConVar("bhop_ui_sounds"):GetBool() then
+            surface.PlaySound("garrysmod/ui_return.wav")
+        end
     end
 end
 
@@ -1309,33 +1316,46 @@ UI:AddListener("segment", function(_, data)
 	)
 end)
 
+-- Menu
 UI:AddListener("menu", function()
     RunConsoleCommand("bhop_menu")
 end)
 
--- Change Log
+-- Change log
 hook.Add("InitPostEntity", "Bhop_Changelog", function()
     if Iv(lp()) then
         local lastchange = lp():GetPData("Bhop_Changelog", false)
 
-        if (not lastchange) or (tonumber(lastchange) ~= 7.04) then
+        if (not lastchange) or (tonumber(lastchange) ~= 13) then
             UI:NumberedUIPanel("Change Log",
-                {["name"] = "[+] Added !revote command as requested."},
-                {["name"] = "[+] Confirmation is now needed when resetting waypoints."},
-                {["name"] = "[*] Fixed segment menu and checkpoints menu."},
-                {["name"] = "[+] Added showkeys and strafe trainer addons."},
-                {["name"] = "[*] Fixed UI conflicts."},
-                {["name"] = "[*] Fixed TIMER:Print() messages."},
-                {["name"] = "[*] Segment style waypoints display and fixes."},
-                {["name"] = "[*] Timer display and updates."},
-                {["name"] = "[+] Added custom themes for chat timer SSJ colors."}
+                {["name"] = "[+] Added !revote command."},
+                {["name"] = "[+] Checkpoint reset now asks for confirmation."},
+                {["name"] = "[*] Fixed Segment & Checkpoint menu bugs."},
+                {["name"] = "[+] Added ShowKeys & Strafe Trainer addons."},
+                {["name"] = "[+] Custom themes for chat, timer, and SSJ colors."},
+                {["name"] = "[+] SSJ rework (1:1 Shavit Port) + SSJTOP leaderboard."},
+                {["name"] = "[+] RNGFix, SurfFix, TPFix, EdgeFix updated & optimized."},
+                {["name"] = "[+] New menu system with blur & font updates."},
+                {["name"] = "[+] Paint, JHUD, and Strafe Trainer UI menus added."},
+                {["name"] = "[+] BoosterFix added + now persists through map change."},
+                {["name"] = "[+] Added Prespeed + Auto-Strafe for styles like Unreal."},
+                {["name"] = "[+] !runs now accepts stylename (!runs segment)."},
+                {["name"] = "[*] Replay system fixes: crouch bugs, time display, spawn logic."},
+                {["name"] = "[*] Speedrun style, segment second finishes in progress."},
+                {["name"] = "[*] F1 Admin Panel rework in progress (ranks, kick/ban)."},
+                {["name"] = "[*] Scoreboard UI cleanup + placement indicator."},
+                {["name"] = "[*] Added Style menu (!style, !mode, etc)."},
+                {["name"] = "[+] Global WR database integration + UI update."},
+                {["name"] = "[+] JumpHUD: EFFI, SYNC, JSS stats added."},
+                {["name"] = "[+] Added Edge Helper + Rampometer (1:1 CS:S ports)."}
             )
 
-            lp():SetPData("Bhop_Changelog", 7.04)
+            lp():SetPData("Bhop_Changelog", 13)
         end
     end
 end)
 
+-- WR to time
 function UI:WRConvert(ns)
     local floor = math.floor
     local format = string.format
@@ -1391,13 +1411,13 @@ function StringToTab(tab)
     end
 
     if not istable(tab) then
-        print("[WARNING] StringToTab() received invalid data!")
         return {}
     end
 
     return tab
 end
 
+-- WR menu
 UI:AddListener("wr", function(_, data)
     local wrList = data[1]
     local recordStyle = data[2]

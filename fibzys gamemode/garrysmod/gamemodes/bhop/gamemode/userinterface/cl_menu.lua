@@ -682,26 +682,43 @@ function UI:CreateMenu()
 
     -- Auto Tab
     { text = "Audio", panelContent = function(parent)
+
+        local scrollPanel = vgui.Create("DScrollPanel", parent)
+        scrollPanel:Dock(FILL)
+
+        local vBar = scrollPanel:GetVBar()
+        UI:MenuScrollbar(vBar)
+
+        local container = vgui.Create("DPanel", scrollPanel)
+        container:SetSize(parent:GetWide() - 20, 650)
+        container:SetPos(0, 0)
+        container.Paint = function(self, w, h)
+            surface.SetDrawColor(colors.content)
+            surface.DrawRect(0, 0, w, h)
+        end
+
         local x, y = 10, 0
-        self:CreatePanel(parent, {"Audio"})
+        self:CreatePanel(container, {"Audio"})
         y = y + 45
-        self:CreateToggle(parent, y, "bhop_chatsounds", "Chat Sounds", "Enables or disables chat sounds on messages.")
+        self:CreateToggle(container, y, "bhop_chatsounds", "Chat Sounds", "Enables or disables chat sounds on messages.")
         y = y + offset
-        self:CreateToggle(parent, y, "bhop_timerchatsound", "Chat Timer Sounds", "Enables or disables chat timer sounds on messages.")
+        self:CreateToggle(container, y, "bhop_timerchatsound", "Chat Timer Sounds", "Enables or disables chat timer sounds on messages.")
         y = y + offset
-        self:CreateToggle(parent, y, "bhop_mute_music", "Disable Map Music", "Use if you want to disable music on all maps.")
+        self:CreateToggle(container, y, "bhop_ui_sounds", "UI Sounds", "Enables or disables UI sounds in menus.")
         y = y + offset
-        self:CreateToggle(parent, y, "bhop_gunsounds", "Gun Sounds", "Enables or disables weapon sounds.")
+        self:CreateToggle(container, y, "bhop_mute_music", "Disable Map Music", "Use if you want to disable music on all maps.")
         y = y + offset
-        self:CreateInputBoxText(parent, y, "bhop_footsteps", "on", "Footsteps", "Options: 'off', 'local', 'spectate', 'all'.")
+        self:CreateToggle(container, y, "bhop_gunsounds", "Gun Sounds", "Enables or disables weapon sounds.")
         y = y + offset
-        self:CreateToggle(parent, y, "bhop_zonesounds", "Zone sounds", "Enables or disables zone sounds on leave.")
+        self:CreateInputBoxText(container, y, "bhop_footsteps", "on", "Footsteps", "Options: 'off', 'local', 'spectate', 'all'.")
         y = y + offset
-        self:CreateToggle(parent, y, "bhop_wrsfx", "WR Sounds", "Enables or disables the World Record sounds.")
+        self:CreateToggle(container, y, "bhop_zonesounds", "Zone sounds", "Enables or disables zone sounds on leave.")
         y = y + offset
-        self:CreateInputBox(parent, y, "bhop_wrsfx_volume", "0.4", "WR Sounds Volume", "Customize your WR sound volume, 1 is loud 0.4 is default.")
+        self:CreateToggle(container, y, "bhop_wrsfx", "WR Sounds", "Enables or disables the World Record sounds.")
         y = y + offset
-        self:CreateToggle(parent, y, "bhop_wrsfx_bad", "Bad Improvement Sounds", "Enables or disables the bad improvement sounds.")
+        self:CreateInputBox(container, y, "bhop_wrsfx_volume", "0.4", "WR Sounds Volume", "Customize your WR sound volume, 1 is loud 0.4 is default.")
+        y = y + offset
+        self:CreateToggle(container, y, "bhop_wrsfx_bad", "Bad Improvement Sounds", "Enables or disables the bad improvement sounds.")
     end },
 
     -- Controls Tab

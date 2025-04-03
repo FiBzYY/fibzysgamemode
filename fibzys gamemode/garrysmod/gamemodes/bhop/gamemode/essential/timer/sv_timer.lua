@@ -26,7 +26,7 @@ util.AddNetworkString("WRSounds")
 util.AddNetworkString("BadImprovement")
 
 timer_sounds = {}
-local g_groundticks = 15
+local g_groundticks = 20
 
 local ok, loadedReqwest = pcall(require, "reqwest")
 if ok and loadedReqwest then
@@ -322,7 +322,7 @@ function TIMER:ResetTimer(ply)
     if not self:ValidTimer(ply) then return end
 
     -- Don’t allow resets if groundTicks is too low
-    if (ply.groundTicks or 0) < g_groundticks then return end
+    if (ply.groundTicks or 0) < 20 then return end
     if not ply.time then return end
 
     -- Tick based reset

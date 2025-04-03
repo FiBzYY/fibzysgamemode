@@ -14,8 +14,8 @@ Lang = {
     FinishingStats = {UTIL.Colour["Timer"], "1;", UTIL.Colour["White"], " had ", UTIL.Colour["Timer"], "2;%", UTIL.Colour["White"], " Sync with ", UTIL.Colour["Timer"], "3;", UTIL.Colour["White"], " Jumps, and ", UTIL.Colour["Timer"], "4;", UTIL.Colour["White"], " Strafes."},
 
     -- Timer/Style
-    StyleEqual = {"Your styles is already set to ", UTIL.Colour["Timer"], "1;", UTIL.Colour["White"], "."},
-    StyleChange = {"Your styles is changed to ", UTIL.Colour["Timer"], "1;", UTIL.Colour["White"], "."},
+    StyleEqual = {"Your style is already set to ", UTIL.Colour["Timer"], "1;", UTIL.Colour["White"], "."},
+    StyleChange = {"Your style is changed to ", UTIL.Colour["Timer"], "1;", UTIL.Colour["White"], "."},
     SegmentSet = {"New ", UTIL.Colour["Timer"], "checkpoint", UTIL.Colour["White"], " set."},
     StopTimer = {"Your timer has been stopped due to the use of ", UTIL.Colour["Red"], "checkpoints", UTIL.Colour["White"], "."},
     TooFast = { "You are moving too fast: ", UTIL.Colour["Red"], "1; u/s", UTIL.Colour["White"], "." },
@@ -85,6 +85,7 @@ Lang = {
     VoteFailure = {"Something went wrong while trying to change maps. Please ", UTIL.Colour["Timer"], " !rtv ", UTIL.Colour["White"], UTIL.Colour["Timer"], "again."},
     VoteVIPExtend = {"We need help of the VIPs! The extend limit is ", UTIL.Colour["Timer"], "2;", " do you wish to start a vote to extend anyway? Type !extend or !vip extend.", UTIL.Colour["White"], UTIL.Colour["Timer"]},
     RevokeFail = "You can not revoke your vote because you have not Rocked the Vote yet.",
+    VoteAFK = "Your RTV vote was removed because you are AFK.",
 
     -- Nominate
     Nomination = {UTIL.Colour["Timer"], "1;", UTIL.Colour["White"], " has nominated ", UTIL.Colour["White"], UTIL.Colour["Timer"], "2;", UTIL.Colour["White"], " to be played next."},

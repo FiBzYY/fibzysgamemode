@@ -328,18 +328,23 @@ function RTV:Who(ply)
 end
 
 function RTV:CheckVotes()
-    for _, ply in ipairs(player.GetHumans()) do
-        if ply.AFK and ply.Rocked then
-            ply.Rocked = false
-            RTV.MapVotes = RTV.MapVotes - 1
-            RTV.Required = math.max(math.ceil((#player.GetHumans() - Spectator:GetAFK()) * (BHOP.RTV.AmountNeeded)), 1)
-        end
-    end
+	for _,ply in ipairs(player.GetHumans()) do
+		if ply.AFK.Away and ply.Rocked then
+			ply.Rocked = false
 
-    local required = math.max(math.ceil((#player.GetHumans() - Spectator:GetAFK()) * (BHOP.RTV.AmountNeeded)), 1)
-    if RTV.MapVotes >= required and RTV.MapVotes > 0 then
-        RTV:StartVote()
-    end
+			NETWORK:StartNetworkMessageTimer(ply, "Print", {"Notification", Lang:Get("VoteAFK")})
+
+			RTV.MapVotes = RTV.MapVotes - 1
+			RTV.Required = math.ceil((#player.GetHumans() - Spectator:GetAFK()) * (BHOP.RTV.AmountNeeded))
+		end
+	end
+
+	local required = math.ceil((#player.GetHumans() - Spectator:GetAFK()) * (BHOP.RTV.AmountNeeded))
+	if (RTV.MapVotes <= 1) then return end
+
+	if RTV.MapVotes >= required then
+		RTV:StartVote()
+	end
 end
 
 function RTV:Check(ply)
