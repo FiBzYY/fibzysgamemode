@@ -190,17 +190,7 @@ function GM:SetupMove(client, data, cmd)
     local velocity = data:GetVelocity()
     local velocity2d = velocity:Length2D()
     local style = TIMER:GetStyle(client)
-    local sidespeed = 10000 -- 450
-    local speedModifier = (client:OnGround() or client:GetMoveType() == MOVETYPE_NOCLIP) and sidespeed or 10000
     local buttons = data:GetButtons()
-    local moveRight = bit.band(buttons, IN_MOVERIGHT) ~= 0
-    local moveLeft = bit.band(buttons, IN_MOVELEFT) ~= 0
-    local moveForward = bit.band(buttons, IN_FORWARD) ~= 0
-    local moveBack = bit.band(buttons, IN_BACK) ~= 0
-     
-    -- Movement speeds
-    data:SetSideSpeed((moveRight and speedModifier) or (moveLeft and -speedModifier) or 0)
-    data:SetForwardSpeed((moveForward and speedModifier) or (moveBack and -speedModifier) or 0)
 
     -- Zone Cap Settings
     if client.InStartZone and not client:GetNWInt("inPractice", false) and style ~= TIMER:GetStyleID("SPEED") and style ~= TIMER:GetStyleID("Prespeed") then
@@ -344,7 +334,7 @@ function GM:SetupMove(client, data, cmd)
            style == TIMER:GetStyleID("HG") or style == TIMER:GetStyleID("MM") or 
            style == TIMER:GetStyleID("SPEED") or style == TIMER:GetStyleID("E") or 
            style == TIMER:GetStyleID("Stamina") or style == TIMER:GetStyleID("Prespeed") or 
-           style == TIMER:GetStyleID("Swift") then
+           style == TIMER:GetStyleID("Swift") or style == TIMER:GetStyleID("Practice") then
            forwardInput = (forwardPressed and 3 or 0) - (backPressed and 3 or 0)
            sideInput = (rightPressed and 3 or 0) - (leftPressed and 3 or 0)
     end

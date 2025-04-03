@@ -238,6 +238,15 @@ function UTIL:FindPlayer(name)
 	return (#players == 1 and players[1] or players)
 end
 
+function GetDefaultSetting(name, fallback)
+    return tostring(BHOP.DefaultSettings[name] or fallback)
+end
+
+-- to create convars (client)
+function UTIL:CreateSetting(name, fallback, archive, replicated, help, min, max)
+    return CreateClientConVar(name, GetDefaultSetting(name, fallback), archive or true, replicated or false, help, min, max)
+end
+
 DynamicColors = {
     TextColor = Color(255, 255, 255),
     TextColorJhud = Color(255, 255, 255),

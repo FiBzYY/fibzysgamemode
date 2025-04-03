@@ -47,7 +47,7 @@ function RTV:Init()
     RTV:TrueRandom(1, 5)
 
     timer.Create("RTV_MapCountdown", RTV.MapLength, 1, function() RTV:StartVote() end)
-    timer.Create("BroadcastRTVTimeLeft", BHOP.RTV.ChangeMapTime, 0, function() RTV:SendTimeLeft() end)
+    timer.Create("BroadcastRTVTimeLeft", 10, 0, function() RTV:SendTimeLeft() end)
 end
 
 function RTV:CreateTimer(name, delay, func)
@@ -61,6 +61,12 @@ function RTV:StartVote()
     RTV.Selections = {}
     BHDATA:Broadcast("Print", {"Server", Lang:Get("VoteStart")})
     SendPopupNotification(nil, "Notification", "Choose your maps!", BHOP.RTV.ChangeMapTime)
+
+    if BHOP.RTV.RandomMap then
+        won = RTV:TrueRandom(1, 5)
+    elseif max == 0 then
+        won = 6
+    end
 
     local RTVTempList = {}
     for map, voters in pairs(RTV.Nominations) do
@@ -94,7 +100,7 @@ function RTV:StartVote()
         for _, index in ipairs(indices) do
             if Added >= 5 then break end
             local data = MapList[index]
-            if (data[2] or 0) > 0 and not table.HasValue(RTV.Selections, data[1]) and data[1] ~= game.GetMap() then
+            if not table.HasValue(RTV.Selections, data[1]) and data[1] ~= game.GetMap() then
                 table.insert(RTV.Selections, data[1])
                 Added = Added + 1
             end
@@ -106,14 +112,14 @@ function RTV:StartVote()
         table.insert(RTVSend, RTV:GetMapData(map))
     end
 
-    UI:SendToClient(false, "MapVote", "started", RTVSend)
+    UI:SendToClient(false, "rtv", "GetList", RTVSend)
     RTV:CreateTimer("EndVote", 15, function() if not RTV.VIPTriggered then RTV:EndVote() end end)
 
     RTV:CreateTimer("InstantVote", 0.1, function()
         for map, voters in pairs(RTV.Nominations) do
             for id, data in ipairs(RTVSend) do
                 if data[1] == map then
-                    UI:SendToClient(voters, "MapVote", "instant", id)
+                    UI:SendToClient(voters, "rtv", "InstantVote", id)
                 end
             end
         end
@@ -128,76 +134,74 @@ function RTV:EndVote()
         return RTV:ResetVote("Yes", 2, false, "VoteCancelled")
     end
 
-    local max, won = 0, -1
+    local nMax, nWin = 0, -1
     for i = 1, 7 do
-        if RTV.MapVoteList[i] > max then
-            max = RTV.MapVoteList[i]
-            won = i
+        if RTV.MapVoteList[i] > nMax then
+            nMax = RTV.MapVoteList[i]
+            nWin = i
         end
     end
 
-    if BHOP.RTV.RandomMap then
-        won = RTV:TrueRandom(1, 5)
-    elseif max == 0 then
-        won = 6
+    if nMax == 0 then
+        nWin = 6
     end
 
-    if won <= 0 then
-        won = RTV:TrueRandom(1, 5)
-    elseif won == 6 then
+    if nWin <= 0 then
+        nWin = RTV:TrueRandom(1, 5)
+    elseif nWin == 6 then
         BHDATA:Broadcast("Print", { "Server", Lang:Get("VoteExtend", { RTV.DefaultExtend }) })
         return RTV:ResetVote(nil, 1, true, nil, true)
-    elseif won == 7 then
+    elseif nWin == 7 then
         RTV.VotePossible = false
 
         if MapList and #MapList > 0 then
             local nValue = RTV:TrueRandom(1, #MapList)
             local tabWin = MapList[nValue]
-            local map = tabWin[1]
+            local szMap = tabWin[1]
 
-            BHDATA:Broadcast("Print", { "Server", Lang:Get("VoteChange", {map}) })
-            RunConsoleCommand("changelevel", map)
+            BHDATA:Broadcast("Print", { "Server", Lang:Get("VoteChange", { szMap }) })
+            RunConsoleCommand("changelevel", szMap)
         else
-            won = RTV:TrueRandom(1, 5)
+            nWin = RTV:TrueRandom(1, 5)
         end
     end
 
-    local map = RTV.Selections[won]
-    if not map or not type(map) == "string" then return end
+    local szMap = RTV.Selections[nWin]
+    if not szMap or not type(szMap) == "string" then return end
 
-    BHDATA:Broadcast("Print", { "Server", Lang:Get("VoteChange", { map }) })
-    if not RTV:IsAvailable(map) then
-        BHDATA:Broadcast("Print", { "Server", Lang:Get("VoteMissing", { map }) })
+    BHDATA:Broadcast("Print", { "Server", Lang:Get("VoteChange", { szMap }) })
+    if not RTV:IsAvailable(szMap) then
+        BHDATA:Broadcast("Print", { "Server", Lang:Get("VoteMissing", { szMap }) })
     end
 
     BHDATA:Unload()
-    RTV:CreateTimer("ChangeLevel", BHOP.RTV.ChangeMapTime, function() RunConsoleCommand("changelevel", map) end)
+    RTV:CreateTimer("ChangeLevel", BHOP.RTV.ChangeMapTime, function() RunConsoleCommand("changelevel", szMap) end)
 end
 
-function RTV:ResetVote(no, multi, extend, msg, nominate)
-    multi = multi or 1
-    if no == "Yes" then RTV.CancelVote = nil end
+function RTV:ResetVote(szCancel, nMult, bExtend, szMsg, bNominate)
+    nMult = nMult or 1
+    if szCancel == "Yes" then RTV.CancelVote = nil end
 
     RTV.VotePossible = false
     RTV.Selections = {}
-    if nominate then RTV.Nominations = {} end
+    if bNominate then RTV.Nominations = {} end
 
     RTV.MapInit = CurTime()
-    RTV.MapEnd = RTV.MapInit + (multi * RTV.DefaultExtend * 60)
+    RTV.MapEnd = RTV.MapInit + (nMult * RTV.DefaultExtend * 60)
     RTV.MapVotes = 0
     RTV.MapVoteList = {0, 0, 0, 0, 0, 0, 0}
 
-    if extend then RTV.Extends = RTV.Extends + 1 end
+    if bExtend then RTV.Extends = RTV.Extends + 1 end
 
     for _, p in ipairs(player.GetHumans()) do
         p.Rocked = nil
-        if nominate then p.NominatedMap = nil end
+        if bNominate then p.NominatedMap = nil end
     end
 
-    timer.Create("RTV_MapCountdown", multi * RTV.DefaultExtend * 60, 1, function() RTV:StartVote() end)
+    timer.Create("RTV_MapCountdown", nMult * RTV.DefaultExtend * 60, 1, function() RTV:StartVote() end)
 
-    if msg then
-        BHDATA:Broadcast("Print", {"Server", Lang:Get(msg)})
+    if szMsg then
+        BHDATA:Broadcast("Print", {"Server", Lang:Get(szMsg)})
     end
 end
 
@@ -206,8 +210,8 @@ function RTV:CreateTimer(name, delay, func)
 end
 
 function RTV:Vote(ply)
-    if ply.RTVLimit and CurTime() - ply.RTVLimit < 12 then
-        return NETWORK:StartNetworkMessageTimer(ply, "Print", {"Server", Lang:Get("VoteLimit", {math.ceil(12 - (CurTime() - ply.RTVLimit))})})
+    if ply.RTVLimit and CurTime() - ply.RTVLimit < 60 then
+        return NETWORK:StartNetworkMessageTimer(ply, "Print", {"Server", Lang:Get("VoteLimit", {math.ceil(60 - (CurTime() - ply.RTVLimit))})})
     elseif ply.Rocked then
         return NETWORK:StartNetworkMessageTimer(ply, "Print", {"Server", Lang:Get("VoteAlready")})
     elseif RTV.VotePossible then
@@ -244,11 +248,11 @@ function RTV:Revoke(ply)
     end
 end
 
-function RTV:Nominate(ply, map)
+function RTV:Nominate(ply, szMap)
     local szIdentifier = "Nomination"
-    local varArgs = {ply:Name(), map}
+    local varArgs = {ply:Name(), szMap}
 
-    if ply.NominatedMap and ply.NominatedMap ~= map then
+    if ply.NominatedMap and ply.NominatedMap ~= szMap then
         if RTV.Nominations[ply.NominatedMap] then
             for id, p in ipairs(RTV.Nominations[ply.NominatedMap]) do
                 if p == ply then
@@ -258,49 +262,49 @@ function RTV:Nominate(ply, map)
                     end
 
                     szIdentifier = "NominationChange"
-                    varArgs = {ply:Name(), ply.NominatedMap, map}
+                    varArgs = {ply:Name(), ply.NominatedMap, szMap}
                     break
                 end
             end
         end
-    elseif ply.NominatedMap == map then
+    elseif ply.NominatedMap == szMap then
         return NETWORK:StartNetworkMessageTimer(ply, "Print", {"Server", Lang:Get("NominationAlready")})
     end
 
-    RTV.Nominations[map] = RTV.Nominations[map] or {}
-    if not table.HasValue(RTV.Nominations[map], ply) then
-        table.insert(RTV.Nominations[map], ply)
-        ply.NominatedMap = map
+    RTV.Nominations[szMap] = RTV.Nominations[szMap] or {}
+    if not table.HasValue(RTV.Nominations[szMap], ply) then
+        table.insert(RTV.Nominations[szMap], ply)
+        ply.NominatedMap = szMap
         BHDATA:Broadcast("Print", {"Server", Lang:Get(szIdentifier, varArgs)})
     else
         NETWORK:StartNetworkMessageTimer(ply, "Print", {"Server", Lang:Get("NominationAlready")})
     end
 end
 
-function RTV:ReceiveVote(ply, vote, old)
-    if not RTV.VotePossible or not vote then return end
-    local add = ply.IsVIP and ply.VIPLevel and ply.VIPLevel >= Admin.Level.Elevated and 1 or 1
+function RTV:ReceiveVote(ply, nVote, nOld)
+    if not RTV.VotePossible or not nVote then return end
+
+    local nAdd = ply.IsVIP and ply.VIPLevel and ply.VIPLevel >= Admin.Level.Elevated and 1 or 1
 
     if not nOld then
-        if vote < 1 or vote > 7 then return end
-        RTV.MapVoteList[vote] = RTV.MapVoteList[vote] + add
+        if nVote < 1 or nVote > 7 then return end
+        RTV.MapVoteList[nVote] = RTV.MapVoteList[nVote] + nAdd
     else
-        if vote < 1 or vote > 7 or old < 1 or old > 7 then return end
-        RTV.MapVoteList[vote] = RTV.MapVoteList[vote] + add
-        RTV.MapVoteList[old] = RTV.MapVoteList[old] - add
-        if RTV.MapVoteList[old] < 0 then RTV.MapVoteList[old] = 0 end
+        if nVote < 1 or nVote > 7 or nOld < 1 or nOld > 7 then return end
+        RTV.MapVoteList[nVote] = RTV.MapVoteList[nVote] + nAdd
+        RTV.MapVoteList[nOld] = RTV.MapVoteList[nOld] - nAdd
+        if RTV.MapVoteList[nOld] < 0 then RTV.MapVoteList[nOld] = 0 end
     end
 
     BHDATA:Broadcast("RTV", {"VoteList", RTV.MapVoteList})
-
-    UI:SendToClient(false, "MapVote", "update", RTV.MapVoteList)
-    NETWORK:GetNetworkMessage(ply, "MapVote", RTV.MapVoteList)
+    UI:SendToClient(false, "rtv", "VoteList", RTV.MapVoteList)
 end
 
-NETWORK:GetNetworkMessage("VoteCallback", function(ply, data)
-    local mapId = data[1]
-    local oldId = data[2]
-    RTV:ReceiveVote(ply, mapId, oldId)
+UI:AddListener("rtv", function(client, data)
+    local vote = data[1]
+    local old = data[2]
+
+    RTV:ReceiveVote(client, vote, old)
 end)
 
 function RTV:IsAvailable(szMap)
@@ -366,12 +370,12 @@ function RTV:VIPExtend(ply)
     end
 end
 
+-- load data saved
 function RTV:LoadData()
     MapList = {}
 
     MySQL:Start("SELECT map, multiplier, plays FROM timer_map", function(results)
         if not results or #results == 0 then
-            print("[RTV] No maps found in MySQL database!")
             return
         end
 
@@ -450,6 +454,7 @@ hook_Add("InitPostEntity", "InitializeRTV", function()
     RTV:Init()
 end)
 
+-- send the list for ui
 function RTV:SendMapList(client)
     local mapList = {}
     local seenMaps = {}

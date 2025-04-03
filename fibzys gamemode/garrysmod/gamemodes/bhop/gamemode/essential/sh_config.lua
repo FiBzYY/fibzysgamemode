@@ -50,9 +50,9 @@ if not CONFIG_LOADED then
     -- Gamemode version
     BHOP.Version = {
         Engine = "9594",
-        GM = "13.242",
-        ReleaseDate = "03/31/25",
-        LastUpdated = "03/31/25"
+        GM = "13.246",
+        ReleaseDate = "04/02/25",
+        LastUpdated = "04/02/25"
     }
 
     -- Main movement settings
@@ -208,5 +208,34 @@ if not CONFIG_LOADED then
             "models/player/css/ct_sas.mdl",
             "models/player/css/ct_urban.mdl",
         }
+    }
+
+    -- set default values here (for dev override)
+    BHOP.DefaultSettings = {
+        ["bhop_anticheats"] = 0,
+        ["bhop_gunsounds"] = 1,
+        ["bhop_hints"] = 5,
+        ["bhop_set_fov"] = 90,
+        ["bhop_wrsfx"] = 1,
+        ["bhop_wrsfx_volume"] = 0.4,
+        ["bhop_wrsfx_bad"] = 1,
+        ["bhop_chatsounds"] = 0,
+        ["bhop_zonesounds"] = 1,
+        ["bhop_showplayerslabel"] = 1,
+        ["bhop_autoshoot"] = 1,
+        ["bhop_joindetails"] = 1,
+        ["bhop_simpletextures"] = 0,
+        ["bhop_sourcesensitivity"] = 0,
+        ["bhop_absolutemousesens"] = 0,
+        ["bhop_showchatbox"] = 1,
+        ["bhop_nogun"] = 0,
+        ["bhop_nosway"] = 1,
+        ["bhop_showplayers"] = 1,
+        ["bhop_viewtransfrom"] = 0,
+        ["bhop_thirdperson"] = 0,
+        ["bhop_viewpunch"] = 1,
+        ["bhop_weaponpickup"] = 1,
+        ["bhop_viewinterp"] = 0,
+        ["bhop_water_toggle"] = 0,
     }
 end

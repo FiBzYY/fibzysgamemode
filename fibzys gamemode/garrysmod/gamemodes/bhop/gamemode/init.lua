@@ -141,9 +141,12 @@ CreateConVar("bhop_version", tostring(BHOP.Version.GM), {FCVAR_ARCHIVE, FCVAR_NO
 CreateConVar("bhop_prediction", "1", {FCVAR_ARCHIVE, FCVAR_NOTIFY, FCVAR_REPLICATED}, "Prediction enabled")
 CreateConVar("bhop_remove_dustmotes", "1", {FCVAR_ARCHIVE, FCVAR_NOTIFY, FCVAR_REPLICATED}, "Toggle remove func_dustmotes")
 
-
 cachedVersionMsg = nil
 notifySent = false
+
+local function VersionToNumber(str)
+    return tonumber(str:gsub("[^%d%.]", ""), 10) or 0
+end
 
 local function FetchVersionData()
     http.Fetch("http://77.93.141.26/latest_version.json?nocache=" .. os.time(),
@@ -154,10 +157,19 @@ local function FetchVersionData()
                 local currentVersion = BHOP.Version.GM or "unknown"
                 local date = BHOP.Version.LastUpdated or "unknown"
 
-                if currentVersion ~= latestVersion then
+                local latestNum = VersionToNumber(latestVersion)
+                local currentNum = VersionToNumber(currentVersion)
+
+                if currentNum < latestNum then
                     cachedVersionMsg = "Gamemode is outdated! Current: " .. currentVersion .. " | Latest: " .. latestVersion
                     if not notifySent then
                         UTIL:Notify(Color(255, 0, 255), "Gamemode", cachedVersionMsg)
+                        notifySent = true
+                    end
+                elseif currentNum > latestNum then
+                    cachedVersionMsg = "Gamemode is newer than latest! Current: " .. currentVersion .. " | Latest: " .. latestVersion
+                    if not notifySent then
+                        UTIL:Notify(Color(0, 200, 255), "Gamemode", cachedVersionMsg)
                         notifySent = true
                     end
                 else
