@@ -18,6 +18,7 @@ if not CONFIG_LOADED then
     -- Server name
     BHOP.ServerName = GetConVar("hostname"):GetString() -- "fibzy dev"
     BHOP.GameType = "bhop"
+    BHOP.GameName = "Bunny Hop"
 
     -- Enable live cycling host name
     BHOP.EnableCycle = false

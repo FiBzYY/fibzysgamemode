@@ -439,9 +439,9 @@ function TIMER:Null(varInput, varAlternate)
     return (varInput ~= "NULL") and varInput or varAlternate
 end
 
-function BHDATA:Send(ply, szAction, varArgs)
+function BHDATA:Send(ply, network, varArgs)
     net.Start(BHDATA.Protocol)
-    net.WriteString(szAction)
+    net.WriteString(network)
 
     if varArgs and type(varArgs) == "table" then
         net.WriteBit(true)
@@ -454,14 +454,14 @@ function BHDATA:Send(ply, szAction, varArgs)
 end
 
 -- Broadcast messages
-function BHDATA:Broadcast(szAction, varArgs, varExclude)
-    if type(szAction) ~= "string" then
+function BHDATA:Broadcast(network, varArgs, varExclude)
+    if type(network) ~= "string" then
         UTIL:Notify(Color(255, 0, 0), "Database", "[ERROR] Broadcast: Action must be a string. Got: ", type(szAction))
         return
     end
 
     net.Start(BHDATA.Protocol)
-    net.WriteString(szAction)
+    net.WriteString(network)
 
     if varArgs and type(varArgs) == "table" then
         net.WriteBit(true)
@@ -484,23 +484,23 @@ function BHDATA:Broadcast(szAction, varArgs, varExclude)
 end
 
 -- Calls for Admin Speed WRList
-local function coreHandle(ply, szAction, varArgs)
-    if szAction == "Admin" then
+local function coreHandle(ply, network, varArgs)
+    if network == "Admin" then
         Admin:HandleClient(ply, varArgs)
-	elseif szAction == "Speed" then
+	elseif network == "Speed" then
 		TIMER:AddSpeedData(ply, varArgs)
-	elseif szAction == "WRList" then
-		TIMER:SendWRList( ply, varArgs[ 1 ], varArgs[ 2 ], varArgs[ 3 ] )
+	elseif network == "WRList" then
+		TIMER:SendWRList(ply, varArgs[1], varArgs[2], varArgs[3])
     end
 end
 
 local function coreReceive(_, ply)
-    local szAction = net.ReadString()
-    local bTable = net.ReadBool()
-    local varArgs = bTable and net.ReadTable() or {}
+    local network = net.ReadString()
+    local table = net.ReadBool()
+    local varArgs = table and net.ReadTable() or {}
 
     if Iv(ply) and ply:IsPlayer() then
-        coreHandle(ply, szAction, varArgs)
+        coreHandle(ply, network, varArgs)
     end
 end
 net.Receive("TimerNetworkProtocol", coreReceive)

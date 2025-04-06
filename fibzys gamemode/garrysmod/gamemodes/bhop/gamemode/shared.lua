@@ -7,9 +7,9 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~]]
 
 -- Dont change
-GM.Name = "Bunny Hop"
-GM.DisplayName = "Bunny Hop"
-GM.Author = "fibzy"
+GM.Name = BHOP.GameName
+GM.DisplayName = BHOP.GameName
+GM.Author = BHOP.Author
 GM.Version = BHOP.Version.GM
 
 --util.PrecacheModel "models/player/lpswat.mdl"
@@ -50,8 +50,7 @@ end
 
 BHDATA = BHDATA or {} 
 
-local hook_Add = hook.Add
-local hook_Remove = hook.Remove
+local hook_Add, hook_Remove = hook.Add, hook.Remove
 
 -- Remove bad hooks
 hook_Add("MouthMoveAnimation", "Optimization", function() return nil end)
@@ -83,7 +82,6 @@ function GM:PostGamemodeLoaded()
 end
 
 -- Showhidden load up
-
 ShowHidden = ShowHidden or {}
 ShowHidden.Refresh = (ShowHidden.Refresh ~= nil)
 ShowHidden.luabsp = include("nonessential/showhidden/luabsp.lua")

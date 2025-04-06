@@ -8,7 +8,7 @@
 
 TIMER = TIMER or {}
 
--- Ranks list can be changed Rankname | Color | Points
+-- Ranks list can be changed Rankname | Color | Scalar
 TIMER.Ranks = {
     [-1] = {"Unranked", Color(255, 255, 255), 0},
     { "Rookie", Color(255, 228, 196), 0 },
@@ -191,6 +191,7 @@ end
 TIMER.TickInterval = engine.TickInterval()
 TIMER.TickCount = engine.TickCount()
 
+-- Mode types and styles
 function TIMER:GetMode(client)
 	return (client.mode and client.mode or 1)
 end

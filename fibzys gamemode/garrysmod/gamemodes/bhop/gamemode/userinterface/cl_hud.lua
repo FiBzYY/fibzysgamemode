@@ -16,9 +16,10 @@ local disablespec = CreateClientConVar("bhop_disablespec", 0, true, false, "Disa
 local jhudold = CreateClientConVar("bhop_jhudold", 0, true, false, "Display the old JHUD from 2020")
 local rainbowtext = CreateClientConVar("bhop_rainbowtext", 0, true, false, "Display the some rainbow colors")
 
+-- Crosshair
 CreateClientConVar("bhop_default_crosshair", "1", true, false, "Enable default crosshair")
 
--- Shortcuts
+-- Cache
 local lp, Iv, ct, ceil, fl, fo, mc = LocalPlayer, IsValid, CurTime, math.ceil, math.floor, string.format, math.Clamp
 local insert, round, hook_Add = table.insert, math.Round, hook.Add
 local DrawText, DrawBoxRound, DrawBoxEx = draw.SimpleText, draw.RoundedBox, draw.RoundedBoxEx
@@ -38,6 +39,7 @@ local function GetClientVelocity(ply)
     return speed2D
 end
 
+-- get the speed type 2
 local function GetSpeed(vel, twoD)
     if twoD then
         vel = Vector(vel.x, vel.y, 0)
@@ -209,13 +211,13 @@ function getColorForGain(gain)
 end
 
 local RECORDS = {}
-net.Receive("SendAllRecords", function()
-    RECORDS = net.ReadTable()
+NETWORK:GetNetworkMessage("SendAllRecords", function(_, data)
+    RECORDS = data[1]
 end)
 
 -- Get the current live placement
-local function GetCurrentPlacement(nCurrent, s)
-    local timetbl = RECORDS[s]
+local function GetCurrentPlacement(cur, style)
+    local timetbl = RECORDS[style]
 
     if not timetbl or next(timetbl) == nil then
         return 1
@@ -224,7 +226,7 @@ local function GetCurrentPlacement(nCurrent, s)
     local c = #timetbl + 1
 
     for k, v in ipairs(timetbl) do
-        if nCurrent < v then
+        if cur < v then
             c = k
             break
         end
@@ -913,7 +915,7 @@ HUD.Themes = {
         DrawText("00:00", "HUDSpecHud", screenWidth - 184, (screenHeight / 17) - 1, Color(241, 176, 13), text, TEXT_ALIGN_RIGHT)
     end
 
-    local velocity = math.floor(tonumber(data.velocity) or (IsValid(pl) and pl:GetVelocity():Length2D()) or 0)
+    local velocity = math.floor(tonumber(data.velocity) or (Iv(pl) and pl:GetVelocity():Length2D()) or 0)
     local time = "Time: "
     local pb = "Best: "
     local style = pl:GetNWInt("Style", 1)
@@ -1036,7 +1038,7 @@ HUD.Themes = {
         local strafes = data.strafes or 0
         local sync = pl.sync or 0
 
-        local velocity = math.floor(tonumber(data.velocity) or (IsValid(pl) and pl:GetVelocity():Length2D()) or 0)
+        local velocity = math.floor(tonumber(data.velocity) or (Iv(pl) and pl:GetVelocity():Length2D()) or 0)
         local personal = data.pb or 0
         local personalf = ConvertTimeWR(personal)
         local current = (data.current and data.current < 0) and 0 or data.current or 0
@@ -1236,6 +1238,7 @@ local function drawSpeed(speed, color)
     DrawText(math.Round(speed, 0), "JHUDMainBIG", screenWidth / 2, screenHeight / 2 - 100, color, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 end
 
+-- CVars for JHUD
 CreateConVar("bhop_jhud", "1", FCVAR_ARCHIVE, "Enable or disable the JHUD HUD element.")
 CreateConVar("bhop_jhud_gain", "1", FCVAR_ARCHIVE, "Enable or disable Gain display on JHUD.")
 CreateConVar("bhop_jhud_sync", "1", FCVAR_ARCHIVE, "Enable or disable Sync display on JHUD.")
@@ -1321,7 +1324,6 @@ local jhudstyle = CreateClientConVar("bhop_jhud_style", "jcs", true, false, "Cho
 -- JHUD Display
 local function JumpHudDisplay()
     if not jhudenable:GetBool() then return end
-
     if not SSJStats or not SSJStats.jumps then return end
 
     local scrW, scrH = screenWidth, screenHeight
@@ -1361,7 +1363,7 @@ local size, halfSize, textSpacing = 4, 2, 6
 local maxTrainValue = 200
 local sideHeight = 68
 
--- Cvars to change
+-- Cvars to change for trainer
 CreateClientConVar("bhop_trainer_verygood", "220 255 0", true, false)
 CreateClientConVar("bhop_trainer_good", "0 255 0", true, false)
 CreateClientConVar("bhop_trainer_ok", "0 200 0", true, false)
@@ -1442,7 +1444,7 @@ concommand.Add("bhop_hidespec_toggle", function(client, cmd, args)
 	spechud:SetBool(!spechud:GetBool())
 end)
 
--- Disable
+-- Disable defaukt huds
 local HUDItems = {
     CHudHealth = true,
     CHudBattery = true,
@@ -1463,6 +1465,7 @@ function GM:HUDShouldDraw(element)
     return true
 end
 
+-- Remove player labels
 function GM:HUDDrawTargetID()
     return false 
 end
@@ -1505,7 +1508,7 @@ end
 -- Spectator HUD
 function DrawSpecHUD()
     local lp = LocalPlayer()
-    if not IsValid(lp) or not disablespec:GetBool() then return end
+    if not Iv(lp) or not disablespec:GetBool() then return end
 
     local Obs = lp:GetObserverTarget()
     local SpecList = {}
@@ -1513,7 +1516,7 @@ function DrawSpecHUD()
 
     if lp:Alive() and lp:Team() ~= TEAM_SPECTATOR then
         for _, v in ipairs(player.GetAll()) do
-            if IsValid(v) and v:GetObserverTarget() == lp then
+            if Iv(v) and v:GetObserverTarget() == lp then
                 table.insert(SpecList, v)
             end
         end
@@ -1524,9 +1527,9 @@ function DrawSpecHUD()
             return
         end
 
-    elseif lp:Team() == TEAM_SPECTATOR and IsValid(Obs) then
+    elseif lp:Team() == TEAM_SPECTATOR and Iv(Obs) then
         for _, v in ipairs(player.GetAll()) do
-            if IsValid(v) and v:GetObserverTarget() == Obs then
+            if Iv(v) and v:GetObserverTarget() == Obs then
                 table.insert(SpecList, v)
             end
         end
@@ -1545,7 +1548,7 @@ function DrawSpecHUD()
     local seenNames = {}
 
     for _, spectator in ipairs(SpecList) do
-        if IsValid(spectator) and spectator:IsPlayer() then
+        if Iv(spectator) and spectator:IsPlayer() then
             local name = spectator:GetName()
             if not seenNames[name] then
                 seenNames[name] = true
@@ -1554,7 +1557,7 @@ function DrawSpecHUD()
         end
     end
 
-    if IsValid(Obs) and Obs:IsBot() then
+    if Iv(Obs) and Obs:IsBot() then
         for _, name in pairs(CSList or {}) do
             if not seenNames[name] then
                 seenNames[name] = true
@@ -1572,6 +1575,7 @@ end
 
 -- Draw the HUD
 local hudHideConVar = GetConVar("bhop_hud_hide")
+
 function GM:HUDPaintBackground()
     local pl = LocalPlayer()
     if not Iv(pl) then return end
@@ -1580,7 +1584,7 @@ function GM:HUDPaintBackground()
 
     if pl:Team() == TEAM_SPECTATOR then
         local ob = pl:GetObserverTarget()
-        if not IsValid(ob) then return end 
+        if not Iv(ob) then return end 
 
         local isReplay = ob:IsBot() and ob:IsPlayer()
 

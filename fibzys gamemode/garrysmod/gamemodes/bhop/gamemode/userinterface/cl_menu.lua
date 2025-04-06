@@ -801,6 +801,8 @@ function UI:CreateMenu()
             y = y + offset
             self:CreateToggle(container, y, "bhop_rampometer_percent", "Ramp-o-Meter Percent", "If you want to see the meter in percentage.")
             y = y + offset
+            self:CreateToggle(container, y, "bhop_center_speed", "Center Speed", "If you want to see the the center speed hud.")
+            y = y + offset
             self:CreateToggle(container, y, "bhop_bash2_screen", "Bash2 Screen Logs", "If you want to see Bash2 logs on screen.")
         end },
 

@@ -6,9 +6,8 @@
 		desc: 🚧 Manages zones (start, end, checkpoints) for Bunny Hop gamemode.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~]]
 
-local Iv = IsValid
-
-util.AddNetworkString("SendZoneData")
+-- Cache
+local sq, Iv, math_min, math_max = sql.Query, IsValid, math.min, math.max
 
 Zones = Zones or {
     Type = {
@@ -35,12 +34,7 @@ Zones = Zones or {
     Extra = {}
 }
 
--- Query
-local sq = sql.Query
-local math_min = math.min
-local math_max = math.max
-
--- Setup
+-- Setup all zone types
 function Zones:Setup()
     self.StartPoint = nil
     self.BonusPoint = nil
@@ -75,6 +69,7 @@ function Zones:Setup()
     end
 end
 
+-- Timer Zone
 function Zones:CreateZoneEntity(zone)
     local ent = ents.Create("ent_timer")
     if not Iv(ent) then return nil end
@@ -89,6 +84,7 @@ function Zones:CreateZoneEntity(zone)
     return ent
 end
 
+-- Soild Zone
 function Zones:CreateSolidBlockEnt(zone)
     local ent = ents.Create("ent_soild")
     if not Iv(ent) then return nil end
@@ -106,6 +102,7 @@ function Zones:CreateSolidBlockEnt(zone)
     return ent
 end
 
+-- Restart Zone
 function Zones:CreateTeleportRestart(zone)
     local ent = ents.Create("ent_restart")
     if not Iv(ent) then return nil end
@@ -123,6 +120,7 @@ function Zones:CreateTeleportRestart(zone)
     return ent
 end
 
+-- Fullbright Zone
 function Zones:CreateTriggerFullBright(zone)
     local ent = ents.Create("ent_fullbright")
     if not Iv(ent) then return nil end
@@ -140,6 +138,7 @@ function Zones:CreateTriggerFullBright(zone)
     return ent
 end
 
+-- Booster Zone
 function Zones:CreateBoosterZone(zone)
     local ent = ents.Create("ent_booster")
     if not Iv(ent) then return nil end
@@ -201,6 +200,7 @@ function Zones:ExtractData(nType)
     return {nID, nData}
 end
 
+-- Spawns in the center
 function Zones:GetCenterPoint(nType)
     for _, zone in pairs(self.Entities) do
         if IsValid(zone) and zone.zonetype == nType then
@@ -212,6 +212,7 @@ function Zones:GetCenterPoint(nType)
     return nil
 end
 
+-- Get the zone spawn
 function Zones:GetSpawnPoint(data)
     if not data or not data[1] or not data[3] then
         return Vector(0, 0, 0)
@@ -222,6 +223,7 @@ function Zones:GetSpawnPoint(data)
     return Vector(data[3][1], data[3][2], data[1][3] + groundOffset)
 end
 
+-- Inside the zone
 function Zones:IsInside(ply, nType)
     local pos = ply:GetPos()
     for _, zone in pairs(self.Entities) do
@@ -234,6 +236,7 @@ function Zones:IsInside(ply, nType)
     return false
 end
 
+-- Inside the zone
 function Zones:IsInArea(ply, vec, vec2)
     if not Iv(ply) then return false end
 
@@ -279,6 +282,7 @@ NETWORK:GetNetworkMessage("SendZoneData", function(_, data)
     Zones:FinishSet(ply)
 end)
 
+-- Marked as finished placement
 function Zones:FinishSet(ply, extra)
     local editor = self.Editor[ply]
 
@@ -310,6 +314,7 @@ function Zones:CheckSet(ply, finish, extra)
     return false
 end
 
+-- Cancel the zone placement
 function Zones:CancelSet(ply, force)
     self.Editor[ply] = nil
 
@@ -319,6 +324,7 @@ function Zones:CancelSet(ply, force)
     NETWORK:StartNetworkMessage(ply, "CancelZonePlacement")
 end
 
+-- Save new placed zones
 function Zones:SaveZoneToDatabase(editor)
     local Min = util.TypeToString(Vector(
         math.min(editor.Start[1], editor.End[1]),
@@ -367,12 +373,14 @@ function Zones:SaveZoneToDatabase(editor)
     end)
 end
 
+-- wipe bouns records
 function Zones:ClearBonusRecords()
     local bonusstyleID = TIMER:GetStyleID("bonus")
     sq("DELETE FROM timer_times WHERE map = '" .. game.GetMap() .. "' AND style = " .. bonusstyleID)
     TIMER:LoadRecords()
 end
 
+-- Find nearest zones
 function Zones:FindNearestSpawn(at, tab)
     if not at or not tab then return nil end
 
@@ -398,6 +406,7 @@ function Zones:FindNearestSpawn(at, tab)
     return order[1]
 end
 
+-- Bonus spawn angles
 function Zones:AssignBonusAngles()
     TIMER.BonusAngles = {}
 
@@ -414,6 +423,7 @@ function Zones:AssignBonusAngles()
     end
 end
 
+-- zone render fixes
 function Zones:PermanentFixes()
     for _, ent in pairs(ents.GetAll()) do
         if Iv(ent) then
@@ -422,6 +432,7 @@ function Zones:PermanentFixes()
     end
 end
 
+-- Setup map zones
 function Zones:SetupMap()
     if self.MapSetup then return end
     self.MapSetup = true
@@ -431,11 +442,13 @@ function Zones:SetupMap()
     self:SetupEntities()
 end
 
+-- remove bad hooks
 function Zones:RemoveHooks()
     hook.Remove("PreDrawHalos", "PropertiesHover")
     hook.Remove("PlayerPostThink", "ProcessFire")
 end
 
+-- Zone map fixes
 function Zones:SetupEntities()
     for _, ent in pairs(ents.FindByClass("func_lod")) do
         ent:SetRenderMode(RENDERMODE_TRANSALPHA)
@@ -455,6 +468,7 @@ function Zones:SetupEntities()
     self:SetupFuncButtons()
 end
 
+-- Door fixes
 function Zones:SetupFuncDoors()
     for _, ent in pairs(ents.FindByClass("func_door")) do
         if not ent.IsP then continue end
@@ -526,9 +540,9 @@ local function includeIfExists(filePath)
     end
 end
 
+-- Map fixes
 includeIfExists("bhop/gamemode/maps/wildcard.lua")
 includeIfExists("bhop/gamemode/maps/disable_sprites.lua")
--- includeIfExists("bhop/gamemode/maps/.lua")
 includeIfExists("bhop/gamemode/maps/" .. game.GetMap() .. ".lua")
 
 for identifier, func in pairs(__HOOK) do

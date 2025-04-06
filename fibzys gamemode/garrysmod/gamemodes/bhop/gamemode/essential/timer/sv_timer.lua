@@ -1356,8 +1356,6 @@ function TIMER:GetDate()
     return os.date("%Y-%m-%d %I:%M:%S %p", correctedTime)
 end
 
-util.AddNetworkString("SendAllRecords")
-
 local function SendAllRecords(ply)
     if not IsValid(ply) then return end
 
@@ -1376,9 +1374,7 @@ local function SendAllRecords(ply)
         end
     end
 
-    net.Start("SendAllRecords")
-    net.WriteTable(recordsTable)
-    net.Send(ply)
+    NETWORK:StartNetworkMessage(ply, "SendAllRecords", recordsTable)
 end
 
 hook.Add("PlayerInitialSpawn", "SendRecordsToClient", function(ply)
@@ -1387,6 +1383,6 @@ hook.Add("PlayerInitialSpawn", "SendRecordsToClient", function(ply)
     end)
 end)
 
-net.Receive("RequestAllRecords", function(len, ply)
+NETWORK:GetNetworkMessage("RequestAllRecords", function(ply)
     SendAllRecords(ply)
 end)
