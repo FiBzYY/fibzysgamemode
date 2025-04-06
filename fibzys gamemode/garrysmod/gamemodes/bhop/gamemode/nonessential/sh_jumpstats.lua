@@ -558,10 +558,16 @@ local function SSJ_PrintStats(ply, lastSpeed, jumpTimeDiff)
         local ssjType = wasDucking and "duck" or "normal"
         local jumpSpeed = floor(velocity)
 
-        SSJTOP[steamID] = SSJTOP[steamID] or { duck = 0, normal = 0 }
+        local steamID = ply:SteamID()
+        local steamID64 = ply:SteamID64()
+        local wasDucking = playerDuckStatus[steamID] or false
+        local ssjType = wasDucking and "duck" or "normal"
+        local jumpSpeed = floor(velocity)
 
-        if jumpSpeed > SSJTOP[steamID][ssjType] then
-            SSJTOP[steamID][ssjType] = jumpSpeed
+        SSJTOP[steamID64] = SSJTOP[steamID64] or { duck = 0, normal = 0 }
+
+        if jumpSpeed > SSJTOP[steamID64][ssjType] then
+            SSJTOP[steamID64][ssjType] = jumpSpeed
 
             if SERVER then
                 local ID = "SSJTop"

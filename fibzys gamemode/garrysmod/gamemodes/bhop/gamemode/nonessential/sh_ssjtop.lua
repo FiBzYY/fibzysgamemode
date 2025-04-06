@@ -64,6 +64,30 @@ if SERVER then
             end
         end)
     end)
+
+    -- Fetch top SSJ from database when player joins
+    hook.Add("PlayerInitialSpawn", "SSJTop_LoadFromDB", function(ply)
+        if not IsValid(ply) or not ply:IsPlayer() or ply:IsBot() then return end
+
+        local steamID = ply:SteamID()
+        local steamID64 = ply:SteamID64()
+
+        local query = string.format("SELECT * FROM ssjtop_records WHERE steamid = '%s'", steamID)
+        MySQL:Start(query, function(results)
+            if results and istable(results) then
+                 SSJTOP[steamID64] = SSJTOP[steamID64] or { duck = 0, normal = 0, name = ply:Nick() }
+                 SSJTOP[steamID64].name = ply:Nick()
+
+                for _, row in ipairs(results) do
+                    local ssjType = row.type
+                    local speed = tonumber(row.jumpspeed) or 0
+                    if SSJTOP[steamID64][ssjType] == nil or speed > SSJTOP[steamID64][ssjType] then
+                        SSJTOP[steamID64][ssjType] = speed
+                    end
+                end
+            end
+        end)
+    end)
 end
 
 -- Crouch Status Before Jump
