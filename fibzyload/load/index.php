@@ -6,7 +6,7 @@ $mapname = isset($_GET["m"]) ? htmlspecialchars($_GET["m"]) : "Unknown";
 
 // Your servers' data
 $_SERVERS = array(
-    "ThisServerIdentifier" => array('Bunny Hop', 'YOURIPHERE', YOURPORTHERE),
+    "ThisServerIdentifier" => array('Bunny Hop', '77.93.141.26', 25000),
     "AnotherServer" => array('Bunny Hop', 'IP ADDRESS', 27015),
 );
 
@@ -14,7 +14,7 @@ $_SERVERS = array(
 $gamedata = isset($_SERVERS[$requesttype]) ? $_SERVERS[$requesttype] : array("Unknown", "Unknown", "Unknown");
 
 // Your Steam API Key
-$apikey = "YOURAPIKEY";
+$apikey = "305502D0982FA29805221FECA497DECB";
 
 // Fetch player details from Steam API if a valid SteamID is provided
 if ($requestuser !== "Unknown") {
@@ -301,6 +301,9 @@ $steamid = ($requestuser !== "Unknown") ? convertSteamID($requestuser) : "Unknow
             'backgrounds/images/bg3.png',
             'backgrounds/images/bg4.png',
             'backgrounds/images/bg5.png',
+            'backgrounds/images/bg6.jpg',
+            'backgrounds/images/bg7.jpg',
+            'backgrounds/images/bg8.jpg',
         ];
 
         // Shuffle images to randomize the order
