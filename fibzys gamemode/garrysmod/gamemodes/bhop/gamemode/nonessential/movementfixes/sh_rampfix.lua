@@ -49,6 +49,8 @@ local function FindRampNormal(ply)
 end
 
 local function RampLossFix(ply, mv)
+    if not movement_surffix:GetBool() then return end 
+
     if not IsValid(ply) or not ply:Alive() then return end
     if ply:Team() == TEAM_SPECTATOR or ply:GetMoveType() == MOVETYPE_NOCLIP then return end
     if not ply.prevSpeed then InitializePlayerState(ply) end

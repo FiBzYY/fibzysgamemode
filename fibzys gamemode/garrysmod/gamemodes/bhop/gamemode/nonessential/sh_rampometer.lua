@@ -8,8 +8,6 @@
 ]]--
 
 if SERVER then
-    util.AddNetworkString("RampTestingSync")
-
     local bhopRampConVar = CreateConVar("bhop_addon_rampometer", "1", FCVAR_ARCHIVE + FCVAR_REPLICATED, "Enable or disable Ramp-O-Meter")
 
     local playerPrevPos = {}

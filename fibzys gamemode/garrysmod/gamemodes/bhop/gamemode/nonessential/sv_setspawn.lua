@@ -4,14 +4,14 @@
 
 local function isValidSpawnPoint(ply)
     if ply:Team() == TEAM_SPECTATOR then
-        NETWORK:StartNetworkMessageTimer(ply, "Print", {"Timer", "You have to be alive and playing to be able to use it"})
+        NETWORK:StartNetworkMessageTimer(ply, "Print", {"Timer", Lang:Get("SetSpawnAlive")})
         SendPopupNotification(ply, "Notification", "You have to be alive and playing to be able to use it", 2)
 
         return false
     end
 
     if not ply:IsOnGround() then
-        NETWORK:StartNetworkMessageTimer(ply, "Print", {"Timer", "You have to touch the ground to be able to use it"})
+        NETWORK:StartNetworkMessageTimer(ply, "Print", {"Timer", Lang:Get("SetSpawnGround")})
         SendPopupNotification(ply, "Notification", "You have to touch the ground to be able to use it", 2)
 
         return false
@@ -63,7 +63,7 @@ local function setSpawnPoint(ply)
 
     SaveSetSpawn()
 
-    NETWORK:StartNetworkMessageTimer(ply, "Print", {"Timer", "You have set a new spawn point!"})
+    NETWORK:StartNetworkMessageTimer(ply, "Print", {"Timer", Lang:Get("SetSpawn")})
     SendPopupNotification(ply, "Notification", "You have set a new spawn point!", 2)
 end
 
@@ -93,10 +93,10 @@ local function RemoveSpawnPoint(ply)
 
         SaveSetSpawn()
 
-        NETWORK:StartNetworkMessageTimer(ply, "Print", {"Timer", "Your spawn point has been removed!"})
+        NETWORK:StartNetworkMessageTimer(ply, "Print", {"Timer", Lang:Get("SetSpawnRemoved")} )
         SendPopupNotification(ply, "Notification", "Your spawn point has been removed!", 2)
     else
-        NETWORK:StartNetworkMessageTimer(ply, "Print", {"Timer", "You don't have a custom spawn point set!"})
+        NETWORK:StartNetworkMessageTimer(ply, "Print", {"Timer", Lang:Get("SetSpawnNone")} )
         SendPopupNotification(ply, "Notification", "No custom spawn found to remove!", 2)
     end
 end

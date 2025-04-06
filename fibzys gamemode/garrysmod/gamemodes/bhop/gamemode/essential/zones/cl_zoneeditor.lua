@@ -9,7 +9,7 @@ local previewPos = nil
 local zonePlacementEnabled = false
 local minm, maxm = math.min, math.max
 
-net.Receive("CancelZonePlacement", function()
+NETWORK:GetNetworkMessage("CancelZonePlacement", function(_, _)
     isPlacing = false
     isZoneFinalized = false
     startPoint = nil
@@ -164,13 +164,7 @@ hook.Add("Tick", "ZonePlace", function()
         isZoneFinalized = true
         endPoint = previewPos
 
-        net.Start("SendZoneData")
-        net.WriteTable({
-            Start = startPoint,
-            End = endPoint,
-            Type = AdminLoad.Editor.Type
-        })
-        net.SendToServer()
+        NETWORK:StartNetworkMessage(nil, "SendZoneData", LocalPlayer(), startPoint, endPoint, AdminLoad.Editor.Type)
 
         isPlacing = false
         isZoneFinalized = false

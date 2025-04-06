@@ -6,8 +6,6 @@
 ]]--
 
 if SERVER then
-    util.AddNetworkString("DrawEdgeHelper")
-
     local edgeHelperPlayers = {}
     local FILE_NAME = "edgehelper_state.txt"
 

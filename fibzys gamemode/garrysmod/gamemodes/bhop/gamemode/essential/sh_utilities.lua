@@ -2,7 +2,7 @@
 
 local normalmat = Material(BHOP.Zone.ZoneMaterial)
 
--- Zone drawing
+-- Zone drawing wireframe support, and flat zone support
 function UTIL:DrawZoneTypes(min, max, colour, normal, pos, thickness, flatzone)
     if not colour or not min or not max then return end
 
@@ -111,7 +111,7 @@ if CLIENT then
 	end)
 end
 
--- Colors
+-- Colors and prefix names
 UTIL.Colour = {
 	["Timer"] = Color(0, 132, 255),
 	["Timer Info"] = Color(0, 132, 255),
@@ -133,7 +133,7 @@ UTIL.Colour = {
 	["Red"] = Color(255, 0, 0)
 }
 
--- Messages
+-- Messages for client
 function UTIL:AddMessage(prefix, ...)
 	if not prefix then 
 		chat.AddText(color_white, ...)
@@ -144,6 +144,7 @@ function UTIL:AddMessage(prefix, ...)
 	chat.AddText(c, prefix, Color(200, 200, 200), " | ", color_white, ...)
 end
 
+-- Console messages
 function UTIL:AddConsoleMessage(prefix, ...)
 	if not prefix then 
 		MsgC(color_white, ...)
@@ -196,6 +197,7 @@ function UTIL:DrawBlurRect(x, y, w, h, rep, c)
 	end
 end
 
+-- Server side notify
 function UTIL:Notify(c, p, m)
     MsgC(c, p, color_white, " | ", m, "\n")
 end
@@ -247,6 +249,7 @@ function UTIL:CreateSetting(name, fallback, archive, replicated, help, min, max)
     return CreateClientConVar(name, GetDefaultSetting(name, fallback), archive or true, replicated or false, help, min, max)
 end
 
+-- Color changes
 DynamicColors = {
     TextColor = Color(255, 255, 255),
     TextColorJhud = Color(255, 255, 255),
@@ -297,32 +300,34 @@ hook.Add("Initialize", "AssignPlayerColors", function()
 end)
 
 if SERVER then
-    util.AddNetworkString("SendDynamicColor")
+    -- network message
+    NETWORK:GetNetworkMessage("SendDynamicColor", function(ply, data)
+        if not data or not data[1] then return end
 
-    hook.Add("PlayerInitialSpawn", "SetupDynamicColor", function(ply)
-        ply.DynamicColor = Color(255, 255, 255) 
+        local r = data[1]
+        local g = data[2]
+        local b = data[3]
+
+        ply.DynamicColor = Color(r, g, b)
     end)
 
-    net.Receive("SendDynamicColor", function(len, ply)
-        local r = net.ReadUInt(8)
-        local g = net.ReadUInt(8)
-        local b = net.ReadUInt(8)
-        ply.DynamicColor = Color(r, g, b)
+    hook.Add("PlayerInitialSpawn", "SetupDynamicColor", function(ply)
+        ply.DynamicColor = Color(255, 255, 255) -- Default color on join
     end)
 end
 
 -- Color Sender
 if CLIENT then
-    hook.Add("Initialize", "SendColorToServer", function()
+    hook.Add("InitPostEntity", "SendColorToServer", function()
         timer.Simple(1, function()
+            if not IsValid(LocalPlayer()) then return end
+
             GeneratePlayerColors(LocalPlayer())
 
             local col = DynamicColors.TextColor or Color(255, 255, 255)
-            net.Start("SendDynamicColor")
-            net.WriteUInt(col.r, 8)
-            net.WriteUInt(col.g, 8)
-            net.WriteUInt(col.b, 8)
-            net.SendToServer()
+
+            -- Send RGB as separate values
+            NETWORK:StartNetworkMessage(nil, "SendDynamicColor", col.r, col.g, col.b)
         end)
     end)
 end

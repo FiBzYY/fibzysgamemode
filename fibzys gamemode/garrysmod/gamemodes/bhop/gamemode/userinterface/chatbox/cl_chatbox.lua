@@ -1,4 +1,4 @@
-﻿CreateClientConVar("bhop_chatbox", "1", true, false)
+﻿CreateClientConVar("bhop_chatbox", "0", true, false)
 
 function InitChatbox()
     if GetConVar("bhop_chatbox"):GetInt() == 0 then

@@ -6,6 +6,8 @@
     Description: Configuration settings for Bunny Hop gamemode
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~]]--
 
+-- Edit sh_timer.lua if you want to change rank names or placement points for it
+
 if not CONFIG_LOADED then
     CONFIG_LOADED = true
     BHOP = BHOP or {}
@@ -20,11 +22,15 @@ if not CONFIG_LOADED then
     -- Enable live cycling host name
     BHOP.EnableCycle = false
 
+    -- Links
     BHOP.DicordLink = "https://discord.com/invite/mGh2KE9FzD"
-    BHOP.OwnerRank = "Demon"
-    BHOP.UniTag = "ᴵᴬᴳ" -- iag tag support
+    BHOP.TutLink = "https://www.youtube.com/watch?v=jTFRwzCl6Hc"
 
-    -- Cycle text
+    -- Tags
+    BHOP.OwnerRank = "Demon"
+    BHOP.UniTag = "ᴵᴬᴳ" -- IAG Tag support
+
+    -- Hostname Cycle text
     BHOP.Nametime = 10
     BHOP.ServerNames = {
         "Best server ever 10/10",
@@ -50,30 +56,46 @@ if not CONFIG_LOADED then
     -- Gamemode version
     BHOP.Version = {
         Engine = "9594",
-        GM = "13.246",
-        ReleaseDate = "04/03/25",
-        LastUpdated = "04/03/25"
+        GM = "13.25",
+        ReleaseDate = "04/05/25",
+        LastUpdated = "04/05/25"
     }
 
     -- Main movement settings
     BHOP.Move = {
-        BaseGainsMovement = true, -- CS:S Movement support?
+        BaseGainsMovement = true, -- WiP CS:S Movement support?
         GModGainsMovement = true,
 
         -- Cvar settings (most changeable via menu)
+
+        -- Maxspeed (Default is 250)
         MaxVel = 250,
+
+        -- Gravity
         Gravity = 800,
+
+        -- Air speeds cap (If air cap feels to limited increase its a bit)
         AirAccel = 100,
+
+        -- Stairs size
         StepSize = 18,
 
-        -- Speed gain
+        -- Speed gain (If gain speeds feels to limited increase its a bit)
         SpeedGain = 32.4,
+
+        -- Unreal gain
         SpeedGainUnreal = 49.2,
+
+        -- Zone speed cap
         SpeedCap = 4000,
 
         -- Jump Height
         JumpHeight = 290,
+
+        -- Stamina height
         JumpScroll = 268.4,
+
+        -- CS:S Jump height
         JumpHeightBase = 301.99337,
         
         -- Walk speed
@@ -84,7 +106,9 @@ if not CONFIG_LOADED then
         EyeView = 62.0,
         EyeDuck = 45.0,
         OffsetView = 64.0,
-        OffsetDuck = 47.0
+        OffsetDuck = 47.0,
+        EyeHeight = 12.0,
+        CrouchWalkSpeed = 150
     }
 
     BHOP.IsBanOn = BHOP.IsBanOn or true
@@ -107,10 +131,6 @@ if not CONFIG_LOADED then
         ["STEAM_0:0:53974417"] = {
             name = "justa",
             reason = "Trolls and trash talks gamemodes, follows cat!, causes drama"
-        },
-        ["STEAM_0:0:53053491"] = {
-            name = "sad",
-            reason = "Part of justa's crew, minor issues, brags about 'better' code"
         },
         ["STEAM_0:1:205142"] = {
             name = "vehnex",
@@ -135,16 +155,25 @@ if not CONFIG_LOADED then
         ["STEAM_0:0:87749794"] = false -- obvixus
     }
 
+    -- Replay FOV
     BHOP.ReplayFov = 90
+
+    -- Bot and Player model
+    BHOP.Models = {
+        Bot = "models/player/ct_gsg9.mdl",
+        Player = "models/player/ct_gsg9.mdl"
+    }
 
     -- Zone colors
     BHOP.Zone = {
+        -- Zone colours
         HelperColour = Color(255, 255, 0),
         PlacingColour = Color(255, 0, 0),
         StartColor = Color(255, 255, 255),
         EndColor = Color(0, 0, 255),
         BonusColor = Color(255, 165, 0),
 
+        -- Other
         ZoneMaterial = "sprites/jscfixtimer",
         ZoneHeight = 128,
         JumpZoneSpeedCap = 290 -- via changeable menu
@@ -158,14 +187,15 @@ if not CONFIG_LOADED then
         VoteFailColour = Color(255, 0, 0),
         ExtendColour = Color(0, 132, 255),
         AmountNeeded = 2/3, -- 66% of the active players need to vote for a map change
-        ChangeMapTime = 10, -- 10 Seconds after RTV Menu
-        RandomMap = false -- pick rng map on rtv
+        ChangeMapTime = 10, -- 10 Seconds after RTV Menu then change map
+        RandomMap = false -- Pick RNG map on rtv
     }
 
     BHOP.AFKSystem = {
-        afkMinutes = 999, -- Time in minutes untill kick
+        afkrtvMinutes = 25, -- Time in minutes for rtv marked afk
+        afkKickMinutes = 999, -- Time in minutes untill kicked for afk
         adminBypass = false, -- Set this to true for admin AFK bypass
-        adminNotify = false, -- Notify admin when someone is AFK
+        adminNotify = true, -- Notify admin when someone is AFK
     }
 
     BHOP.GhostBot = true -- Enables ghosting feel for replays
@@ -187,9 +217,16 @@ if not CONFIG_LOADED then
         "wrsfx/no_improvement.mp3"
     }
 
+    -- Spawning Amoo
+    BHOP.DefaultAmmo = {
+        ["pistol"] = 999,
+        ["smg1"] = 999,
+        ["buckshot"] = 999
+    }
+
     -- MISC WiP
     BHOP.HUD = {
-        HUDColors = {
+        HUDColors = { -- WiP
             SpeedColor = Color(0, 255, 0),
             TimerColor = Color(255, 255, 255),
             BackgroundColor = Color(0, 0, 0, 150)
@@ -212,6 +249,7 @@ if not CONFIG_LOADED then
 
     -- set default values here (for dev override)
     BHOP.DefaultSettings = {
+        -- Client settings
         ["bhop_anticheats"] = 0,
         ["bhop_gunsounds"] = 1,
         ["bhop_hints"] = 5,
@@ -237,5 +275,7 @@ if not CONFIG_LOADED then
         ["bhop_weaponpickup"] = 1,
         ["bhop_viewinterp"] = 0,
         ["bhop_water_toggle"] = 0,
+
+        -- SSJ Settings: TO DO
     }
 end

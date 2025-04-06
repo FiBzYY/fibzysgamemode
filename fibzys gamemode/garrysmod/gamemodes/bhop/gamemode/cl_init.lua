@@ -152,6 +152,7 @@ local hints = {
     { color_white, "You can edit the style of your HUD with ", timerColor, "!theme" },
     { color_white, "You can edit the delay between these hints with ", timerColor, "bhop_hints <delay>", color_white, " in your console. 0 will stop hints completely." },
     { color_white, "Report bugs or issues using !discord to stay updated with the community." },
+    { color_white, "Struggling to bunny hop? Type !tut to watch the video." },
     { color_white, "Struggling on the map? Check out easier styles with ", timerColor, "!styles." },
     { color_white, "Low FPS? Try the x64 beta version of Garry's Mod with ", timerColor, "gmod_mcore_test 1", color_white, " for better performance." },
     { color_white, "Support the server and get Lifetime VIP for $10! Use !donate for details (Custom model/name/chat/tag)." },
@@ -191,18 +192,17 @@ hook_Add("InitPostEntity", "AutoStartHintTimer", function()
     UpdateHintTimer()
 end)
 
-net.Receive("SendConnectionCount", function()
+NETWORK:GetNetworkMessage("ConnectionCount", function(_, data)
     if bhop_joindetails:GetBool() then
-        local nick = net.ReadString()
-        local connectionCount = net.ReadInt(32)
-        UTIL:AddMessage("Server", nick .. " has connected " .. connectionCount .. " times!")
+        local nick = data[1]
+        local count = data[2]
+        UTIL:AddMessage("Server", nick .. " has connected " .. count .. " times!")
     end
 end)
 
-net.Receive("SendVersionData", function()
+NETWORK:GetNetworkMessage("VersionData", function(_, data)
     if bhop_joindetails:GetBool() then
-      local msg = net.ReadString()
-      UTIL:AddMessage("Server", msg)
+        UTIL:AddMessage("Server", data[1])
     end
 end)
 
@@ -244,9 +244,14 @@ end
 cvars.AddChangeCallback("bhop_showchatbox", UpdateChatboxVisibility)
 hook.Add("PlayerInitialSpawn", "SetChatboxVisibility", UpdateChatboxVisibility)
 
--- Discord
-net.Receive("OpenDiscordLink", function()
+-- Discord popup
+NETWORK:GetNetworkMessage("OpenDiscord", function()
     gui.OpenURL(BHOP.DicordLink)
+end)
+
+-- Tutorial popup
+NETWORK:GetNetworkMessage("OpenTutorial", function()
+    gui.OpenURL(BHOP.TutLink)
 end)
 
 -- Interp switcher with easy toggling
@@ -357,11 +362,6 @@ concommand.Add("bhop_togglematrix", function(ply)
     cvar:SetBool(not cvar:GetBool())
 end)
 
--- Networked FoV Changer
-net.Receive("SyncFOV", function()
-    LocalPlayer():SetFOV(net.ReadInt(32), 0.2)
-end)
-
 -- Adjust FOV when switching weapons
 hook_Add("PlayerSwitchWeapon", "CustomFOVSwitchWeapon", function(ply)
     if IsValid(ply) and ply:IsPlayer() then
@@ -369,33 +369,18 @@ hook_Add("PlayerSwitchWeapon", "CustomFOVSwitchWeapon", function(ply)
     end
 end)
 
--- Sync FOV with the server
-local function SyncCustomFOVWithServer()
-    net.Start("SyncFOV")
-    net.WriteInt(GetConVar("bhop_set_fov"):GetInt(), 32)
-    net.SendToServer()
-end
-
--- Auto-sync on FOV change
-cvars.AddChangeCallback("bhop_set_fov", function()
-    SyncCustomFOVWithServer()
-end)
-
--- Sync FOV on player join
-hook_Add("InitPostEntity", "SendFOVStateOnJoin", SyncCustomFOVWithServer)
-
 -- Hide local player model
 hook_Add("ShouldDrawLocalPlayer", "HideLocalPlayerModel", function()
     return false
 end)
 
 -- Suppress join/leave chat messages
-hook_Add("ChatText", "SuppressMessages", function(_, _, _, szID)
-    return szID == "joinleave"
+hook_Add("ChatText", "SuppressMessages", function(_, _, _, id)
+    return id == "joinleave"
 end)
 
 -- Full chat control
-function GM:OnPlayerChat(ply, szText, bTeam, bDead)
+function GM:OnPlayerChat(ply, text, bTeam, bDead)
     local tab = {}
 
     if Iv(ply) and ply:IsPlayer() then
@@ -445,7 +430,7 @@ function GM:OnPlayerChat(ply, szText, bTeam, bDead)
 
     tab[#tab + 1] = color_white
     tab[#tab + 1] = ": "
-    tab[#tab + 1] = szText
+    tab[#tab + 1] = text
 
     chat.AddText(unpack(tab))
 
@@ -486,8 +471,8 @@ concommand.Add("bhop_showplayers_toggle", function()
     end
 end)
 
-net.Receive("bhop_set_showplayers", function()
-    local shouldShow = net.ReadBool()
+NETWORK:GetNetworkMessage("TogglePlayerVisibility", function(_, data)
+    local shouldShow = data[1]
     RunConsoleCommand("bhop_showplayers", shouldShow and "1" or "0")
 end)
 
@@ -517,20 +502,19 @@ cvars.AddChangeCallback("bhop_water_toggle", function(_, _, newValue)
     RunConsoleCommand("r_waterdrawreflection", value)
 end)
 
-net.Receive("bhop_set_water_toggle", function()
+NETWORK:GetNetworkMessage("ToggleWaterFX", function()
     local cvar = GetConVar("bhop_water_toggle")
     local current = cvar:GetInt()
     local new = current == 0 and 1 or 0
 
     RunConsoleCommand("bhop_water_toggle", tostring(new))
-
     RunConsoleCommand("r_waterdrawrefraction", new)
     RunConsoleCommand("r_waterdrawreflection", new)
 
     if new == 1 then
-        UTIL:AddMessage("Settings", "Enabled Water reflections/refractions.")
+        UTIL:AddMessage("Settings", "✅ Enabled Water reflections/refractions.")
     else
-        UTIL:AddMessage("Settings", "Disabled Water reflections/refractions.")
+        UTIL:AddMessage("Settings", "❌ Disabled Water reflections/refractions.")
     end
 end)
 
@@ -698,13 +682,15 @@ local textColor = Color(255, 255, 255, 255)
 local headerColor = Color(32, 32, 32, 255)
 local lineColor = Color(255, 255, 255, 255)
 
-net.Receive("LJStats", function()
+NETWORK:GetNetworkMessage("LJStats", function(_, data)
     timer.Remove("LJStatsHide")
-    jumptype = net.ReadString()
-    dist = net.ReadInt(16)
-    syncs = net.ReadTable()
-    speed = net.ReadTable()
-    sync = net.ReadInt(16) / 100
+
+    jumptype = data[1]
+    dist     = data[2]
+    syncs    = data[3]
+    speed    = data[4]
+    sync     = data[5] / 100
+
     drawLJ = true
 
     timer.Create("LJStatsHide", 5, 1, function()
@@ -741,15 +727,15 @@ hook.Add("HUDPaintBackground", "DrawStats", function()
 end)
 
 -- Client WR sounds
-net.Receive("WRSounds", function(len)
+NETWORK:GetNetworkMessage("WRSoundGlobal", function(_, data)
     if not sounds_enabled:GetBool() then return end
-    local soundPath = "wrsfx/" .. net.ReadString()
 
+    local soundPath = "wrsfx/" .. data[1]
     lp():EmitSound(soundPath, 75, 100, sounds_volume:GetFloat())
 end)
 
 -- Bad improvement
-net.Receive("BadImprovement", function()
+NETWORK:GetNetworkMessage("PlayBadWRRoast", function()
     if not sounds_enabledbad:GetBool() then return end
 
     if BHOP.ExcludeWRSounds and #BHOP.ExcludeWRSounds > 0 then
@@ -757,32 +743,6 @@ net.Receive("BadImprovement", function()
         lp():EmitSound(soundPath, 75, 100)
     end
 end)
-
---[[ -- Replay Trail
-local trailConfig = {
-    ["blue"] = CreateClientConVar("sl_trail_blue", "1", true, false, "Set trail color to blue when faster than trail speed.", 0, 1),
-    ["range"] = CreateClientConVar("sl_trail_range", "500", true, false, "Increase trail visibility range.", 0, 1),
-    ["ground"] = CreateClientConVar("sl_trail_ground", "0", true, false, "Show trails only when on the ground.", 0, 1),
-    ["vague"] = CreateClientConVar("sl_trail_vague", "0", true, false, "Make trails more transparent.", 0, 1),
-    ["label"] = CreateClientConVar("sl_trail_label", "0", true, false, "Hide trail labels.", 0, 1),
-    ["hud"] = CreateClientConVar("sl_trail_hud", "0", true, false, "Hide trail HUD.", 0, 1)
-}
-
-local function UpdateSettings()
-    for _, ent in ipairs(ents.FindByClass("game_point")) do
-        ent:LoadConfig()
-    end
-end
-
-for _, cvar in pairs(trailConfig) do
-    cvars.AddChangeCallback(cvar:GetName(), function()
-        UpdateSettings()
-    end)
-end
-
-function GetTrailConfig(name)
-    return trailConfig[name]:GetBool()
-end]]--
 
 -- Show Player labels
 local Markers = Markers or {}

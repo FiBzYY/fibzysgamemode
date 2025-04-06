@@ -59,11 +59,11 @@ local function ConvertTimeMS(ns)
 end
 
 -- Update networking
-net.Receive("Timer_Update", function()
-    local ply = LocalPlayer()
-    startTick = net.ReadInt(32)
-    endTick = net.ReadInt(32)
-    fractionalTicks = net.ReadInt(32)
+NETWORK:GetNetworkMessage("TimerUpdate", function(_, data)
+    ply = data[1]
+    startTick = data[2]
+    endTick = data[3]
+    fractionalTicks = data[4]
 
     if startTick > 0 and endTick == 0 then
         TIMER:ResetToCheckpoint(ply, startTick)
@@ -1036,7 +1036,7 @@ HUD.Themes = {
         local strafes = data.strafes or 0
         local sync = pl.sync or 0
 
-        local velocity = data.velocity or math.floor(GetClientVelocity(pl)) or 0
+        local velocity = math.floor(tonumber(data.velocity) or (IsValid(pl) and pl:GetVelocity():Length2D()) or 0)
         local personal = data.pb or 0
         local personalf = ConvertTimeWR(personal)
         local current = (data.current and data.current < 0) and 0 or data.current or 0
@@ -1064,7 +1064,11 @@ HUD.Themes = {
         insert(texts, "")
         insert(texts, "Speed: " .. velocity .. " u/s")
         insert(texts, "Style: " .. stylename)
-        insert(texts, "Jumps: " .. jumps .. " | " .. "Strafes: " .. (HUDData[pl].strafes or 0) .. " (" .. sync .. "%)")
+
+        if pl:Team() ~= TEAM_SPECTATOR and not pl:IsBot() then
+            local hud = HUDData[pl] or {}
+            insert(texts, "Jumps: " .. jumps .. " | Strafes: " .. (hud.strafes or 0) .. " (" .. sync .. "%)")
+        end
 
         surface.SetFont("sm_mod")
 

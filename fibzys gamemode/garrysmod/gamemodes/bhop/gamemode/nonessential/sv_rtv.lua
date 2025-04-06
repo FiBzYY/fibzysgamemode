@@ -13,20 +13,15 @@
 local MapList = MapList or {}
 local hook_Add = hook.Add
 
-util.AddNetworkString("SendRTVTimeLeft")
-
-local lastTimeLeft = -1
-
 function RTV:SendTimeLeft()
     if not RTV.MapEnd or not RTV.VotePossible then return end
 
-    local timeLeft = math.max(0, RTV.MapEnd - CurTime()) 
+    local timeLeft = math.max(0, RTV.MapEnd - CurTime())
 
-    if timeLeft ~= lastTimeLeft then
-        lastTimeLeft = timeLeft
-        net.Start("SendRTVTimeLeft")
-        net.WriteFloat(timeLeft)
-        net.Broadcast()
+    if timeLeft ~= self.LastTimeLeft then
+        self.LastTimeLeft = timeLeft
+
+        NETWORK:StartNetworkMessage(nil, "RTVTimeLeft", timeLeft)
     end
 end
 
@@ -134,74 +129,74 @@ function RTV:EndVote()
         return RTV:ResetVote("Yes", 2, false, "VoteCancelled")
     end
 
-    local nMax, nWin = 0, -1
+    local max, win = 0, -1
     for i = 1, 7 do
-        if RTV.MapVoteList[i] > nMax then
-            nMax = RTV.MapVoteList[i]
-            nWin = i
+        if RTV.MapVoteList[i] > max then
+            max = RTV.MapVoteList[i]
+            win = i
         end
     end
 
-    if nMax == 0 then
-        nWin = 6
+    if max == 0 then
+        win = 6
     end
 
-    if nWin <= 0 then
-        nWin = RTV:TrueRandom(1, 5)
-    elseif nWin == 6 then
+    if win <= 0 then
+        win = RTV:TrueRandom(1, 5)
+    elseif win == 6 then
         BHDATA:Broadcast("Print", { "Server", Lang:Get("VoteExtend", { RTV.DefaultExtend }) })
         return RTV:ResetVote(nil, 1, true, nil, true)
-    elseif nWin == 7 then
+    elseif win == 7 then
         RTV.VotePossible = false
 
         if MapList and #MapList > 0 then
-            local nValue = RTV:TrueRandom(1, #MapList)
-            local tabWin = MapList[nValue]
-            local szMap = tabWin[1]
+            local val = RTV:TrueRandom(1, #MapList)
+            local tabWin = MapList[val]
+            local map = tabWin[1]
 
-            BHDATA:Broadcast("Print", { "Server", Lang:Get("VoteChange", { szMap }) })
-            RunConsoleCommand("changelevel", szMap)
+            BHDATA:Broadcast("Print", { "Server", Lang:Get("VoteChange", { map }) })
+            RunConsoleCommand("changelevel", map)
         else
-            nWin = RTV:TrueRandom(1, 5)
+            win = RTV:TrueRandom(1, 5)
         end
     end
 
-    local szMap = RTV.Selections[nWin]
-    if not szMap or not type(szMap) == "string" then return end
+    local map = RTV.Selections[win]
+    if not map or not type(map) == "string" then return end
 
-    BHDATA:Broadcast("Print", { "Server", Lang:Get("VoteChange", { szMap }) })
-    if not RTV:IsAvailable(szMap) then
-        BHDATA:Broadcast("Print", { "Server", Lang:Get("VoteMissing", { szMap }) })
+    BHDATA:Broadcast("Print", { "Server", Lang:Get("VoteChange", { map }) })
+    if not RTV:IsAvailable(map) then
+        BHDATA:Broadcast("Print", { "Server", Lang:Get("VoteMissing", { map }) })
     end
 
     BHDATA:Unload()
-    RTV:CreateTimer("ChangeLevel", BHOP.RTV.ChangeMapTime, function() RunConsoleCommand("changelevel", szMap) end)
+    RTV:CreateTimer("ChangeLevel", BHOP.RTV.ChangeMapTime, function() RunConsoleCommand("changelevel", map) end)
 end
 
-function RTV:ResetVote(szCancel, nMult, bExtend, szMsg, bNominate)
-    nMult = nMult or 1
-    if szCancel == "Yes" then RTV.CancelVote = nil end
+function RTV:ResetVote(cancel, mult, extend, message, nominate)
+    mult = mult or 1
+    if cancel == "Yes" then RTV.CancelVote = nil end
 
     RTV.VotePossible = false
     RTV.Selections = {}
-    if bNominate then RTV.Nominations = {} end
+    if nominate then RTV.Nominations = {} end
 
     RTV.MapInit = CurTime()
-    RTV.MapEnd = RTV.MapInit + (nMult * RTV.DefaultExtend * 60)
+    RTV.MapEnd = RTV.MapInit + (mult * RTV.DefaultExtend * 60)
     RTV.MapVotes = 0
     RTV.MapVoteList = {0, 0, 0, 0, 0, 0, 0}
 
-    if bExtend then RTV.Extends = RTV.Extends + 1 end
+    if extend then RTV.Extends = RTV.Extends + 1 end
 
     for _, p in ipairs(player.GetHumans()) do
         p.Rocked = nil
-        if bNominate then p.NominatedMap = nil end
+        if nominate then p.NominatedMap = nil end
     end
 
-    timer.Create("RTV_MapCountdown", nMult * RTV.DefaultExtend * 60, 1, function() RTV:StartVote() end)
+    timer.Create("RTV_MapCountdown", mult * RTV.DefaultExtend * 60, 1, function() RTV:StartVote() end)
 
-    if szMsg then
-        BHDATA:Broadcast("Print", {"Server", Lang:Get(szMsg)})
+    if message then
+        BHDATA:Broadcast("Print", {"Server", Lang:Get(message)})
     end
 end
 
@@ -223,8 +218,8 @@ function RTV:Vote(ply)
 
     RTV.MapVotes = RTV.MapVotes + 1
     RTV.Required = math.max(math.ceil((#player.GetHumans() - Spectator:GetAFK()) * (BHOP.RTV.AmountNeeded)), 1)
-    local nVotes = RTV.Required - RTV.MapVotes
-    BHDATA:Broadcast("Print", {"Server", Lang:Get("VotePlayer", {ply:Name(), nVotes, nVotes == 1 and "vote" or "votes"})})
+    local voteds = RTV.Required - RTV.MapVotes
+    BHDATA:Broadcast("Print", {"Server", Lang:Get("VotePlayer", {ply:Name(), voteds, voteds == 1 and "vote" or "votes"})})
 
     if RTV.MapVotes >= RTV.Required and RTV.MapVotes > 0 then
         RTV:StartVote()
@@ -241,18 +236,18 @@ function RTV:Revoke(ply)
 
         RTV.MapVotes = RTV.MapVotes - 1
         RTV.Required = math.ceil((#player.GetHumans() - Spectator:GetAFK()) * (BHOP.RTV.AmountNeeded))
-        local nVotes = RTV.Required - RTV.MapVotes
-        BHDATA:Broadcast("Print", {"Server", Lang:Get("VoteRevoke", {ply:Name(), nVotes, nVotes == 1 and "vote" or "votes"})})
+        local voteds = RTV.Required - RTV.MapVotes
+        BHDATA:Broadcast("Print", {"Server", Lang:Get("VoteRevoke", {ply:Name(), voteds, voteds == 1 and "vote" or "votes"})})
     else
         NETWORK:StartNetworkMessageTimer(ply, "Print", {"Server", Lang:Get("RevokeFail")})
     end
 end
 
-function RTV:Nominate(ply, szMap)
+function RTV:Nominate(ply, map)
     local szIdentifier = "Nomination"
-    local varArgs = {ply:Name(), szMap}
+    local varArgs = {ply:Name(), map}
 
-    if ply.NominatedMap and ply.NominatedMap ~= szMap then
+    if ply.NominatedMap and ply.NominatedMap ~= map then
         if RTV.Nominations[ply.NominatedMap] then
             for id, p in ipairs(RTV.Nominations[ply.NominatedMap]) do
                 if p == ply then
@@ -262,38 +257,38 @@ function RTV:Nominate(ply, szMap)
                     end
 
                     szIdentifier = "NominationChange"
-                    varArgs = {ply:Name(), ply.NominatedMap, szMap}
+                    varArgs = {ply:Name(), ply.NominatedMap, map}
                     break
                 end
             end
         end
-    elseif ply.NominatedMap == szMap then
+    elseif ply.NominatedMap == map then
         return NETWORK:StartNetworkMessageTimer(ply, "Print", {"Server", Lang:Get("NominationAlready")})
     end
 
-    RTV.Nominations[szMap] = RTV.Nominations[szMap] or {}
-    if not table.HasValue(RTV.Nominations[szMap], ply) then
-        table.insert(RTV.Nominations[szMap], ply)
-        ply.NominatedMap = szMap
+    RTV.Nominations[map] = RTV.Nominations[map] or {}
+    if not table.HasValue(RTV.Nominations[map], ply) then
+        table.insert(RTV.Nominations[map], ply)
+        ply.NominatedMap = map
         BHDATA:Broadcast("Print", {"Server", Lang:Get(szIdentifier, varArgs)})
     else
         NETWORK:StartNetworkMessageTimer(ply, "Print", {"Server", Lang:Get("NominationAlready")})
     end
 end
 
-function RTV:ReceiveVote(ply, nVote, nOld)
-    if not RTV.VotePossible or not nVote then return end
+function RTV:ReceiveVote(ply, voted, old)
+    if not RTV.VotePossible or not voted then return end
 
     local nAdd = ply.IsVIP and ply.VIPLevel and ply.VIPLevel >= Admin.Level.Elevated and 1 or 1
 
-    if not nOld then
-        if nVote < 1 or nVote > 7 then return end
-        RTV.MapVoteList[nVote] = RTV.MapVoteList[nVote] + nAdd
+    if not old then
+        if voted < 1 or voted > 7 then return end
+        RTV.MapVoteList[voted] = RTV.MapVoteList[voted] + nAdd
     else
-        if nVote < 1 or nVote > 7 or nOld < 1 or nOld > 7 then return end
-        RTV.MapVoteList[nVote] = RTV.MapVoteList[nVote] + nAdd
-        RTV.MapVoteList[nOld] = RTV.MapVoteList[nOld] - nAdd
-        if RTV.MapVoteList[nOld] < 0 then RTV.MapVoteList[nOld] = 0 end
+        if voted < 1 or voted > 7 or old < 1 or old > 7 then return end
+        RTV.MapVoteList[voted] = RTV.MapVoteList[voted] + nAdd
+        RTV.MapVoteList[old] = RTV.MapVoteList[old] - nAdd
+        if RTV.MapVoteList[old] < 0 then RTV.MapVoteList[old] = 0 end
     end
 
     BHDATA:Broadcast("RTV", {"VoteList", RTV.MapVoteList})
@@ -307,8 +302,8 @@ UI:AddListener("rtv", function(client, data)
     RTV:ReceiveVote(client, vote, old)
 end)
 
-function RTV:IsAvailable(szMap)
-    return file.Exists("maps/" .. szMap .. ".bsp", "GAME")
+function RTV:IsAvailable(map)
+    return file.Exists("maps/" .. map .. ".bsp", "GAME")
 end
 
 function RTV:Who(ply)
@@ -349,8 +344,8 @@ end
 
 function RTV:Check(ply)
     RTV.Required = math.ceil((#player.GetHumans() - Spectator:GetAFK()) * (BHOP.RTV.AmountNeeded))
-    local nVotes = RTV.Required - RTV.MapVotes
-    NETWORK:StartNetworkMessageTimer(ply, "Print", {"Server", Lang:Get("VoteCheck", {nVotes, nVotes == 1 and "vote" or "votes"})})
+    local voteds = RTV.Required - RTV.MapVotes
+    NETWORK:StartNetworkMessageTimer(ply, "Print", {"Server", Lang:Get("VoteCheck", {voteds, voteds == 1 and "vote" or "votes"})})
 end
 
 function RTV:VIPExtend(ply)

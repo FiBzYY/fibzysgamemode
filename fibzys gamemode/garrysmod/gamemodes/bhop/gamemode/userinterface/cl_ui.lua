@@ -1646,16 +1646,10 @@ local function CreateSSJTopMenu(data)
 end
 
 -- SSJTop Data
-local function RequestSSJTop()
-    net.Start("SSJTOP_SendData")
-    net.SendToServer()
-end
-
-net.Receive("SSJTOP_SendData", function()
-    local ssjData = net.ReadTable()
+NETWORK:GetNetworkMessage("SSJTopData", function(_, data)
+    local ssjData = data[1]
     CreateSSJTopMenu(ssjData)
 end)
-
 concommand.Add("ssjtop_menu", RequestSSJTop)
 
 local function ColorToText(col)
@@ -1784,7 +1778,7 @@ function OpenBhopJHUDMenu()
 end
 concommand.Add("bhop_jhudmenu", OpenBhopJHUDMenu)
 
-net.Receive("JHUD_SendData", function()
+NETWORK:GetNetworkMessage("OpenJHUDMenu", function()
     RunConsoleCommand("bhop_jhudmenu")
 end)
 
@@ -1905,6 +1899,6 @@ function OpenBhopTrainerMenu()
 end
 concommand.Add("bhop_strafetrainermenu", OpenBhopTrainerMenu)
 
-net.Receive("TRAINER_SendData", function()
+NETWORK:GetNetworkMessage("OpenStrafeTrainerMenu", function()
     RunConsoleCommand("bhop_strafetrainermenu")
 end)

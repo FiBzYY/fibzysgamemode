@@ -14,13 +14,6 @@ end
 -- Cache
 local lp, Iv, ct, hook_Add, string_sub, math_floor = LocalPlayer, IsValid, CurTime, hook.Add, string.sub, math.floor
 
--- Network
-util.AddNetworkString("SyncPlayerData")
-util.AddNetworkString("SyncFOV")
-util.AddNetworkString("FOVStateChanged")
-util.AddNetworkString("UpdatePointsSum")
-util.AddNetworkString("SendConnectionCount")
-
 PlayerJumps = PlayerJumps or {}
 playerTimescales = playerTimescales or {}
 
@@ -42,9 +35,6 @@ function IncrementJumpCounter(ply)
     NETWORK:StartNetworkMessageTimer(observers, "JumpUpdate", {ply, PlayerJumps[ply]})
 end
 
-local botmodel = "models/player/ct_gsg9.mdl"
-local playermodel = "models/player/ct_gsg9.mdl"
-
 function TIMER:Spawn(ply)
     if not Iv(ply) then return end
     ply:SetHull(Vector(-16, -16, 0), Vector(16, 16, BHOP.Move.EyeView))
@@ -53,7 +43,7 @@ function TIMER:Spawn(ply)
     ply:SetViewOffsetDucked(Vector(0, 0, BHOP.Move.OffsetDuck))
 
     if ply:IsBot() then
-        ply:SetModel(botmodel)
+        ply:SetModel(BHOP.Models.Bot)
         ply:DrawShadow(false)
         ply:SetMoveType(MOVETYPE_NONE)
         ply:SetFOV(100, 0)
@@ -70,11 +60,11 @@ function TIMER:Spawn(ply)
         return
     end
 
-    ply:SetModel(playermodel)
+    ply:SetModel(BHOP.Models.Player)
     ply:SetTeam(1)
     ply:DrawShadow(false)
     ply:SetJumpPower(jumppower:GetFloat())
-    ply:SetStepSize(18)
+    ply:SetStepSize(stairsize:GetFloat())
     ply:SetWalkSpeed(walkspeed:GetFloat())
     ply:SetNoCollideWithTeammates(true)
     ply:SetAvoidPlayers(false)
@@ -198,21 +188,19 @@ function TIMER:Load(ply)
     TIMER:UpdateWRs(ply)
     UTIL:GetPlayerCountryByIP(ply)
 
+    -- Update and broadcast connection count
     local connectionCount = ply:GetPData("connectionv2", 0)
     connectionCount = connectionCount + 1
     ply:SetPData("connectionv2", connectionCount)
 
-    net.Start("SendConnectionCount")
-    net.WriteString(ply:Nick())
-    net.WriteInt(connectionCount, 32)
-    net.Broadcast()
+    -- Broadcast the message
+    NETWORK:StartNetworkMessage(nil, "ConnectionCount", ply:Nick(), connectionCount)
 
+    -- Server sends version info
     timer.Simple(1, function()
         if not IsValid(ply) or not cachedVersionMsg then return end
 
-        net.Start("SendVersionData")
-        net.WriteString(cachedVersionMsg)
-        net.Send(ply)
+        NETWORK:StartNetworkMessage(ply, "VersionData", cachedVersionMsg)
     end)
 
     net.Start("SendVersionDataMenu")
@@ -399,9 +387,7 @@ function TIMER:LoadRank(ply, update)
 
         ply.Sum = Sum
 
-        net.Start("UpdatePointsSum")
-        net.WriteInt(Sum, 32)
-        net.Send(ply)
+        NETWORK:StartNetworkMessage(ply, "UpdatePointsSum", Sum)
 
         if not update then
             NETWORK:StartNetworkMessageTimer(ply, "Timer", {"Ranks", Player.NormalScalar, Player.AngledScalar})

@@ -1,5 +1,4 @@
 ﻿local lp, Iv, DrawText, Text, hook_Add = LocalPlayer, IsValid, draw.SimpleText, draw.DrawText, hook.Add
-logs = logs or {}
 
 -- Menu colors
 colors = {
@@ -915,10 +914,17 @@ local RankNames = {
 }
 
 local rankColors = {
-    ["Developer"] = Color(255, 0, 255),
-    ["Admin"] = Color(255, 0, 0),
-    ["Moderator"] = Color(0, 255, 0),
-    ["Player"] = Color(255, 255, 255),
+    ["Player"]      = Color(255, 255, 255), -- white
+    ["Base"]        = Color(200, 200, 200), -- light gray
+    ["Elevated"]    = Color(100, 200, 255), -- light blue
+    ["Moderator"]   = Color(0, 200, 100),   -- green
+    ["Admin"]       = Color(255, 50, 50),   -- red
+    ["Zoner"]       = Color(255, 200, 0),   -- gold
+    ["Super Admin"] = Color(255, 100, 255), -- purple-pink
+    ["Developer"]   = Color(128, 0, 255),   -- deep purple
+    ["Manager"]     = Color(0, 255, 255),   -- cyan
+    ["Founder"]     = Color(255, 0, 127),   -- hot pink / rose
+    ["Owner"]       = Color(255, 215, 0),   -- royal gold
 }
 
 function UI:UpdatePlayerList(parent)
@@ -981,44 +987,69 @@ function UI:UpdatePlayerList(parent)
             surface.DrawLine(0, h - 1, w, h - 1)
         end
 
-        -- playerPanel clickable
+        -- clickable
         playerPanel:SetCursor("hand")
         playerPanel.OnMousePressed = function()
             local frame = vgui.Create("DFrame")
-            frame:SetTitle("Set Rank for " .. ply:Nick())
+            frame:SetTitle("")
             frame:SetSize(300, 140)
             frame:Center()
             frame:MakePopup()
+            frame:ShowCloseButton(false)
+
+            frame.Paint = function(self, w, h)
+                surface.SetDrawColor(32, 32, 32)
+                surface.DrawRect(0, 0, w, h)
+
+                draw.SimpleText("Set Rank for " .. ply:Nick(), "ui.mainmenu.button", 15, 10, Color(255, 255, 255), TEXT_ALIGN_LEFT)
+            end
 
             local textEntry = vgui.Create("DTextEntry", frame)
             textEntry:SetPos(20, 40)
             textEntry:SetSize(260, 30)
-            textEntry:SetText("Enter rank name...")
+            textEntry:SetText("")
+            textEntry:SetFont("ui.mainmenu.button")
+
+            textEntry.Paint = function(self, w, h)
+                surface.SetDrawColor(42, 42, 42)
+                surface.DrawRect(0, 0, w, h)
+
+                self:DrawTextEntryText(Color(255, 255, 255), Color(100, 100, 255), Color(255, 255, 255))
+            end
 
             local confirmBtn = vgui.Create("DButton", frame)
             confirmBtn:SetPos(20, 80)
             confirmBtn:SetSize(260, 30)
-            confirmBtn:SetText("Set Rank")
+            confirmBtn:SetText("")
+            confirmBtn:SetFont("ui.mainmenu.button")
+
+            confirmBtn.Paint = function(self, w, h)
+                local hover = self:IsHovered()
+                surface.SetDrawColor(hover and Color(60, 60, 60) or Color(45, 45, 45))
+                surface.DrawRect(0, 0, w, h)
+
+                draw.SimpleText("Set Rank", "ui.mainmenu.button", w / 2, h / 2, Color(255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            end
 
             confirmBtn.DoClick = function()
                 local newRank = textEntry:GetValue()
-                print("Set " .. ply:Nick() .. " to rank: " .. newRank)
+                if newRank == "" then return end
 
+                NETWORK:StartNetworkMessage(nil, "AdminSetRank", ply:SteamID64(), newRank)
                 frame:Close()
             end
         end
     end
 end
 
-net.Receive("SendAdminLogs", function()
-    local count = net.ReadUInt(16)
+NETWORK:GetNetworkMessage("SendAdminLogs", function(_, data)
     local logs = {}
 
-    for i = 1, count do
-        local date = net.ReadString()
-        local admin = net.ReadString()
-        local steam = net.ReadString()
-        local action = net.ReadString()
+    for _, row in ipairs(data[1]) do
+        local date = row.date or "Unknown"
+        local admin = row.adminname or "Unknown"
+        local steam = row.adminsteam or "Unknown"
+        local action = row.data or "No data"
 
         local logText = "[" .. date .. "] " .. admin .. " (" .. steam .. "): " .. action
         table.insert(logs, logText)
@@ -1047,6 +1078,8 @@ function UI:UpdateServerLogs(parent, logs)
         surface.SetDrawColor(30, 30, 30, 255)
         surface.DrawRect(0, 0, w, h)
     end
+
+    UI:MenuScrollbar(scrollPanel:GetVBar())
 
     if logs and #logs > 0 then
         for _, log in ipairs(logs) do
@@ -1130,7 +1163,14 @@ function UI:CreateInputBoxSettings(parent, y, command, defaultVal, labelText, in
     inputBox:SetNumeric(true)
 
     local convarVal = ConVarExists(command) and GetConVar(command):GetFloat() or defaultVal
-    inputBox:SetText(string.format("%.2f", convarVal))
+
+    if command == "bhop_settings_cap" then
+        inputBox:SetText(math.Round(convarVal * 5))
+    elseif command == "bhop_settings_mv" then
+        inputBox:SetText(string.format("%.1f", convarVal + 0.4))
+    else
+        inputBox:SetText(math.Round(convarVal))
+    end
 
     inputBox:SetFont("ui.mainmenu.button")
 
@@ -1141,12 +1181,11 @@ function UI:CreateInputBoxSettings(parent, y, command, defaultVal, labelText, in
     end
 
     if command == "bhop_admin_mapmultiplier" then
-        net.Start("RequestMapMultiplier")
-        net.SendToServer()
+        NETWORK:StartNetworkMessage(nil, "RequestMapMultiplier")
     end
 
-    net.Receive("ReceiveMapMultiplier", function()
-        local actualMultiplier = net.ReadFloat()
+    NETWORK:GetNetworkMessage("ReceiveMapMultiplier", function(_, data)
+        local actualMultiplier = data[1]
         inputBox:SetText(tostring(actualMultiplier))
     end)
 
@@ -1164,14 +1203,9 @@ function UI:CreateInputBoxSettings(parent, y, command, defaultVal, labelText, in
         self:SetText(tostring(newValue))
 
         if command == "bhop_admin_mapmultiplier" then
-            net.Start("AdminChangeMapMultiplier")
-            net.WriteFloat(newValue)
-            net.SendToServer()
+            NETWORK:StartNetworkMessage(nil, "AdminChangeMapMultiplier", newValue)
         else
-            net.Start("AdminChangeMovementSetting")
-            net.WriteString(command)
-            net.WriteFloat(newValue)
-            net.SendToServer()
+            NETWORK:StartNetworkMessage(nil, "AdminChangeMovementSetting", command, newValue)
         end
     end
 
@@ -1218,10 +1252,7 @@ function UI:UpdateAdminSettings(parent)
     end
 
     CreateSettingRow("Normal Start", "Set Start", self.PlayerListPanel, function()
-        net.Start("AdminHandleRequest")
-        net.WriteInt(1, 8)
-        net.WriteInt(0, 8)
-        net.SendToServer()
+        NETWORK:StartNetworkMessage(nil, "AdminHandleRequest", 1, 0)
 
         if IsValid(Frame) then
             Frame:SetVisible(false)
@@ -1231,10 +1262,7 @@ function UI:UpdateAdminSettings(parent)
     end)
 
     CreateSettingRow("Normal End", "Set End", self.PlayerListPanel, function()
-        net.Start("AdminHandleRequest")
-        net.WriteInt(1, 8)  
-        net.WriteInt(1, 8)
-        net.SendToServer()
+        NETWORK:StartNetworkMessage(nil, "AdminHandleRequest", 1, 1)
 
         if IsValid(Frame) then
             Frame:SetVisible(false)
@@ -1244,10 +1272,7 @@ function UI:UpdateAdminSettings(parent)
     end)
 
     CreateSettingRow("Bonus Start", "Set Start", self.PlayerListPanel, function()
-        net.Start("AdminHandleRequest")
-        net.WriteInt(1, 8)  
-        net.WriteInt(2, 8)
-        net.SendToServer()
+        NETWORK:StartNetworkMessage(nil, "AdminHandleRequest", 1, 2)
 
         if IsValid(Frame) then
             Frame:SetVisible(false)
@@ -1257,10 +1282,7 @@ function UI:UpdateAdminSettings(parent)
     end)
 
     CreateSettingRow("Bonus End", "Set End", self.PlayerListPanel, function()
-        net.Start("AdminHandleRequest")
-        net.WriteInt(1, 8)  
-        net.WriteInt(3, 8)
-        net.SendToServer()
+        NETWORK:StartNetworkMessage(nil, "AdminHandleRequest", 1, 3)
 
         if IsValid(Frame) then
             Frame:SetVisible(false)
@@ -1274,55 +1296,71 @@ function UI:UpdateAdminSettings(parent)
     end)
 end
 
--- Dev
 function UI:OpenChangeMapUI()
     local frame = vgui.Create("DFrame")
-    frame:SetTitle("Change Map")
+    frame:SetTitle("")
     frame:SetSize(300, 150)
     frame:Center()
     frame:MakePopup()
+    frame:ShowCloseButton(false)
 
-    local label = vgui.Create("DLabel", frame)
-    label:SetText("Map Name:")
-    label:SetFont("ui.mainmenu.button")
-    label:Dock(TOP)
-    label:SetHeight(30)
-    label:DockMargin(10, 10, 10, 0)
-    label:SetTextColor(colors.text)
+    frame.Paint = function(self, w, h)
+        surface.SetDrawColor(32, 32, 32)
+        surface.DrawRect(0, 0, w, h)
 
-    local mapInput = vgui.Create("DTextEntry", frame)
-    mapInput:Dock(TOP)
-    mapInput:SetHeight(30)
-    mapInput:DockMargin(10, 0, 10, 0)
-
-    local buttonPanel = vgui.Create("DPanel", frame)
-    buttonPanel:Dock(BOTTOM)
-    buttonPanel:SetHeight(40)
-    buttonPanel:DockMargin(10, 10, 10, 0)
-    buttonPanel.Paint = function(self, w, h)
-        surface.SetDrawColor(0, 0, 0, 0)
+        draw.SimpleText("Change Map", "ui.mainmenu.button", 15, 10, Color(255, 255, 255), TEXT_ALIGN_LEFT)
     end
 
-    local enterButton = vgui.Create("DButton", buttonPanel)
-    enterButton:SetText("Enter")
-    enterButton:Dock(LEFT)
-    enterButton:SetWidth(100)
+    local mapInput = vgui.Create("DTextEntry", frame)
+    mapInput:SetPos(20, 40)
+    mapInput:SetSize(260, 30)
+    mapInput:SetText("")
+    mapInput:SetFont("ui.mainmenu.button")
+
+    mapInput.Paint = function(self, w, h)
+        surface.SetDrawColor(42, 42, 42)
+        surface.DrawRect(0, 0, w, h)
+        self:DrawTextEntryText(Color(255, 255, 255), Color(100, 100, 255), Color(255, 255, 255))
+    end
+
+    -- Enter Button
+    local enterButton = vgui.Create("DButton", frame)
+    enterButton:SetPos(20, 85)
+    enterButton:SetSize(120, 30)
+    enterButton:SetText("")
+    enterButton:SetFont("ui.mainmenu.button")
+
+    enterButton.Paint = function(self, w, h)
+        local hover = self:IsHovered()
+        surface.SetDrawColor(hover and Color(60, 60, 60) or Color(45, 45, 45))
+        surface.DrawRect(0, 0, w, h)
+
+        draw.SimpleText("Enter", "ui.mainmenu.button", w / 2, h / 2, Color(255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+    end
+
     enterButton.DoClick = function()
         local mapName = mapInput:GetValue()
         if mapName ~= "" then
-            net.Start("AdminChangeMap")
-            net.WriteString(mapName)
-            net.SendToServer()
+            NETWORK:StartNetworkMessage(nil, "AdminChangeMap", mapName)
             frame:Close()
-        else
-            print("ERROR")
         end
     end
 
-    local closeButton = vgui.Create("DButton", buttonPanel)
-    closeButton:SetText("Close")
-    closeButton:Dock(RIGHT)
-    closeButton:SetWidth(100)
+    -- Close Button
+    local closeButton = vgui.Create("DButton", frame)
+    closeButton:SetPos(160, 85)
+    closeButton:SetSize(120, 30)
+    closeButton:SetText("")
+    closeButton:SetFont("ui.mainmenu.button")
+
+    closeButton.Paint = function(self, w, h)
+        local hover = self:IsHovered()
+        surface.SetDrawColor(hover and Color(60, 60, 60) or Color(45, 45, 45))
+        surface.DrawRect(0, 0, w, h)
+
+        draw.SimpleText("Close", "ui.mainmenu.button", w / 2, h / 2, Color(255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+    end
+
     closeButton.DoClick = function()
         frame:Close()
     end

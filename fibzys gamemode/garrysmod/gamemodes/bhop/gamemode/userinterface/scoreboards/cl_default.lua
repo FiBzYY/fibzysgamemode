@@ -17,7 +17,9 @@ timeLeft = 0
 
 -- Time left
 NETWORK:GetNetworkMessage("RTVTimeLeft", function(_, data)
-    timeLeft = data[1]
+    local timeLeft = data[1]
+
+    hook.Run("RTVTimeLeftUpdated", timeLeft)
 end)
 
 local scoreboard
@@ -712,7 +714,7 @@ local function CreateScoreboard(shouldHide)
                 end
 
 				local ranks = {"VIP", "VIP+", "Moderator", "Admin", "Zone Admin", "Super Admin", "Developer", "Manager", "Founder", "Owner"}
-				local rankIndex = lp():GetNWInt("AccessIcon", 0)
+				local rankIndex = ply:GetNWInt("AccessIcon", 0)
 				local rankName = rankIndex == 0 and "User" or ranks[rankIndex]
 				local textColor = rankName == "User" and Color(255, 0, 0) or Color(0, 255, 0)
 

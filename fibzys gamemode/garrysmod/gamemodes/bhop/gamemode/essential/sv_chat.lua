@@ -7,10 +7,12 @@
 
 ]]--
 
+-- DO TO: Make multi lang for French and Russian
+
 Lang = {
     -- Timer
     TimerFinish = {UTIL.Colour["Timer"], "2;", UTIL.Colour["White"], " beat the map in ", UTIL.Colour["Timer"], "4;", UTIL.Colour["White"], " on ", UTIL.Colour["Timer"], "1;", UTIL.Colour["White"], " placing ", UTIL.Colour["Timer"], "[#6;]", " ", UTIL.Colour["White"], "(", UTIL.Colour["Green"], "5;", UTIL.Colour["White"], ")"},
-    WorldRecord = { UTIL.Colour["Timer"], "2;", UTIL.Colour["White"], " beat the map in ", UTIL.Colour["Timer"], "4;", UTIL.Colour["White"], " (", UTIL.Colour["Green"], "WR ", "-5;", UTIL.Colour["White"], ")" },
+    WorldRecord = {UTIL.Colour["Timer"], "2;", UTIL.Colour["White"], " beat the map in ", UTIL.Colour["Timer"], "4;", UTIL.Colour["White"], " (", UTIL.Colour["Green"], "WR ", "-5;", UTIL.Colour["White"], ")" },
     FinishingStats = {UTIL.Colour["Timer"], "1;", UTIL.Colour["White"], " had ", UTIL.Colour["Timer"], "2;%", UTIL.Colour["White"], " Sync with ", UTIL.Colour["Timer"], "3;", UTIL.Colour["White"], " Jumps, and ", UTIL.Colour["Timer"], "4;", UTIL.Colour["White"], " Strafes."},
 
     -- Timer/Style
@@ -33,15 +35,12 @@ Lang = {
     SetSpawn = {"You have set a ", UTIL.Colour["Timer"], "spawn point", UTIL.Colour["White"], "."},
     styleFreestyle = {"You have ", UTIL.Colour["Timer"], "1;", UTIL.Colour["White"], " Freestyle Zone.", UTIL.Colour["Timer"], "2;"},
 
+    -- AFK
+    AFKMark = {UTIL.Colour["Timer"], "1;", UTIL.Colour["White"], " is now AFK."},
+    AFKPlay = {UTIL.Colour["Timer"], "1;", UTIL.Colour["White"], " is now nolonger AFK."},
+
     -- SSJTOP
-    ssjTop = {
-        UTIL.Colour["Green"], "1;",
-        UTIL.Colour["White"], " got a ",
-        UTIL.Colour["Red"], "2;",
-        UTIL.Colour["White"], " SSJ (", UTIL.Colour["Timer"], "3;", UTIL.Colour["White"], ") on the ",
-        UTIL.Colour["Red"], "4;",
-        UTIL.Colour["White"], " jump!"
-    },
+    ssjTop = {UTIL.Colour["Green"], "1;", UTIL.Colour["White"], " got a ", UTIL.Colour["Red"], "2;", UTIL.Colour["White"], " SSJ (", UTIL.Colour["Timer"], "3;", UTIL.Colour["White"], ") on the ", UTIL.Colour["Red"], "4;", UTIL.Colour["White"], " jump!"},
 
     -- Replay
     BotEnter = {UTIL.Colour["Timer"], "1;", UTIL.Colour["White"], " styles Replay has been spawned."},
@@ -62,6 +61,13 @@ Lang = {
     BotMultiExclude = "The Replay can not display the Normal styles Run. Check the main Replay for that!",
     BotDetails = "The Replay run was done by 1; [2;] on the 3; styles in a time of 4; at this date: 5;",
 
+    -- SetSpawn
+    SetSpawn = {"You have set a new", UTIL.Colour["Timer"], " spawn point", UTIL.Colour["White"], "!"},
+    SetSpawnAlive = {"You have to be ", UTIL.Colour["Timer"], "alive", UTIL.Colour["White"], " and ", UTIL.Colour["Timer"], "playing", UTIL.Colour["White"], " to be able to use it."},
+    SetSpawnGround = {"You have to", UTIL.Colour["Timer"], " touch ", UTIL.Colour["White"], "the ground to be able to use it."},
+    SetSpawnRemoved = {"Your", UTIL.Colour["Timer"], " spawn point ", UTIL.Colour["White"], "has been removed."},
+    SetSpawnNone = {"You don't have a", UTIL.Colour["Timer"], " spawn point ", UTIL.Colour["White"], "set."},
+
     -- Zone
     ZoneStart = {"You are now placing a", UTIL.Colour["Timer"], " Zone", UTIL.Colour["White"], ". Start placing with 1. Press to", UTIL.Colour["Red"], " Set Zone", UTIL.Colour["White"], " Left click to save."},
     ZoneFinish = {"The", UTIL.Colour["Timer"], " Zone ", UTIL.Colour["White"], "has been placed."},
@@ -78,7 +84,7 @@ Lang = {
     VoteLimit = {"Please wait for", UTIL.Colour["Timer"], " 1; ", UTIL.Colour["White"], "seconds before voting again."},
     VoteAlready = {"You have already Rocked the Vote."},
     VotePeriod = {"A map vote has already started. You cannot vote right now."},
-    VoteRevoke = {UTIL.Colour["Timer"], "1;", UTIL.Colour["White"], " has revoked his Rock the Vote. (", UTIL.Colour["Timer"], "2;", UTIL.Colour["White"], " ", UTIL.Colour["Timer"], "3;", UTIL.Colour["White"], " left)"},
+    VoteRevoke = {UTIL.Colour["Timer"], "1;", UTIL.Colour["White"], " has revoked his Rock the Vote. (", UTIL.Colour["Timer"], "2;", " ", UTIL.Colour["Timer"], "3;", UTIL.Colour["White"], " left", UTIL.Colour["White"], ")" },
     VoteList = {UTIL.Colour["Timer"], "1;", UTIL.Colour["White"], " vote(s) needed to change maps.\nVoted (", UTIL.Colour["Timer"], "2;", UTIL.Colour["White"], "): ", UTIL.Colour["Timer"], "3;", UTIL.Colour["White"], "\nHaven't voted (", UTIL.Colour["Timer"], "4;", UTIL.Colour["White"], "): ", UTIL.Colour["Timer"], "5;", color_white},
     VoteCheck = {"There are ", UTIL.Colour["Timer"], "1;", UTIL.Colour["White"], " ", UTIL.Colour["Timer"], "2;", UTIL.Colour["White"], " needed to change maps."},
     VoteCancelled = {"The vote was cancelled by an Admin, the map will not change.", UTIL.Colour["Timer"], "1;", UTIL.Colour["White"]},

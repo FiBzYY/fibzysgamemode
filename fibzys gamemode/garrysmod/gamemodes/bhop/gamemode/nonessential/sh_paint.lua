@@ -320,7 +320,7 @@ if CLIENT then
         Paint:OpenCombinedMenu()
     end)
 
-    net.Receive("PAINT_SendData", function()
+    NETWORK:GetNetworkMessage("OpenPaintMenu", function()
         RunConsoleCommand("bhop_paintmenu")
     end)
 end

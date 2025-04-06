@@ -777,8 +777,7 @@ local function RNGFix_SetupMove(ply, mv, cmd)
     MapTeleportedSequentialTicks[ply] = false
     RNGFixHudDetect[ply] = false
 
-    -- If we are actually not doing ANY of the fixes that rely on pre-tick collision prediction, skip all this.
-    if rngfix_downhill:GetBool() or rngfix_uphill:GetBool() or rngfix_edgefix:GetBool() or rngfix_stairs:GetBool() or rngfix_telehop:GetBool() then
+    if movement_rngfix:GetBool() and (rngfix_downhill:GetBool() or rngfix_uphill:GetBool() or rngfix_edgefix:GetBool() or rngfix_stairs:GetBool() or rngfix_telehop:GetBool()) then
         DoPreTickChecks(ply, mv, cmd)
     end
 end

@@ -34,7 +34,6 @@ function UpdateSpectateData(isBot, playerName, startTime, bestRecord)
     TIMER:SpectateUpdate()
 end
 
-
 function SpectatePlayer(startTime, bestRecord)
     UpdateSpectateData(false, "Player", startTime, bestRecord)
 end
@@ -61,8 +60,6 @@ end
 function CS_Bot(timer, name, record, server, var)
     if server and type(server) == "number" then
         TIMER:Sync(server)
-    else
-        print("[CS_Bot] server is not a number! Got:", type(server))
     end
 
     if var and type(var) == "table" and #var > 0 then
@@ -114,15 +111,6 @@ local timer_prefix = CreateClientConVar("bhop_timer_prefix_rainbow", "0", true, 
 local timer_format = CreateClientConVar("bhop_timer_format", "pipe", true, false, "Choose the timer format: brackets or pipe.")
 local use_dynamic_color = CreateClientConVar("bhop_use_dynamic_color", "0", true, false, "Use DynamicColors.TextColor for all prefixes.")
 local timer_sound = CreateClientConVar("bhop_timerchatsound", "0", true, false, "Toggle sound when displaying chat messages")
-
-local prefixColors = {
-    ["Server"] = UTIL.Colour["Server"],
-    ["Timer"] = UTIL.Colour["Timer"],
-    ["Notification"] = UTIL.Colour["Timer"],
-    ["AntiCheat"] = UTIL.Colour["AntiCheat"],
-    ["SSJTOP"] = UTIL.Colour["AntiCheat"]
-}
-
 local insert = table.insert
 
 function TIMER:Print(szPrefix, varText)
@@ -150,7 +138,7 @@ function TIMER:Print(szPrefix, varText)
         prefixStart, prefixEnd = "[", "] "
     end
 
-    local prefixColor = useDynamicColor and DynamicColors.TextColor or (prefixColors[szPrefix] or color_white)
+    local prefixColor = useDynamicColor and DynamicColors.TextColor or (UTIL.Colour[szPrefix] or color_white)
     local chatMessage = {}
 
     if isRainbowEnabled then

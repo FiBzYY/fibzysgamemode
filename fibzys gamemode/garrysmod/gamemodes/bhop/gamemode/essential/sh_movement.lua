@@ -25,9 +25,13 @@ movementspeed = CreateConVar("bhop_settings_mv", "32.4", CV_FLAGSMV, "Change air
 movementspeedunreal = CreateConVar("bhop_settings_mv_unreal", "49.2", CV_FLAGSMV, "Change air movement speed for unreal", 0, 10000)
 movementcap = CreateConVar("bhop_settings_cap", "100", CV_FLAGSMV, "Change air movement speed cap", 0, 10000)
 maxspeed = CreateConVar("bhop_settings_maxspeed", "250", CV_FLAGSMV, "Change max movement speed", 0, 100000)
+crouchboosting = CreateConVar("bhop_movement_crouchboosting", "1", CV_FLAGSMV, "Enable or disable crouch boosting", 0, 1)
 jumppower = CreateConVar("bhop_settings_jumppower", "290", CV_FLAGSMV, "Change jump height", 0, 10000)
 walkspeed = CreateConVar("bhop_settings_walkspeed", "250", CV_FLAGSMV, "Change walk speed", 0, 10000)
+stairsize = CreateConVar("bhop_settings_stairsize", "18", CV_FLAGSMV, "Change size for walkable stars", 0, 10000)
 zonecap = CreateConVar("bhop_settings_zonecap", "290", CV_FLAGSMV, "Change zone cap speed", 0, 10000)
+movement_rngfix = CreateConVar("bhop_movement_rngfix", "1", CV_FLAGSMV, "Enable or disable rngfix", 0, 1)
+movement_surffix = CreateConVar("bhop_movement_rampfix", "1", CV_FLAGSMV, "Enable or disable surf fix", 0, 1)
 
 -- Client Cvars
 CreateClientConVar("bhop_smoothnoclip", "0", true, true, "Toggle smooth noclipping on or off")
@@ -230,12 +234,18 @@ function GM:SetupMove(client, data, cmd)
 
     -- Crouch Boosting by fibzy
     local DisableCrouch = -1
-    local isCrouching = client:Crouching()
 
-    if isCrouching and onGround and cmd:KeyDown(IN_JUMP) then
-        if client:GetDuckSpeed() ~= DisableCrouch then
-            client:SetDuckSpeed(DisableCrouch)
-            client:SetUnDuckSpeed(DisableCrouch)
+    if crouchboosting:GetBool() then
+        local isCrouching = client:Crouching()
+
+        if isCrouching and onGround and cmd:KeyDown(IN_JUMP) then
+            if client:GetDuckSpeed() ~= DisableCrouch then
+                client:SetDuckSpeed(DisableCrouch)
+                client:SetUnDuckSpeed(DisableCrouch)
+            end
+        else
+            client:SetDuckSpeed(duckspeed)
+            client:SetUnDuckSpeed(unduckspeed)
         end
     else
         client:SetDuckSpeed(duckspeed)
@@ -410,9 +420,7 @@ hook.Add("SetupMove", "StaminaSystem", function(client, data, cmd)
     local currentTime = CurTime()
 
     -- Enable stamina
-    local enableStamina = style == TIMER:GetStyleID("L") or 
-    style == TIMER:GetStyleID("Stamina") or 
-    IsKZMap()
+    local enableStamina = style == TIMER:GetStyleID("L") or style == TIMER:GetStyleID("Stamina") or IsKZMap()
 
     if enableStamina and onGround and not client:IsBot() then
         if client.StaminaAirTicks then
@@ -492,11 +500,11 @@ function GM:FinishMove(ply, mv)
     end
 
     if ply:Alive() then
-        local eyeClearance = 12
+        local eyeClearance = BHOP.Move.EyeHeight
         local offset = ply:GetCurrentViewOffset()
 
         local vHullMin = Vector(-16, -16, 0)
-        local vHullMax = Vector(16, 16, 45)
+        local vHullMax = Vector(16, 16, BHOP.Move.EyeDuck)
 
         -- start position for direct manipulation
         local sx, sy, sz = mv:GetOrigin():Unpack()
@@ -559,9 +567,9 @@ function GM:OnPlayerHitGround(client, isWater, onFloater, Speed)
 
     if style == TIMER:GetStyleID("L") or style == TIMER:GetStyleID("E") or style == TIMER:GetStyleID("Stamina") then 
         client:SetJumpPower(scrollpower)
-        timer.Simple(0.333333333, function() 
+        timer.Simple(0.333333333, function()
             if not Iv(client) or not client.SetJumpPower or not normpower then return end 
-            client:SetJumpPower(normpower) 
+            client:SetJumpPower(normpower)
         end)
     end
 end

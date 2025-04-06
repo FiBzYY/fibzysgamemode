@@ -22,9 +22,6 @@ Timer = {
     CheckpointStartTick = 0
 }
 
-util.AddNetworkString("WRSounds")
-util.AddNetworkString("BadImprovement")
-
 timer_sounds = {}
 local g_groundticks = 20
 
@@ -216,17 +213,11 @@ util.AddNetworkString("Timer_Update")
 util.AddNetworkString("Timer_FinalUpdate")
 
 function SendTimerUpdate(ply, startTick, endTick, fractionalTicks)
-    net.Start("Timer_Update")
-    net.WriteInt(startTick or 0, 32)
-    net.WriteInt(endTick or 0, 32)
-    net.WriteInt(fractionalTicks or 0, 32)
-    net.Send(ply)
+    NETWORK:StartNetworkMessage(ply, "TimerUpdate", ply, startTick or 0, endTick or 0, fractionalTicks or 0)
 end
 
 function SendFinalTimerUpdate(ply, fractionalTicks)
-    net.Start("Timer_FinalUpdate")
-    net.WriteInt(fractionalTicks or 0, 32)
-    net.Send(ply)
+    NETWORK:StartNetworkMessage(ply, "TimerFinalUpdate", ply, fractionalTicks or 0)
 end
 
 -- Pre speed stopper
@@ -633,8 +624,7 @@ function TIMER:Finish(ply, time)
 
                 -- Didn't improve Bad Sounds
                 if record ~= 0 and time >= record then
-                    net.Start("BadImprovement")
-                    net.Send(ply)
+                     NETWORK:StartNetworkMessage(ply, "PlayBadWRRoast")
                     return
                 end
 
@@ -917,9 +907,7 @@ function TIMER:Broadcast()
     local soundPath = TIMER:GetNextSound()
     if soundPath == "" then return end
 
-    net.Start("WRSounds")
-    net.WriteString(soundPath)
-    net.Broadcast()
+    NETWORK:StartNetworkMessage(nil, "WRSoundGlobal", soundPath)
 end
 
 TIMER:LoadSounds()

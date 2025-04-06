@@ -6,8 +6,8 @@ Spectator.Modes = {
 }
 
 local AFK = {}
-local afkMinutes = 25
-local afkKickMinutes = BHOP.AFKSystem.afkMinutes
+local afkMinutes = BHOP.AFKSystem.afkrtvMinutes
+local afkKickMinutes = BHOP.AFKSystem.afkKickMinutes
 local adminBypass = BHOP.AFKSystem.adminBypass
 local adminNotify = BHOP.AFKSystem.adminNotify
 local hook_Add = hook.Add
@@ -41,10 +41,12 @@ function AFK:SetAFK(ply, afk)
     ply.AFK.Away = afk
     ply:SetNWBool("afk", afk)
 
+    local data = { ply:Nick() }
+
     if afk then
-		NETWORK:StartNetworkMessageTimer(ply, "Print", { "RTV", "You are AFK." })
+        NETWORK:StartNetworkMessageTimer(nil, "Print", { "RTV", Lang:Get("AFKMark", data) })
     else
-		NETWORK:StartNetworkMessageTimer(ply, "Print", { "RTV", "You are no longer AFK." })
+        NETWORK:StartNetworkMessageTimer(nil, "Print", { "RTV", Lang:Get("AFKPlay", data) })
     end
 end
 
@@ -52,7 +54,7 @@ function AFK:CheckAFK()
     for _, ply in ipairs(player.GetHumans()) do
         local idleTime = CurTime() - ply.AFK.LastActivity
         if not ply.AFK.Away and not IsImmune(ply) and idleTime > (afkMinutes * 60) then
-            print(ply:Nick() .. " idle for " .. idleTime .. "s, marking AFK.")
+			UTIL:Notify(Color(0, 255, 0), "AFK", ply:Nick() .. " has been AFK for " .. idleTime .. "s, marking AFK.")
             AFK:SetAFK(ply, true)
         end
     end
@@ -75,7 +77,7 @@ local function AFKController()
     AFK:CheckAFK()
     AFK:KickAFK()
 end
-timer.Create("AFKTimer", 60, 0, AFKController)
+timer.Create("AFKTimer", 10, 0, AFKController)
 
 function Spectator:GetAFK()
     local tab = {}

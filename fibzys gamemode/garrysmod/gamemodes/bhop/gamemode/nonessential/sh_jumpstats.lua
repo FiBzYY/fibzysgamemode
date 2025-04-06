@@ -265,18 +265,15 @@ local function GetJSSIndicator(jss)
 end
 
 if SERVER then
-    util.AddNetworkString("SyncSSJSettings")
-    util.AddNetworkString("SyncSSJFromServer")
-
-    net.Receive("SyncSSJSettings", function(len, ply)
-        local showSSJ = net.ReadBool()
-        local showPre = net.ReadBool()
+    NETWORK:GetNetworkMessage("SyncSSJSettings", function(ply, data)
+        local showSSJ = data[1]
+        local showPre = data[2]
 
         local ssjData = ply:GetPData("SSJ_Settings", nil)
         local previousSettings = ssjData and util.JSONToTable(ssjData) or {true, true}
-        
-        previousSettings[1] = showSSJ
-        
+
+        previousSettings[1] = showSSJ -- [1] = bhop_showssj
+
         ply:SetPData("SSJ_Settings", util.TableToJSON(previousSettings))
 
         ply:SetNWBool("bhop_showssj", showSSJ)
@@ -286,9 +283,7 @@ if SERVER then
     hook.Add("PlayerInitialSpawn", "SyncSSJOnSpawn", function(ply)
         local ssjData = ply:GetPData("SSJ_Settings", nil)
         if ssjData then
-            net.Start("SyncSSJFromServer")
-            net.WriteString(ssjData)
-            net.Send(ply)
+            NETWORK:StartNetworkMessage(ply, "SyncSSJFromServer", ssjData)
         end
     end)
 end
@@ -300,8 +295,8 @@ if CLIENT then
     local lastSSJ = GetConVar("bhop_showssj"):GetBool()
     local lastPre = GetConVar("bhop_showpre"):GetBool()
 
-    net.Receive("SyncSSJFromServer", function()
-        local ssjSettings = util.JSONToTable(net.ReadString()) or {}
+    NETWORK:GetNetworkMessage("SyncSSJFromServer", function(_, data)
+        local ssjSettings = util.JSONToTable(data[1]) or {}
 
         if ssjSettings[1] ~= nil then
             RunConsoleCommand("bhop_showssj", ssjSettings[1] and "1" or "0")
@@ -315,11 +310,7 @@ if CLIENT then
 
         if newSSJ ~= lastSSJ or newPre ~= lastPre then
             lastSSJ, lastPre = newSSJ, newPre
-
-            net.Start("SyncSSJSettings")
-            net.WriteBool(newSSJ)
-            net.WriteBool(newPre)
-            net.SendToServer()
+            NETWORK:StartNetworkMessage(nil, "SyncSSJSettings", newSSJ, newPre)
         end
     end
 
@@ -551,19 +542,14 @@ local function SSJ_PrintStats(ply, lastSpeed, jumpTimeDiff)
     -- SSJ HUD Update
     NETWORK:StartNetworkMessageSSJ(ply, "SSJ", jumpCount, coeffsum, velocity, strafes, efficiency, sync, lastSpeed or 0, g_speedDiff[ply])
 
-    -- Illegal Check
-    local illegal = false
-
     local style = TIMER:GetStyle(ply)
     if jumpCount == 1 and velocity > 290 then
-        illegal = true
+        gB_IllegalSSJ[ply]  = true
     elseif IsIllegalStyle(style) then
-        illegal = true
+        gB_IllegalSSJ[ply]  = true
     elseif ply:GetNWInt("inPractice", true) then
-        illegal = true
+        gB_IllegalSSJ[ply]  = true
     end
-
-    gB_IllegalSSJ[ply] = illegal
 
     -- SSJ TOP Record
     if SSJTOP and jumpCount == 6 and not gB_IllegalSSJ[ply] then

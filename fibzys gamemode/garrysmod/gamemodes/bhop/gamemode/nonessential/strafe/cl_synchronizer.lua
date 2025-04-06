@@ -20,7 +20,7 @@ local lastUpdateTime = 0
 local TICK_UPDATE_INTERVAL = engine.TickInterval()
 local indicatorPercentage = 90  
 
-local hudEnabled = CreateClientConVar("bhop_strafesync", "1", true, false, "Enable or disable Strafe Sync HUD")
+local hudEnabled = CreateClientConVar("bhop_strafesync", "0", true, false, "Enable or disable Strafe Sync HUD")
 
 local function NormalizeAngle(angle)
     return (angle + 180) % 360 - 180

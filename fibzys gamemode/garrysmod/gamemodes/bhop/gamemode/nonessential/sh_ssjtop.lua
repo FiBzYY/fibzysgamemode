@@ -7,12 +7,9 @@ local file_Write, file_Read, file_Exists = file.Write, file.Read, file.Exists
 local ipairs, IsValid, timer_Create, timer_Start = ipairs, IsValid, timer.Create, timer.Start
 local ents_FindByClass = ents.FindByClass
 
--- Data file name
-local ssjFileName = "ssjtop.txt"
 playerDuckStatus = {}
 
 if SERVER then
-    util.AddNetworkString("SSJTOP_SendData")
     util.AddNetworkString("SSJTOP_RemoveRecord")
 
     function SaveSSJToMySQL(ply, ssjType, jumpSpeed)
@@ -35,17 +32,6 @@ if SERVER then
                  UTIL:Notify(Color(255, 0, 255), "SSJTop", "Failed MySQL save for " .. steamID)
             end
         end)
-    end
-
-    local function LoadSSJTopFromFile()
-        if file_Exists(ssjFileName, "DATA") then
-            local ssjData = util_JSONToTable(file_Read(ssjFileName, "DATA"))
-            if ssjData and istable(ssjData) then
-                for k, v in pairs(ssjData) do
-                    SSJTOP[k] = v
-                end
-            end
-        end
     end
 
     net.Receive("SSJTOP_RemoveRecord", function(len, ply)
@@ -77,21 +63,6 @@ if SERVER then
                 UTIL:Notify(Color(255, 0, 255), "SSJTop", "Failed to delete SSJTop record for " .. playerName)
             end
         end)
-
-        -- Save updated data file
-        file_Write(ssjFileName, util_TableToJSON(SSJTOP, true))
-    end)
-
-    hook_Add("Initialize", "LoadSSJTopData", function()
-        LoadSSJTopFromFile()
-    end)
-
-    timer_Create("SSJTOP_AutoSave", 2, 0, function()
-        file_Write(ssjFileName, util_TableToJSON(SSJTOP, true))
-    end)
-
-    hook_Add("ShutDown", "SSJTOP_SaveOnShutdown", function()
-        file_Write(ssjFileName, util_TableToJSON(SSJTOP, true))
     end)
 end
 
@@ -101,10 +72,6 @@ hook_Add("StartCommand", "TrackDuckDuringJumps", function(ply)
 
     if ply:IsOnGround() then
         playerDuckStatus[ply:SteamID()] = ply:Crouching()
-    end
-
-    if ply.InStartZone and not ply:KeyDown(IN_JUMP) and ply:IsOnGround() then
-        gB_IllegalSSJ[ply] = false
     end
 end)
 
@@ -123,20 +90,6 @@ hook_Add("InitPostEntity", "SSJTOP_HandleNewTeleports", function()
         ent:Fire("AddOutput", "OnEndTouch !activator:teleported:0:0:-1")
     end
 end)
-
--- SSJ Data Sync
-if SERVER then
-    local function SendSSJTopToClient(ply)
-        if Iv(ply) then
-            net.Start("SSJTOP_SendData")
-            net.WriteTable(SSJTOP)
-            net.Send(ply)
-        end
-    end
-
-    concommand.Add("ssjtop_request", SendSSJTopToClient)
-    net.Receive("SSJTOP_SendData", function(_, ply) SendSSJTopToClient(ply) end)
-end
 
 -- Ground Trace
 local function TracePlayerGround(ply)

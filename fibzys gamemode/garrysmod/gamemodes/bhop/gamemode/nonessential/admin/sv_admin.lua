@@ -42,25 +42,15 @@ local AdminLoad = {}
 
 -- BANS --
 local BanSystem = "[BanSystem] "
-local banFile = "bans.txt"
-local Bans = {
-    steam = {},
-    ip = {}
-}
+local Bans = {steam = {}, ip = {} }
 
-util.AddNetworkString("SendAdminLogs")
-util.AddNetworkString("RequestAdminLogs")
-util.AddNetworkString("AdminChangeMovementSetting")
-
-net.Receive("AdminChangeMovementSetting", function(len, ply)
+NETWORK:GetNetworkMessage("AdminChangeMovementSetting", function(ply, data)
     if not ply:IsAdmin() then return end
 
-    local cvarName = net.ReadString()
-    local newValue = net.ReadFloat()
+    local cvarName = data[1]
+    local newValue = data[2]
 
-    if newValue < 0 or newValue > 100000 then
-        return
-    end
+    if newValue < 0 or newValue > 100000 then return end
 
     local cvar = GetConVar(cvarName)
     if cvar then
@@ -197,21 +187,11 @@ function Admin:SendLogs(ply)
             return
         end
 
-        net.Start("SendAdminLogs")
-        net.WriteUInt(#data, 16)
-
-        for _, row in ipairs(data) do
-            net.WriteString(row.date or "Unknown")
-            net.WriteString(row.adminname or "Unknown")
-            net.WriteString(row.adminsteam or "Unknown")
-            net.WriteString(row.data or "No data")
-        end
-
-        net.Send(ply)
+		NETWORK:StartNetworkMessage(ply, "SendAdminLogs", data)
     end)
 end
 
-net.Receive("RequestAdminLogs", function(len, ply)
+NETWORK:GetNetworkMessage("RequestAdminLogs", function(ply)
     Admin:SendLogs(ply)
 end)
 
@@ -256,7 +236,7 @@ end
 
 function Admin.CommandProcess(ply, args)
     if not Admin:CanAccess(ply, Admin.Level.Elevated) then
-        return BHDATA:Send(ply, "Print", {"Notification", "You don't have access to Admin"})
+        return BHDATA:Send(ply, "Print", {"Notification", "You don't have access to Admin."})
     end
 
     if #args == 0 then
@@ -925,16 +905,70 @@ function Admin:HandleRequest(ply, args)
 	end
 end
 
-util.AddNetworkString("AdminChangeMapMultiplier")
+NETWORK:GetNetworkMessage("AdminSetRank", function(ply, data)
+    if not IsValid(ply) or not ply:IsAdmin() then return end
 
-net.Receive("AdminChangeMapMultiplier", function(len, ply)
+    local szSteam = data[1]
+    local szLevel = data[2]
+    local nType = tonumber(2) or 1
+    local nAccess = Admin.Level.None
+
+    -- Find matching level by name
+    for name, level in pairs(Admin.Level) do
+        if string.lower(name) == string.lower(szLevel) then
+            nAccess = level
+            break
+        end
+    end
+
+    if nAccess == Admin.Level.None then
+        return BHDATA:Send(ply, "Print", { "Admin", Lang:Get("AdminMisinterpret", { szLevel }) })
+    end
+
+    local function UpdateAdminStatus(bUpdate, sqlArg, adminPly)
+        local function UpdateAdminCallback(data, varArg, szError)
+            local targetAdmin, targetData = varArg[1], varArg[2]
+
+            if data then
+                Admin:LoadAdmins()
+                BHDATA:Send(targetAdmin, "Print", { "Admin", Lang:Get("AdminOperationComplete") })
+                Admin:AddLog("Updated admin with identifier [" .. targetData[1] .. "] to level " .. targetData[2] .. " and type " .. targetData[3], targetAdmin:SteamID(), targetAdmin:Name())
+            else
+                BHDATA:Send(targetAdmin, "Print", { "Admin", Lang:Get("AdminErrorCode", { szError }) })
+            end
+        end
+
+        if bUpdate then
+            SQL:Prepare("UPDATE timer_admins SET level = {1}, type = {2} WHERE id = {0}", sqlArg)
+            :Execute(UpdateAdminCallback, { adminPly, sqlArg })
+        else
+            SQL:Prepare("INSERT INTO timer_admins (steam, level, type) VALUES ({0}, {1}, {2})", sqlArg)
+            :Execute(UpdateAdminCallback, { adminPly, sqlArg })
+        end
+    end
+
+    SQL:Prepare("SELECT id FROM timer_admins WHERE steam = {0} ORDER BY level DESC LIMIT 1", { szSteam })
+    :Execute(function(data, varArg, szError)
+        local updateFunc, adminPly, sqlArg = varArg[1], varArg[2], varArg[3]
+        local bUpdate = false
+
+		if TIMER:Assert(data, "id") then
+			bUpdate = true
+			sqlArg[1] = data[1]["id"]
+		end
+
+        updateFunc(bUpdate, sqlArg, adminPly)
+    end, { UpdateAdminStatus, ply, { szSteam, nAccess, nType } })
+end)
+
+NETWORK:GetNetworkMessage("AdminChangeMapMultiplier", function(ply, data)
     if not ply:IsAdmin() then
         ply:ChatPrint("You don't have permission to change the map multiplier!")
         return
     end
 
-    local Points = net.ReadFloat()
-    
+    local Points = data[1]
+
     if not Points or Points <= 0 then
         ply:ChatPrint("Invalid multiplier value!")
         return
@@ -957,6 +991,7 @@ net.Receive("AdminChangeMapMultiplier", function(len, ply)
     end
 
     TIMER:LoadRecords()
+
     for _, p in pairs(player.GetHumans()) do
         TIMER:UpdateRank(p)
     end
@@ -967,66 +1002,66 @@ net.Receive("AdminChangeMapMultiplier", function(len, ply)
     Admin:AddLog("Changed map multiplier on " .. game.GetMap() .. " from " .. nOld .. " to " .. Points, ply:SteamID(), ply:Name())
 end)
 
--- Dev
-util.AddNetworkString("RequestMapMultiplier")
-util.AddNetworkString("ReceiveMapMultiplier")
-util.AddNetworkString("AdminHandleRequest")
-
-net.Receive("RequestMapMultiplier", function(len, ply)
+NETWORK:GetNetworkMessage("RequestMapMultiplier", function(ply)
     if not ply:IsAdmin() then return end
+
     local currentMultiplier = Timer.Multiplier or 0
-    net.Start("ReceiveMapMultiplier")
-    net.WriteFloat(currentMultiplier)
-    net.Send(ply)
+    NETWORK:StartNetworkMessage(ply, "ReceiveMapMultiplier", currentMultiplier)
 end)
 
-net.Receive("AdminHandleRequest", function(len, ply)
-    local ID = net.ReadInt(8)
-    local ZoneType = net.ReadInt(8)
+NETWORK:GetNetworkMessage("AdminHandleRequest", function(ply, data)
+    local ID = data[1]
+    local ZoneType = data[2]
 
     if ID == 1 then
-        Admin:HandleRequest(ply, { -1, 1, ZoneType })
+        Admin:HandleRequest(ply, {-1, 1, ZoneType})
     end
 end)
 
-util.AddNetworkString("AdminChangeMap")
-
-net.Receive("AdminChangeMap", function(len, ply)
+NETWORK:GetNetworkMessage("AdminChangeMap", function(ply, data)
     if not ply:IsAdmin() then
-        ply:ChatPrint("You don't have permission to change the map!")
         return
     end
 
-    local mapName = net.ReadString()
-
+    local mapName = data[1]
     if not mapName or mapName == "" then return end
-    if not file.Exists("maps/" .. mapName .. ".bsp", "GAME") then
-        return
-    end
+    if not file.Exists("maps/" .. mapName .. ".bsp", "GAME") then return end
 
     BHDATA:Unload()
     RunConsoleCommand("changelevel", mapName)
 end)
 
 local function SaveBans()
-    if not file.Exists("bans", "DATA") then
-        file.CreateDir("bans")
-    end
-    file.Write("bans/" .. banFile, util.TableToJSON(Bans))
-	UTIL:Notify(Color(255, 0, 0), "BanSystem", BanSystem .. "Banlist saved to file.")
+    UTIL:Notify(Color(0, 255, 0), "BanSystem", BanSystem .. "Bans are now saved live to the database. No file save needed.")
 end
 
 local function LoadBans()
-    if file.Exists("bans/" .. banFile, "DATA") then
-        Bans = util.JSONToTable(file.Read("bans/" .. banFile, "DATA")) or { steam = {}, ip = {} }
-    else
-        Bans = { steam = {}, ip = {} }
-    end
+    Bans = { steam = {}, ip = {} }
 
-    Bans.steam = Bans.steam or {}
-    Bans.ip = Bans.ip or {}
+    MySQL:Start("SELECT * FROM timer_bans", function(result)
+        if not result then
+            UTIL:Notify(Color(255, 0, 0), "BanSystem", BanSystem .. " Failed to load ban list from database.")
+            return
+        end
 
-    UTIL:Notify(Color(255, 0, 0), "BanSystem", "Loaded " .. table.Count(Bans.steam) .. " SteamID bans and " .. table.Count(Bans.ip) .. " IP bans.")
+        for _, row in ipairs(result) do
+            local banEntry = {
+                reason = row.reason or "No reason",
+                expires = tonumber(row.unban_time) or 0,
+                admin = row.admin or "Console"
+            }
+
+            if row.steamid and row.steamid ~= "" then
+                Bans.steam[string.upper(row.steamid)] = banEntry
+            end
+
+            if row.ip and row.ip ~= "" then
+                Bans.ip[row.ip] = banEntry
+            end
+        end
+
+        UTIL:Notify(Color(255, 0, 0), "BanSystem", BanSystem .. " Loaded " .. table.Count(Bans.steam) .. " SteamID bans and " .. table.Count(Bans.ip) .. " IP bans.")
+    end)
 end
 
 local function IsPlayerBanned(steamID)
@@ -1125,16 +1160,29 @@ end)
 local function BanPlayerBySteamID(steamID, length, reason, admin)
     steamID = string.upper(steamID)
     local adminName = IsValid(admin) and admin:Nick() or "Owner"
-    local banTime = length == 0 and 0 or os.time() + length
+    local banTime = os.time()
+    local unbanTime = length == 0 and 0 or banTime + length
 
+    -- Cache in RAM
     Bans.steam[steamID] = {
-        reason = reason or "No reason provided",
-        expires = banTime,
+        reason = reason,
+        expires = unbanTime,
         admin = adminName
     }
 
-    SaveBans()
-	UTIL:Notify(Color(255, 0, 0), "BanSystem", BanSystem .. "SteamID " .. steamID .. " has been banned for " .. length .. " seconds. Reason: " .. reason .. " by " .. adminName)
+    -- Insert into MySQL
+    local q = string.format(
+        "INSERT INTO timer_bans (steamid, reason, admin, ban_time, unban_time) VALUES ('%s', '%s', '%s', %d, %d)",
+        MySQL:Escape(steamID),
+        MySQL:Escape(reason),
+        MySQL:Escape(adminName),
+        banTime,
+        unbanTime
+    )
+
+    MySQL:Start(q)
+
+    UTIL:Notify(Color(255, 0, 0), "BanSystem", BanSystem .. "SteamID " .. steamID .. " has been banned for " .. length .. " seconds.")
 end
 
 local MAX_BAN_TIME = 315360000
@@ -1170,12 +1218,13 @@ end
 
 local function UnbanPlayer(steamID)
     steamID = string.upper(steamID)
+
     if Bans.steam[steamID] then
         Bans.steam[steamID] = nil
-        SaveBans()
-		UTIL:Notify(Color(255, 0, 0), "BanSystem", BanSystem .. "Unbanned SteamID: " .. steamID)
+        MySQL:Start("DELETE FROM timer_bans WHERE steamid = '" .. MySQL:Escape(steamID) .. "'")
+        UTIL:Notify(Color(0, 255, 0), "BanSystem", BanSystem .. "Unbanned SteamID: " .. steamID)
     else
-		UTIL:Notify(Color(255, 0, 0), "BanSystem", BanSystem .. "No SteamID ban found for " .. steamID)
+        UTIL:Notify(Color(255, 0, 0), "BanSystem", BanSystem .. "No ban found for SteamID: " .. steamID)
     end
 end
 

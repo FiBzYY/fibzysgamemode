@@ -9,6 +9,7 @@
 SQL = SQL or {}
 SQL.Available = true
 
+-- Change via server.cfg instead
 CreateConVar("sv_sql_host", "localhost", {FCVAR_ARCHIVE, FCVAR_SERVER_CAN_EXECUTE}, "The SQL host address")
 CreateConVar("sv_sql_user", "root", {FCVAR_ARCHIVE, FCVAR_SERVER_CAN_EXECUTE}, "The SQL username")
 CreateConVar("sv_sql_pass", "password", {FCVAR_ARCHIVE, FCVAR_SERVER_CAN_EXECUTE}, "The SQL password")
@@ -24,16 +25,20 @@ local SQLDetails = {
     Port = GetConVar("sv_sql_port"):GetInt()
 }
 
+-- Use MySQL for true (sqllite not supported)
 SQL.Use = true
+
 MySQL = MySQL or {}
 MySQL.queries = {}
 
-local gp, gt, gn, gs = pairs, type, tonumber, tostring
+-- Cache
+local gp, gt, gn, gs, Iv = pairs, type, tonumber, tostring, IsValid
 local ss, sl, sg, slc = string.sub, string.len, string.gsub, string.lower
 local sqstr, sq, lqe = sql.SQLStr, sql.Query
 
 UI, DATA = {}, {}
 
+-- If no mysqloo found
 local success, err = pcall(require, "mysqloo")
 if not success then
     SQL.Use = false
@@ -44,8 +49,9 @@ else
     UTIL:Notify(Color(0, 255, 0), "Database", "MySQLoo module successfully loaded.")
 end
 
-resource.AddFile("resource/fonts/FiBuchetMS-Bold.ttf")
-resource.AddFile("resource/fonts/Verdana.ttf")
+-- Fonts
+resource.AddFile("resource/fonts/FiBuchetMS-Bold.ttf") -- CS:S Hud
+resource.AddFile("resource/fonts/Verdana.ttf") -- Other
 
 BHDATA = BHDATA or {}
 BHDATA.Protocol = "TimerNetworkProtocol"
@@ -53,6 +59,7 @@ BHDATA.Protocol2 = "BinaryTransfer"
 
 MapGlobals = MapGlobals or {}
 
+-- Load main data
 function TIMER:Boot()
     if Command and Command.Init then
         Command:Init()
@@ -78,6 +85,7 @@ function TIMER:Boot()
     end)
 end
 
+-- Reload zones for admins
 function ReloadZonesOnMapLoad()
     Zones.Cache = {}
     Zones:ClearEntities()
@@ -96,6 +104,7 @@ function ReloadZonesOnMapLoad()
     end)
 end
 
+-- Unload everything
 function BHDATA:Unload(force)
     if Replay and Replay.Save then
         Replay:Save(force)
@@ -125,6 +134,7 @@ end
 local playerCache = {}
 local cacheExpiration = 300
 
+-- Stats WiP
 function GetPlayerStats(playerID, callback)
     local cachedData = playerCache[playerID]
     for k, v in gp(playerCache) do
@@ -153,6 +163,7 @@ end
 
 SQL.ZonesLoaded = false
 
+-- Load all zones for each map
 function TIMER:LoadZones(callback)
     Zones.Cache = {}
 
@@ -207,6 +218,7 @@ function TIMER:LoadZones(callback)
     end)
 end
 
+-- Global Records
 function MapGlobals:RegisterRecord(client, map, time)
     local steamID = client:SteamID()
     local playerName = client:Nick()
@@ -219,6 +231,8 @@ function MapGlobals:RegisterRecord(client, map, time)
 end
 
 local cachedRecords = {}
+
+-- Used for GWRs Formant
 local function millisecondsToTime(ms)
     local floor, format = math.floor, string.format
     local minutes = floor(ms / 60000)
@@ -228,6 +242,7 @@ local function millisecondsToTime(ms)
     return format("%02d:%02d.%03d", minutes, seconds, milliseconds)
 end
 
+-- Get GWRs
 function MapGlobals:GetGlobalWRForMap(map, callback)
     if cachedRecords[map] then
         callback(cachedRecords[map])
@@ -261,6 +276,7 @@ hook.Add("PlayerInitialSpawn", "SendGlobalWROnJoin", function(client)
     MapGlobals:SendGlobalWRToClient(client, game.GetMap())
 end)
 
+-- Optimize Database sending
 function BHDATA:Optimize()
     local function clearUnusedData()
         if Zones.Cache then
@@ -293,6 +309,7 @@ function BHDATA:Optimize()
     UTIL:Notify(Color(0, 255, 0), "Database", "Optimization completed.")
 end
 
+-- GC Debug
 local function PrintLuaMemoryUsage()
     local memoryUsageKB = collectgarbage("count")
     local message = string.format("Lua memory usage: %.2f KB", memoryUsageKB)
@@ -301,6 +318,7 @@ end
 
 PrintLuaMemoryUsage()
 
+-- Retry connection if fails
 function TIMER:DBRetry(retryCount)
     retryCount = retryCount or 0
     local maxRetries = 3
@@ -375,6 +393,7 @@ function TIMER:DBRetry(retryCount)
     end
 end
 
+-- Start up
 function BHDATA:StartSQL()
     if not SQL or not SQL.Use then return end
 
@@ -407,6 +426,7 @@ function BHDATA.SQLCheck()
     end
 end
 
+-- Assert each table needed
 function TIMER:Assert(result, key)
     if type(result) == "table" and type(result[1]) == "table" then
         return result[1][key] ~= nil
@@ -433,7 +453,7 @@ function BHDATA:Send(ply, szAction, varArgs)
     net.Send(ply)
 end
 
-local Iv = IsValid
+-- Broadcast messages
 function BHDATA:Broadcast(szAction, varArgs, varExclude)
     if type(szAction) ~= "string" then
         UTIL:Notify(Color(255, 0, 0), "Database", "[ERROR] Broadcast: Action must be a string. Got: ", type(szAction))
@@ -463,6 +483,7 @@ function BHDATA:Broadcast(szAction, varArgs, varExclude)
     end
 end
 
+-- Calls for Admin Speed WRList
 local function coreHandle(ply, szAction, varArgs)
     if szAction == "Admin" then
         Admin:HandleClient(ply, varArgs)
@@ -549,12 +570,29 @@ local function sqlQuery(query, callback, args)
     q:start()
 end
 
+-- Make sure admin loads always
+local function WaitForAdmin(retries)
+	retries = retries or 0
+	if retries >= 5 then return end
+
+	if not Admin or not Admin.LoadAdmins then
+		timer.Simple(1, function()
+			WaitForAdmin(retries + 1)
+		end)
+	else
+		Admin:LoadAdmins()
+	end
+end
+
+WaitForAdmin()
+
 local function sqlExecute(query, callback, args)
     sqlQuery(query, function(data, varArgs, err)
         callback(data, varArgs, err)
     end, args)
 end
 
+-- Handle Database connected successfully
 function SQL:CreateObject(callback)
     if not SQL.Use then
         UTIL:Notify(Color(255, 255, 0), "Database", "SQL disabled — skipping CreateObject.")
@@ -583,14 +621,11 @@ function SQL:CreateObject(callback)
     SQLObject:connect()
 end
 
+-- Main Prepare
 function SQL:Prepare(query, args, noQuote)
-    if not SQLObject or not SQL.Available or SQLObject:status() ~= mysqloo.DATABASE_CONNECTED then
-        return {
-            Query = nil,
-            Execute = function(_, callback)
-                if callback then callback(nil) end
-            end
-        }
+    if not SQLObject or not SQL.Available then
+        UTIL:Notify(Color(255, 0, 0), "Database", "[ERROR] Database not connected! Cannot execute query: " .. query)
+        return { Execute = function() end }
     end
 
     local preparedQuery = query
@@ -610,11 +645,11 @@ function SQL:Prepare(query, args, noQuote)
             else
                 formattedArg = gs(arg) or ""
             end
-
+            
             preparedQuery = sg(preparedQuery, "{" .. (i - 1) .. "}", formattedArg)
         end
     end
-
+    
     return {
         Query = preparedQuery,
         Execute = function(self, callback, varArg)
@@ -623,6 +658,7 @@ function SQL:Prepare(query, args, noQuote)
     }
 end
 
+-- UI Data calls
 function UI:SendToClient(client, uiId, ...)
     NETWORK:StartNetworkMessage(client, "UI", uiId, ...)
 end
@@ -642,7 +678,7 @@ NETWORK:GetNetworkMessage("UI", function(cl, data)
     if DATA[id] then
         DATA[id](cl, data)
     else
-        UTIL:Notify(Color(0, 255, 0), "Database", "No listener found for UI ID " .. gs(id))
+        UTIL:Notify(Color(255, 0, 0), "Database", "No listener found for UI ID " .. gs(id))
     end
 end)
 
@@ -660,6 +696,7 @@ function MySQL:ProcessQueuedQueries()
     self.queuedQueries = {}
 end
 
+-- Start the connection now
 function MySQL:Start(query, callback)
     if not SQLObject or SQLObject:status() ~= mysqloo.DATABASE_CONNECTED then
         UTIL:Notify(Color(255, 0, 0), "Database", "Database connection not established")
@@ -681,6 +718,7 @@ function MySQL:Start(query, callback)
     q:start()
 end
 
+-- Easy '' adds
 function MySQL:Escape(str)
     return sqstr(str)
 end

@@ -14,25 +14,13 @@ Command = {
 local lp, Iv, ct, hook_Add = LocalPlayer, IsValid, CurTime, hook.Add
 local insert, explode, lower, sub = table.insert, string.Explode, string.lower, string.sub
 
--- New Networking
-util.AddNetworkString("ChangePlayerName")
-util.AddNetworkString("SendNewMapsList")
-util.AddNetworkString("JHUD_SendData")
-util.AddNetworkString("PAINT_SendData")
-util.AddNetworkString("TRAINER_SendData")
-util.AddNetworkString("bhop_set_showplayers")
-util.AddNetworkString("bhop_set_water_toggle")
-util.AddNetworkString("OpenDiscordLink")
-
 function SendSSJTopToClient(ply)
     if not IsValid(ply) then return end
     if not SSJTOP or table.IsEmpty(SSJTOP) then
         return
     end
 
-    net.Start("SSJTOP_SendData")
-    net.WriteTable(SSJTOP)
-    net.Send(ply)
+    NETWORK:StartNetworkMessage(ply, "SSJTopData", SSJTOP)
 end
 
 -- Map brightness
@@ -85,108 +73,42 @@ if SSJ then
     hook_Add("Initialize", "AddCommand", function() SSJ:AddCommand() end)
 end
 
--- Name changer
-local function ChangePlayerName(ply, newName)
-    if not IsValid(ply) then return end
-    if not newName or newName == "" then
-        TIMER:Print(pl, "Invalid name! Please provide a valid name.")
-        return
-    end
-
-    local maxLength = 32
-    if string.len(newName) > maxLength then
-        TIMER:Print(pl, "Name is too long! Maximum length is " .. maxLength .. " characters.")
-        return
-    end
-
-    ply:SetNWString("CustomName", newName)
-    TIMER:Print(pl, "Your name has been changed to " .. newName)
-end
-
-hook_Add("PlayerSay", "ChangeNameCommand", function(ply, text)
-    if string.sub(text, 1, 11) == "!changename" then
-        local newName = string.Trim(string.sub(text, 12))
-        ChangePlayerName(ply, newName)
-        return ""
-    end
-end)
-
-hook_Add("PlayerName", "OverrideDisplayName", function(ply)
-    local customName = ply:GetNWString("CustomName", nil)
-    if customName and customName ~= "" then
-        return customName
-    end
-    return nil
-end)
-
--- New added maps
-local newestMaps = {}
-local function UpdateMapsList()
-    newestMaps = {}
-
-    local files, _ = file.Find("maps/*.bsp", "GAME")
-    if not files then
-        UTIL:Notify(Color(255, 255, 255), "Command", "Failed to open the /maps directory.")
-        return
-    end
-
-    for _, mapName in ipairs(files) do
-        local cleanMapName = string.StripExtension(mapName)
-
-        local mapPath = "maps/" .. mapName
-        local timeStamp = file.Time(mapPath, "GAME")
-
-        table.insert(newestMaps, {mapName = cleanMapName, timeStamp = timeStamp})
-    end
-
-    table.sort(newestMaps, function(a, b) return a.timeStamp > b.timeStamp end)
-end
-
-local function SendNewMapsList(ply)
-    local maxMapsToShow = 25
-    UpdateMapsList()
-
-    net.Start("SendNewMapsList")
-    net.WriteInt(math.min(#newestMaps, maxMapsToShow), 16)
-
-    for i = 1, math.min(#newestMaps, maxMapsToShow) do
-        local mapInfo = newestMaps[i]
-        net.WriteString(mapInfo.mapName)
-        net.WriteInt(mapInfo.timeStamp, 32)
-    end
-
-    net.Send(ply)
-end
-
-concommand.Add("bhop_newmaps", function(ply)
-    if not Iv(ply) or not ply:IsPlayer() then return end
-    SendNewMapsList(ply)
-end)
-
 function Command:Register(aliases, func, description, syntax)
     for _, alias in ipairs(aliases) do
         self.Functions[alias] = {func, description or "No description available", syntax or "No syntax available"}
     end
 end
 
--- Main command triggers
-function Command:Trigger(pl, szCommand, szText)
-    local mainCommand, commandArgs = szCommand, {}
-    if string.find(szCommand, " ", 1, true) then
-        local splitData = explode(" ", szCommand)
+local commandCooldowns = {}
+local cooldownTime = 1
+
+function Command:Trigger(pl, command, text)
+    local mainCommand, commandArgs = command, {}
+    if string.find(command, " ", 1, true) then
+        local splitData = explode(" ", command)
         mainCommand = splitData[1]
         commandArgs.Upper = {}
         for i = 2, #splitData do
-           insert(commandArgs, splitData[i])
-           insert(commandArgs.Upper, explode(" ", szText)[i])
+            insert(commandArgs, splitData[i])
+            insert(commandArgs.Upper, explode(" ", text)[i])
         end
     end
 
-    local szFunc = self.Functions[mainCommand] and self.Functions[mainCommand][1]
+    local func = self.Functions[mainCommand] and self.Functions[mainCommand][1]
     commandArgs.Key = mainCommand
 
-    if szFunc then
-        return szFunc(pl, commandArgs)
+    local sid = pl:SteamID()
+    commandCooldowns[sid] = commandCooldowns[sid] or {}
+
+    local lastUsed = commandCooldowns[sid][mainCommand] or 0
+    if CurTime() < lastUsed + cooldownTime then
+        return
+    end
+
+    commandCooldowns[sid][mainCommand] = CurTime()
+
+    if func then
+        return func(pl, commandArgs)
     else
         TIMER:Print(pl, "This command doesn't exist.")
         return nil
@@ -481,8 +403,7 @@ function Command:Init()
             {"jhud", "jumphud"},
             function(pl, args)
                 if not IsValid(pl) then return end
-                net.Start("JHUD_SendData")
-                net.Send(pl)
+                NETWORK:StartNetworkMessage(pl, "OpenJHUDMenu")
             end,
             "Jhud Menu command",
             "<arguments>"
@@ -493,8 +414,7 @@ function Command:Init()
             {"strafetrainer", "strafetrainermenu"},
             function(pl, args)
                 if not IsValid(pl) then return end
-                net.Start("TRAINER_SendData")
-                net.Send(pl)
+                NETWORK:StartNetworkMessage(pl, "OpenStrafeTrainerMenu")
                 TIMER:Print(pl, "Strafe Trainer Menu has been opened!")
             end,
             "Paint Menu command",
@@ -506,8 +426,7 @@ function Command:Init()
             {"paint", "paintmenu"},
             function(pl, args)
                 if not IsValid(pl) then return end
-                net.Start("PAINT_SendData")
-                net.Send(pl)
+                NETWORK:StartNetworkMessage(pl, "OpenPaintMenu")
                 TIMER:Print(pl, "Paint Menu has been opened!")
             end,
             "Paint Menu command",
@@ -535,14 +454,10 @@ function Command:Init()
             local key = args.Key and string.lower(args.Key) or ""
 
             if string.sub(key, 1, 4) == "show" then
-                net.Start("bhop_set_showplayers")
-                net.WriteBool(true)
-                net.Send(pl)
+                NETWORK:StartNetworkMessage(pl, "TogglePlayerVisibility", true)
                 TIMER:Print(pl, "Players Enabled. You can now see players!")
             elseif string.sub(key, 1, 4) == "hide" then
-                net.Start("bhop_set_showplayers")
-                net.WriteBool(false)
-                net.Send(pl)
+                NETWORK:StartNetworkMessage(pl, "TogglePlayerVisibility", false)
                 TIMER:Print(pl, "Players Disabled. Players are now hidden!")
             else
                 TIMER:Print(pl, "Invalid command. Use show/hide")
@@ -556,8 +471,7 @@ function Command:Init()
         {
         { "water", "fixwater", "reflection", "refraction" },
         function(pl, args)
-            net.Start("bhop_set_water_toggle")
-            net.Send(pl)
+            NETWORK:StartNetworkMessage(pl, "ToggleWaterFX")
         end,
         "Hide or show water",
         "[subcommand]"
@@ -872,16 +786,26 @@ function Command:Init()
             "<style> [page]"
         },
 
-        -- Discord Link
+        -- Discord Command
         {
             {"discord", "opendiscord"},
             function(ply, args)
-                net.Start("OpenDiscordLink")
-                net.Send(ply)
+                NETWORK:StartNetworkMessage(ply, "OpenDiscord")
             end,
-            "Displays world records or record list",
-            "<style> [page]"
+            "Opens the Discord link.",
+            ""
         },
+
+        -- Tutorial Command
+        {
+            {"tut", "tutorial"},
+            function(ply, args)
+                NETWORK:StartNetworkMessage(ply, "OpenTutorial")
+            end,
+            "Opens the tutorial link.",
+            ""
+        },
+
         -- Normal WR
         --[[{
             {"nwr", "normalwr", "wrnormal"},

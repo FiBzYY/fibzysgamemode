@@ -795,6 +795,25 @@ local function BotButtonRecord(ply, data)
 end
 hook.Add("StartCommand", "ButtonRecord", BotButtonRecord)
 
+function Replay.HandleSpecialBot(_, szType, _, data)
+	if szType == "Fetch" then
+		if not Replay.BotData then
+			return
+		end
+
+		if not Replay.BotData[data] then
+			return
+		end
+
+		return Replay.BotData[data],
+			   nil, nil,
+			   Replay.BotData[data][4],
+			   Replay.BotData[data][5],
+			   Replay.BotInfo[data]
+	end
+
+end
+
 -- Load
 hook.Add("Initialize", "SpawnBotsOnMapLoad", function()
     Replay:Setup()

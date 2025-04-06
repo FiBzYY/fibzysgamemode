@@ -877,8 +877,7 @@ function UI:CreateMenu()
                     UI.CurrentLogsPanel = parent
 
                     -- request the logs
-                    net.Start("RequestAdminLogs")
-                    net.SendToServer()
+                    NETWORK:StartNetworkMessage(nil, "RequestAdminLogs")
 
                     UI:UpdateServerLogs(parent, {})
                 else
@@ -1028,8 +1027,8 @@ end
 
 -- Update points
 local cachedSum = nil
-net.Receive("UpdatePointsSum", function()
-    local pointsSum = net.ReadInt(32)
+NETWORK:GetNetworkMessage("UpdatePointsSum", function(_, data)
+    local pointsSum = math.Round(data[1])
 
     if Iv(lp()) then
         lp().Sum = pointsSum
@@ -1039,10 +1038,9 @@ net.Receive("UpdatePointsSum", function()
 end)
 
 -- Load Points on start
-hook_Add("InitPostEntity", "AssignCachedPointsSum", function()
+hook.Add("InitPostEntity", "AssignCachedPointsSum", function()
     if cachedSum and Iv(lp()) then
         lp().Sum = cachedSum
-
         cachedSum = nil
     end
 end)

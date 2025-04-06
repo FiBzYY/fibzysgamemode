@@ -3,13 +3,8 @@ DEFINE_BASECLASS "player_default"
 local PLAYER = {
     DisplayName = "Player",
     AvoidPlayers = false,
-    CrouchedWalkSpeed = 0.6,
-    Model = "models/player/group01/male_01.mdl", BotModel = "models/player/group01/male_01.mdl"
-}
-
-local DEFAULT_AMMO = {
-    pistol = 999, smg1 = 999,
-    buckshot = 999
+    CrouchedWalkSpeed = BHOP.Move.CrouchWalkSpeed / BHOP.Move.WalkSpeed,
+    Model = BHOP.Models.Player, BotModel = BHOP.Models.Bot
 }
 
 function PLAYER:Loadout()
@@ -29,8 +24,8 @@ function PLAYER:Loadout()
 
     ply.enablepickup = false
 
-    for ammoType, count in pairs(DEFAULT_AMMO) do
-        ply:SetAmmo(count, ammoType)
+    for ammoType, amount in pairs(BHOP.DefaultAmmo) do
+        ply:SetAmmo(amount, ammoType, true)
     end
 end
 

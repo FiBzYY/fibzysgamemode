@@ -258,21 +258,25 @@ function Zones:StartSet(ply, ID)
     NETWORK:StartNetworkMessageTimer(ply, "Print", {"Admin", Lang:Get("ZoneStart")})
 end
 
-net.Receive("SendZoneData", function(len, ply)
-    local zoneData = net.ReadTable()
+NETWORK:GetNetworkMessage("SendZoneData", function(_, data)
+    local ply = data[1]
+    local startPos = data[2]
+    local endPos = data[3]
+    local zoneType = data[4]
 
-    if zoneData and zoneData.Start and zoneData.End and zoneData.Type then
-        Zones.Editor[ply] = {
-            Start = zoneData.Start,
-            End = zoneData.End,
-            Type = zoneData.Type,
-            Active = true
-        }
-
-        Zones:FinishSet(ply)
-    else
+    if not IsValid(ply) or not startPos or not endPos or not zoneType then
         UTIL:Notify(Color(255, 255, 0), "Zones", "Error: Invalid zone data received from client!")
+        return
     end
+
+    Zones.Editor[ply] = {
+        Start = startPos,
+        End = endPos,
+        Type = zoneType,
+        Active = true
+    }
+
+    Zones:FinishSet(ply)
 end)
 
 function Zones:FinishSet(ply, extra)
@@ -306,16 +310,13 @@ function Zones:CheckSet(ply, finish, extra)
     return false
 end
 
-util.AddNetworkString("CancelZonePlacement")
-
 function Zones:CancelSet(ply, force)
     self.Editor[ply] = nil
 
     NETWORK:StartNetworkMessageTimer(ply, "Admin", {"EditZone", nil})
     NETWORK:StartNetworkMessageTimer(ply, "Print", {"Admin", Lang:Get(force and "ZoneCancel" or "ZoneFinish")})
-
-    net.Start("CancelZonePlacement")
-    net.Send(ply)
+    
+    NETWORK:StartNetworkMessage(ply, "CancelZonePlacement")
 end
 
 function Zones:SaveZoneToDatabase(editor)
