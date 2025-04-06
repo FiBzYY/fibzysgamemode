@@ -72,3 +72,31 @@ Speedrun style added
 Fixed replay spawn logic
 Added menus for Paint, JHUD, and Strafe Trainer
 Added sound feedback for non-improved run times
+
+Newer:
+-- Fixed USP boosters not working
+-- Added prespeed
+-- Updated WR menu in main menu and !wr bonus ect
+-- Booster Fix added
+-- Added !runs stylename
+-- Fixed set spawn outside zone
+-- New big update, includes alot of stuff added
+-- Remove ssjtop records
+-- boosterfix now saves via map change
+-- added more config options
+-- updated f1 admin logs to working now
+-- fixed bonus restart not puting in bouns
+-- possible fps fixes
+-- nui UI rework for looks
+-- fixed player label not being centered
+-- added new api version tracker
+-- added more playtesters
+-- maybe discord hook if gamemode is outdated?
+-- fixed pref printer
+-- (work on admin ranks for f1 admin not all ranks get all options)
+-- (work on admin kick and ban in f1)
+-- fixed jump landing display
+-- fixed scoreboard errors
+-- updated rtv
+-- fixed replay time display
+-- added more config stuff
