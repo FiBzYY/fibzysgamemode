@@ -40,7 +40,7 @@ Lang = {
     AFKPlay = {UTIL.Colour["Timer"], "1;", UTIL.Colour["White"], " is now nolonger AFK."},
 
     -- SSJTOP
-    ssjTop = {UTIL.Colour["Green"], "1;", UTIL.Colour["White"], " got a ", UTIL.Colour["Red"], "2;", UTIL.Colour["White"], " SSJ (", UTIL.Colour["Timer"], "3;", UTIL.Colour["White"], ") on the ", UTIL.Colour["Red"], "4;", UTIL.Colour["White"], " jump!"},
+    SSJTop = {UTIL.Colour["Green"], "1;", UTIL.Colour["White"], " got a ", UTIL.Colour["Red"], "2;", UTIL.Colour["White"], " SSJ (", UTIL.Colour["Timer"], "3;", UTIL.Colour["White"], ") on the ", UTIL.Colour["Red"], "4;", UTIL.Colour["White"], " jump!"},
 
     -- Replay
     BotEnter = {UTIL.Colour["Timer"], "1;", UTIL.Colour["White"], " styles Replay has been spawned."},

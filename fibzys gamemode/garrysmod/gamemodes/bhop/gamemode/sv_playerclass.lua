@@ -346,7 +346,6 @@ function TIMER:CacheWRsForStyle(style)
             for _, row in ipairs(data) do
                 TIMER.WRCached[style][row.map] = tonumber(row.WR)
             end
-            print("[WR Cache] Loaded WRs for style: " .. style)
         end
     end)
 end

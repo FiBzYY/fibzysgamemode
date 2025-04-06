@@ -564,7 +564,7 @@ local function SSJ_PrintStats(ply, lastSpeed, jumpTimeDiff)
             SSJTOP[steamID][ssjType] = jumpSpeed
 
             if SERVER then
-                local ID = "ssjTop"
+                local ID = "SSJTop"
                 local Data = { ply:Nick(), tostring(jumpSpeed), ssjType:upper(), "6th" }
                 NETWORK:StartNetworkMessageTimer(nil, "Print", { ID, Lang:Get(ID, Data) })
 

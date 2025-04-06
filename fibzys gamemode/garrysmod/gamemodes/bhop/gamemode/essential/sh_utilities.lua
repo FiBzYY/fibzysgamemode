@@ -10,6 +10,7 @@ function UTIL:DrawZoneTypes(min, max, colour, normal, pos, thickness, flatzone)
     local drawbeams = render.DrawBeam
     local overlap = 0.5
 
+    -- Fix missing spaces
     local function ExtendBeam(p1, p2)
         if not p1 or not p2 then return p1, p2 end
         local direction = (p2 - p1):GetNormalized()
@@ -127,7 +128,8 @@ UTIL.Colour = {
 	["Paint"] = Color(0, 0, 255),
  	["RTV"] = Color(255, 0, 255),
   	["EdgeHelper"] = Color(255, 105, 180),
-    
+  	["SSJTop"] = Color(255, 105, 180),    
+
 	["White"] = Color(255, 255, 255),
 	["Green"] = Color(107, 142, 35),
 	["Red"] = Color(255, 0, 0)
@@ -300,34 +302,32 @@ hook.Add("Initialize", "AssignPlayerColors", function()
 end)
 
 if SERVER then
-    -- network message
-    NETWORK:GetNetworkMessage("SendDynamicColor", function(ply, data)
-        if not data or not data[1] then return end
-
-        local r = data[1]
-        local g = data[2]
-        local b = data[3]
-
-        ply.DynamicColor = Color(r, g, b)
-    end)
+    util.AddNetworkString("SendDynamicColor")
 
     hook.Add("PlayerInitialSpawn", "SetupDynamicColor", function(ply)
-        ply.DynamicColor = Color(255, 255, 255) -- Default color on join
+        ply.DynamicColor = Color(255, 255, 255) 
+    end)
+
+    net.Receive("SendDynamicColor", function(len, ply)
+        local r = net.ReadUInt(8)
+        local g = net.ReadUInt(8)
+        local b = net.ReadUInt(8)
+        ply.DynamicColor = Color(r, g, b)
     end)
 end
 
 -- Color Sender
 if CLIENT then
-    hook.Add("InitPostEntity", "SendColorToServer", function()
+    hook.Add("Initialize", "SendColorToServer", function()
         timer.Simple(1, function()
-            if not IsValid(LocalPlayer()) then return end
-
             GeneratePlayerColors(LocalPlayer())
 
             local col = DynamicColors.TextColor or Color(255, 255, 255)
-
-            -- Send RGB as separate values
-            NETWORK:StartNetworkMessage(nil, "SendDynamicColor", col.r, col.g, col.b)
+            net.Start("SendDynamicColor")
+            net.WriteUInt(col.r, 8)
+            net.WriteUInt(col.g, 8)
+            net.WriteUInt(col.b, 8)
+            net.SendToServer()
         end)
     end)
 end

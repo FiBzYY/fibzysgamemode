@@ -57,8 +57,8 @@ if not CONFIG_LOADED then
     BHOP.Version = {
         Engine = "9594",
         GM = "13.25",
-        ReleaseDate = "04/05/25",
-        LastUpdated = "04/05/25"
+        ReleaseDate = "04/06/25",
+        LastUpdated = "04/06/25"
     }
 
     -- Main movement settings
