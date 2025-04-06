@@ -6,7 +6,7 @@ $mapname = isset($_GET["m"]) ? htmlspecialchars($_GET["m"]) : "Unknown";
 
 // Your servers' data
 $_SERVERS = array(
-    "ThisServerIdentifier" => array('Bunny Hop', '77.93.141.26', 25000),
+    "ThisServerIdentifier" => array('Bunny Hop', '1.1.1', 25000),
     "AnotherServer" => array('Bunny Hop', 'IP ADDRESS', 27015),
 );
 
@@ -14,7 +14,7 @@ $_SERVERS = array(
 $gamedata = isset($_SERVERS[$requesttype]) ? $_SERVERS[$requesttype] : array("Unknown", "Unknown", "Unknown");
 
 // Your Steam API Key
-$apikey = "305502D0982FA29805221FECA497DECB";
+$apikey = "";
 
 // Fetch player details from Steam API if a valid SteamID is provided
 if ($requestuser !== "Unknown") {
