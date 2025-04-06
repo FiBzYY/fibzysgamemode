@@ -1032,7 +1032,7 @@ NETWORK:GetNetworkMessage("AdminChangeMap", function(ply, data)
 end)
 
 local function SaveBans()
-    UTIL:Notify(Color(0, 255, 0), "BanSystem", BanSystem .. "Bans are now saved live to the database. No file save needed.")
+    UTIL:Notify(Color(0, 255, 0), "BanSystem", BanSystem .. "Bans are now saved to the database.")
 end
 
 local function LoadBans()

@@ -786,6 +786,39 @@ function Command:Init()
             "<style> [page]"
         },
 
+        -- Top Players List
+        {
+            {"top", "topplayers"},
+            function(ply, args)
+                local styleArg = args[1] or "normal"
+                local page = tonumber(args[2]) or 1
+
+                local styleID = TIMER:GetStyleID(styleArg)
+                if not styleID then return end
+
+                TIMER:SendTopList(ply, page, styleID)
+            end,
+            "Displays top players list",
+            "<style> [page]"
+        },
+
+        -- Maps Beat List
+        {
+            {"beat", "mapsbeat"},
+            function(ply, args)
+                local styleArg = args[1] or "normal"
+
+                local styleID = TIMER:GetStyleID(styleArg)
+                if not styleID then return end
+
+                ply.style = styleID
+
+                TIMER:GetMapsBeat(ply, styleID)
+            end,
+            "Displays maps beat list",
+            "<style> [page]"
+        },
+
         -- Discord Command
         {
             {"discord", "opendiscord"},

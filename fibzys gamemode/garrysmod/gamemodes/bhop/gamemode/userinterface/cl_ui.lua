@@ -1489,6 +1489,83 @@ UI:AddListener("wr", function(_, data)
     end
 end)
 
+-- Top Players
+UI:AddListener("top", function(_, data)
+    local topList = data[1]
+    local style = data[2]
+    local page = data[3]
+
+    if not istable(topList) or #topList == 0 then
+        UI.Top = UI:NumberedUIPanel("Top Players (" .. TIMER:StyleName(style) .. ")", {
+            ["name"] = "No top players yet!",
+            ["function"] = function() end
+        })
+        UI.Top:ForceNextPrevious(false)
+        return
+    end
+
+    local options = {}
+    for i, entry in ipairs(topList) do
+        local rank = ((page - 1) * 10) + i
+        local wrs = entry.wrs or 0
+        local pts = entry.points or 0
+
+        options[i] = {
+            ["name"] = ("[#%d] %s (%d pts%s)"):format(
+                rank,
+                entry.player or "Unknown",
+                pts,
+                wrs > 0 and (", " .. wrs .. " WRs") or ""
+            ),
+            ["function"] = function()
+                UTIL:AddMessage("Timer", entry.player .. " has " .. pts .. " points" .. (wrs > 0 and (" and " .. wrs .. " WRs") or ""))
+            end
+        }
+    end
+
+    UI.Top = UI:NumberedUIPanel("Top Players (" .. TIMER:StyleName(style) .. ")", unpack(options))
+    UI.Top:ForceNextPrevious(true)
+    UI.Top.style = style
+    UI.Top.page = page
+    UI.Top.count = #topList
+
+    function UI.Top:OnNext(hitMax)
+        if hitMax and ((self.page * 10) < self.count) then
+            RunConsoleCommand("say", "!top " .. style .. " " .. (self.page + 1))
+        end
+    end
+end)
+
+-- Maps beat
+UI:AddListener("mapsbeat", function(_, data)
+    local mapList = data[1]
+    local style = data[2]
+
+    local count = #mapList
+
+    if not istable(mapList) or count == 0 then
+        UI.BeatMaps = UI:NumberedUIPanel("Maps Beaten (" .. TIMER:StyleName(style) .. " - 0 total)", {
+            ["name"] = "You haven't beaten any maps yet!",
+            ["function"] = function() end
+        })
+        UI.BeatMaps:ForceNextPrevious(false)
+        return
+    end
+
+    local options = {}
+    for i, entry in ipairs(mapList) do
+        options[i] = {
+         ["name"] = string.format("%s - %s (%d pts)", entry.map, UI:WRConvert(entry.time or 0), entry.points or 0),
+            ["function"] = function()
+                UTIL:AddMessage("Maps", string.format("You beat %s in %s and earned %d points!", entry.map, UI:WRConvert(entry.time or 0), entry.points))
+            end
+        }
+    end
+
+    UI.BeatMaps = UI:NumberedUIPanel("Maps Beaten (" .. TIMER:StyleName(style) .. " - " .. count .. " total)", unpack(options))
+    UI.BeatMaps:ForceNextPrevious(false)
+end)
+
 -- SSJ Top Menu
 local function CreateSSJTopMenu(data)
     if IsValid(SSJTopFrame) then SSJTopFrame:Remove() end

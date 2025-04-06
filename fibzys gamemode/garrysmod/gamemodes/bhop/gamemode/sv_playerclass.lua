@@ -333,6 +333,90 @@ function TIMER:LoadBest(ply)
 end
 
 Player.Points = {}
+TIMER.WRCached = {}
+
+function TIMER:CacheWRsForStyle(style)
+    local query = [[
+        SELECT map, MIN(time) AS WR FROM timer_times
+        WHERE style = %d GROUP BY map
+    ]]
+    MySQL:Start(string.format(query, style), function(data)
+        TIMER.WRCached[style] = {}
+        if data then
+            for _, row in ipairs(data) do
+                TIMER.WRCached[style][row.map] = tonumber(row.WR)
+            end
+            print("[WR Cache] Loaded WRs for style: " .. style)
+        end
+    end)
+end
+
+hook.Add("Initialize", "BHOP_RankLoad", function()
+    TIMER:CacheWRsForStyle(TIMER:GetStyleID("normal"))
+    TIMER:CacheWRsForStyle(TIMER:GetStyleID("sideways"))
+end)
+
+function TIMER:GetMapWRTime(map, style)
+    return self.WRCached[style] and self.WRCached[style][map]
+end
+
+function TIMER:GetMapCompletionCount(map, style, ply)
+    if not self.MapCompletions then self.MapCompletions = {} end
+    if not self.MapCompletions[style] then self.MapCompletions[style] = {} end
+
+    if self.MapCompletions[style][map] then
+        return self.MapCompletions[style][map]
+    end
+
+    -- async fetch with rank refresh on load
+    local query = string.format("SELECT COUNT(*) AS c FROM timer_times WHERE map = '%s' AND style = %d", map, style)
+    MySQL:Start(query, function(data)
+        local count = (data and data[1] and tonumber(data[1].c)) or 1
+        self.MapCompletions[style][map] = count
+
+        -- refresh rank after we get real completion data
+        if IsValid(ply) then
+            self:UpdateRank(ply)
+        end
+    end)
+
+    return 1
+end
+
+function TIMER:GetPlayerScalar(ply)
+    local completions = ply.FirstPlaceTimes or {}
+    if #completions == 0 then return 0 end
+
+    local scalarSum = 0
+    local mapCount = 0
+
+    for _, mapData in ipairs(completions) do
+        local wr = self:GetMapWRTime(mapData.Map, ply.style)
+        if wr and wr > 0 and mapData.Time > 0 then
+            local ratio = mapData.Time / wr
+
+            -- Group system: 6 tiers based on ratio
+            local groupScalar = 0
+            if ratio <= 1.05 then groupScalar = 1.0     -- group 1
+            elseif ratio <= 1.10 then groupScalar = 0.85 -- group 2
+            elseif ratio <= 1.15 then groupScalar = 0.7  -- group 3
+            elseif ratio <= 1.20 then groupScalar = 0.55 -- group 4
+            elseif ratio <= 1.25 then groupScalar = 0.4  -- group 5
+            else groupScalar = 0.25                      -- group 6
+            end
+
+            -- completion multiplier idea
+            local completionMultiplier = math.Clamp(self:GetMapCompletionCount(mapData.Map, ply.style, ply) / 5, 1, 10)
+
+            -- sum it with weight
+            scalarSum = scalarSum + (groupScalar * completionMultiplier)
+            mapCount = mapCount + 1
+        end
+    end
+
+    if mapCount == 0 then return 0 end
+    return scalarSum / mapCount
+end
 
 function TIMER:CachePointSum(style, id, callback)
     MySQL:Start("SELECT SUM(points) AS Sum FROM timer_times WHERE uid = '" .. id .. "' AND (" .. self:GetMatchingstyles(style) .. ")", function(data)
@@ -374,25 +458,23 @@ end
 
 -- Load the players rank
 function TIMER:LoadRank(ply, update)
-    self:CachePointSum(ply.style, ply:SteamID(), function()
-        local Sum = self:GetPointSum(ply.style, ply:SteamID())
-        local Rank = self:GetRank(Sum, self:GetRankType(ply.style, true))
+    local scalar = self:GetPlayerScalar(ply)
+    local Rank = self:GetRank(scalar, self:GetRankType(ply.style, true))
 
-        if Rank ~= ply.Rank then
-            ply.Rank = Rank
-            ply:SetNWInt("Rank", ply.Rank)
-        end
+    if Rank ~= ply.Rank then
+        ply.Rank = Rank
+        ply:SetNWInt("Rank", ply.Rank)
+    end
 
-        self:SetSubRank(ply, Rank, Sum)
+    ply.RankSum = scalar
+    self:SetSubRank(ply, Rank, scalar)
+    ply.Sum = scalar
 
-        ply.Sum = Sum
+    NETWORK:StartNetworkMessage(ply, "UpdatePointsSum", scalar)
 
-        NETWORK:StartNetworkMessage(ply, "UpdatePointsSum", Sum)
-
-        if not update then
-            NETWORK:StartNetworkMessageTimer(ply, "Timer", {"Ranks", Player.NormalScalar, Player.AngledScalar})
-        end
-    end)
+    if not update then
+        NETWORK:StartNetworkMessageTimer(ply, "Timer", {"Ranks", Player.NormalScalar, Player.AngledScalar})
+    end
 end
 
 -- Sub Ranks
@@ -479,49 +561,31 @@ function TIMER:AddScore(ply)
 end
 
 function TIMER:GetMatchingstyles(style)
-    local baseStyles = { 
-        self:GetStyleID("Normal"), 
-        self:GetStyleID("E"), 
-        self:GetStyleID("Legit"), 
-        self:GetStyleID("Bonus"), 
-        self:GetStyleID("Practice") 
+    local baseStyles = {
+        self:GetStyleID("Normal"),
+        self:GetStyleID("E"),
+        self:GetStyleID("Legit"),
+        self:GetStyleID("Bonus"),
+        self:GetStyleID("Practice")
     }
 
-    local advancedStyles = { 
-        self:GetStyleID("Sideways"), 
-        self:GetStyleID("Half-Sideways"), 
-        self:GetStyleID("WOnly"), 
-        self:GetStyleID("AOnly") 
+    local advancedStyles = {
+        self:GetStyleID("Sideways"),
+        self:GetStyleID("Half-Sideways"),
+        self:GetStyleID("WOnly"),
+        self:GetStyleID("AOnly")
     }
 
-    for _, styleID in ipairs(baseStyles) do
-        if styleID == 0 then
+    local use = (style >= self:GetStyleID("Sideways") and style <= self:GetStyleID("AOnly")) and advancedStyles or baseStyles
+
+    local result = {}
+    for _, sid in ipairs(use) do
+        if sid and sid > 0 then
+            table.insert(result, "style = " .. sid)
         end
     end
 
-    for _, styleID in ipairs(advancedStyles) do
-        if styleID == 0 then
-        end
-    end
-
-    local tab = baseStyles
-    if style >= self:GetStyleID("Sideways") and style <= self:GetStyleID("AOnly") then
-        tab = advancedStyles
-    end
-
-    local t = {}
-    for _, styleID in ipairs(tab) do
-        if styleID and styleID > 0 then
-            table.insert(t, "style = " .. styleID)
-        else
-        end
-    end
-
-    if #t == 0 then
-        return "style = 1"
-    end
-
-    return string.Implode(" OR ", t)
+    return table.concat(result, " OR ")
 end
 
 function TIMER:FindScalar(Points)
@@ -550,16 +614,41 @@ TIMER.PageSize = 7
 TIMER.TopCache = {}
 TIMER.TopLimit = 10
 
-local function CacheTopPlayers(result, cache, style)
-    if TIMER:Assert(result, "Sum") then
-        for i, d in ipairs(result) do
-            if d.nStyle == style then
-                cache[style][i] = { string_sub(d.szPlayer, 1, 20), math_floor(tonumber(d.Sum)) }
-            end
-        end
+local function CacheTopPlayers(result, cache, rankType)
+    if not result or #result == 0 then return end
 
-        TIMER:ClearOldCache(cache[style], TIMER.TopLimit)
+    cache[rankType] = {}
+
+    for i, d in ipairs(result) do
+        local steamid = d.uid
+        local name = string.sub(d.player or "unknown", 1, 20)
+        local points = math.floor(tonumber(d.Sum) or 0)
+
+        cache[rankType][i] = {
+            player = name,
+            points = points,
+            wrs = 0,
+        }
+
+        local styleMatch = TIMER:GetMatchingstyles(tonumber(d.style))
+
+        local wrQuery = string.format([[
+            SELECT COUNT(*) AS WRs
+            FROM timer_times AS t1
+            WHERE uid = %s AND (%s) AND NOT EXISTS (
+                SELECT 1 FROM timer_times AS t2
+                WHERE t1.map = t2.map AND t2.time < t1.time AND t1.style = t2.style
+            )
+        ]], SQLStr(steamid), styleMatch)
+
+        MySQL:Start(wrQuery, function(res)
+            if res and res[1] and cache[rankType][i] then
+                cache[rankType][i].wrs = tonumber(res[1].WRs or 0)
+            end
+        end)
     end
+
+    TIMER:ClearOldCache(cache[rankType], TIMER.TopLimit)
 end
 
 function TIMER:ClearOldCache(cache, maxEntries)
@@ -568,21 +657,23 @@ function TIMER:ClearOldCache(cache, maxEntries)
     end
 end
 
--- Load top times
 function TIMER:LoadTop()
-    local normal = self:GetRankType(self:GetStyleID("normal"), true)
-    local angled = self:GetRankType(self:GetStyleID("sideways"), true)
+    local normalMatch = self:GetMatchingstyles(self:GetStyleID("normal"))
+    local angledMatch = self:GetMatchingstyles(self:GetStyleID("sideways"))
 
-    self.TopCache[normal], self.TopCache[angled] = {}, {}
+    local normalRankType = self:GetRankType(self:GetStyleID("normal"), true)
+    local angledRankType = self:GetRankType(self:GetStyleID("sideways"), true)
 
-    MySQL:Start("SELECT player, SUM(points) as Sum, style FROM timer_times WHERE style IN (" .. normal .. ", " .. self:GetStyleID("bonus") .. ") GROUP BY uid ORDER BY Sum DESC LIMIT " .. self.TopLimit, function(Normal)
-        CacheTopPlayers(Normal, self.TopCache, normal)
-        TIMER:ClearOldCache(self.TopCache[normal], TIMER.TopLimit)
+    self.TopCache[normalRankType], self.TopCache[angledRankType] = {}, {}
+
+    -- Normal styles
+    MySQL:Start("SELECT uid, player, SUM(points) as Sum, style FROM timer_times WHERE " .. normalMatch .. " GROUP BY uid ORDER BY Sum DESC LIMIT " .. self.TopLimit, function(normalResult)
+        CacheTopPlayers(normalResult, self.TopCache, normalRankType)
     end)
 
-    MySQL:Start("SELECT player, SUM(points) as Sum, style FROM timer_times WHERE style IN (" .. self:GetStyleID("sideways") .. ", " .. self:GetStyleID("halfsideways") .. ") GROUP BY uid ORDER BY Sum DESC LIMIT " .. self.TopLimit, function(Angled)
-        CacheTopPlayers(Angled, self.TopCache, angled)
-        TIMER:ClearOldCache(self.TopCache[angled], TIMER.TopLimit)
+    -- Advanced styles
+    MySQL:Start("SELECT uid, player, SUM(points) as Sum, style FROM timer_times WHERE " .. angledMatch .. " GROUP BY uid ORDER BY Sum DESC LIMIT " .. self.TopLimit, function(angledResult)
+        CacheTopPlayers(angledResult, self.TopCache, angledRankType)
     end)
 end
 
@@ -601,34 +692,37 @@ function TIMER:GetTopCount(style)
 end
 
 function TIMER:SendTopList(ply, page, type)
-    local style = type == 4 and self:GetStyleID("sideways") or self:GetStyleID("normal")
+    local style = type == self:GetRankType(self:GetStyleID("sideways"), true) 
+        and self:GetStyleID("sideways") or self:GetStyleID("normal")
 
     local topPage = self:GetTopPage(page, style)
-    local topCount = self:GetTopCount(style)
-    
-    NETWORK:StartNetworkMessageTimer(ply, "GUI_Update", { "Top", { 4, topPage, page, topCount, type } })
+
+    UI:SendToClient(ply, "top", topPage, style, page)
 end
 
 -- Get the players finished maps
-function TIMER:GetMapsBeat(ply, callback)
+function TIMER:GetMapsBeat(ply, style)
     local steamID = ply:SteamID()
-    local style = ply.style
-    local query = string.format("SELECT map, time, points FROM timer_times WHERE uid = '%s' AND style = %d ORDER BY points ASC", steamID, style)
+    local query = string.format(
+        "SELECT map, time, points FROM timer_times WHERE uid = '%s' AND style = %d ORDER BY points DESC",
+        steamID,
+        style
+    )
 
     MySQL:Start(query, function(List)
         local tab = {}
 
         if self:Assert(List, "map") then
-            for _, d in pairs(List) do
+            for _, d in ipairs(List) do
                 table.insert(tab, {
-                    d.map,
-                    tonumber(d.time),
-                    tonumber(d.points)
+                    map = d.map,
+                    time = tonumber(d.time),
+                    points = tonumber(d.points)
                 })
             end
         end
 
-        NETWORK:StartNetworkMessageTimer(ply, "GUI_Open", { "Maps", { callback, tab } })
+        UI:SendToClient(ply, "mapsbeat", tab, style)
     end)
 end
 
