@@ -96,10 +96,16 @@ if CLIENT then
         if not GetConVar("bhop_replaylines"):GetBool() then return end
         if #landingBoxes == 0 then return end
 
+        local ply = LocalPlayer()
+        if not IsValid(ply) then return end
+
+        local posPlayer = ply:GetPos()
+        local drawDistanceSqr = 1000 * 1000
+
         local size = 6
         local height = 0.1
         local overlap = 0.5
-        local lastPos = nil
+        local lastValidPos = nil
 
         local function ExtendBeam(p1, p2)
             if not p1 or not p2 then return p1, p2 end
@@ -114,29 +120,36 @@ if CLIENT then
             local color = box.color or Color(128, 0, 128)
             local colorline = Color(0, 0, 255)
 
-            local tl = pos + Vector(-size, -size, height)
-            local tr = pos + Vector( size, -size, height)
-            local br = pos + Vector( size,  size, height)
-            local bl = pos + Vector(-size,  size, height)
+            local isVisible = pos:DistToSqr(posPlayer) <= drawDistanceSqr
 
-            local a, b = ExtendBeam(tl, tr)
-            render.DrawBeam(a, b, 1.5, 0, 0, color)
+            if isVisible then
+                -- Draw square
+                local tl = pos + Vector(-size, -size, height)
+                local tr = pos + Vector( size, -size, height)
+                local br = pos + Vector( size,  size, height)
+                local bl = pos + Vector(-size,  size, height)
 
-            a, b = ExtendBeam(tr, br)
-            render.DrawBeam(a, b, 1.5, 0, 0, color)
+                local a, b = ExtendBeam(tl, tr)
+                render.DrawBeam(a, b, 1.5, 0, 0, color)
 
-            a, b = ExtendBeam(br, bl)
-            render.DrawBeam(a, b, 1.5, 0, 0, color)
+                a, b = ExtendBeam(tr, br)
+                render.DrawBeam(a, b, 1.5, 0, 0, color)
 
-            a, b = ExtendBeam(bl, tl)
-            render.DrawBeam(a, b, 1.5, 0, 0, color)
+                a, b = ExtendBeam(br, bl)
+                render.DrawBeam(a, b, 1.5, 0, 0, color)
 
-            if lastPos then
-                local from, to = ExtendBeam(lastPos, pos)
+                a, b = ExtendBeam(bl, tl)
+                render.DrawBeam(a, b, 1.5, 0, 0, color)
+            end
+
+            -- Now draw the path line ONLY if both this and last are visible
+            if lastValidPos and isVisible and lastValidPos:DistToSqr(posPlayer) <= drawDistanceSqr then
+                local from, to = ExtendBeam(lastValidPos, pos)
                 render.DrawBeam(from, to, 1, 0, 0, colorline)
             end
 
-            lastPos = pos
+            -- Always update last valid pos
+            lastValidPos = pos
         end
     end)
 
