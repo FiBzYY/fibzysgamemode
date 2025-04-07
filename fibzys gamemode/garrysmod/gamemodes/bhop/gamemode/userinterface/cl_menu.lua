@@ -256,6 +256,109 @@ net.Receive("SendVersionDataMenu", function()
     BHOP.VersionMessage = net.ReadString()
 end)
 
+-- List Commands for Admin
+UI.AdminCommands = {
+    {
+        name = "Gag Player",
+        id = "gag",
+        args = {},
+        access = 1
+    },
+    {
+        name = "Permanently Gag Player",
+        id = "permgag",
+        args = {},
+        access = 1
+    },
+    {
+        name = "Ungag Player",
+        id = "ungag",
+        args = {},
+        access = 1
+    },
+    {
+        name = "Mute Player",
+        id = "mute",
+        args = {},
+        access = 1
+    },
+    {
+        name = "Permanently Mute Player",
+        id = "permmute",
+        args = {},
+        access = 1
+    },
+    {
+        name = "Unmute Player",
+        id = "unmute",
+        args = {},
+        access = 1
+    },
+    {
+        name = "Ban Player",
+        id = "ban",
+        args = {
+            { name = "time", desc = "Ban duration in minutes", default = "0", help = "(0 = forever)" },
+            { name = "reason", desc = "Ban reason", default = "You have been banned from this server.", help = "(max length: 100)" }
+        },
+        access = 1
+    },
+    {
+        name = "Ban SteamID",
+        id = "banid",
+        args = {
+            { name = "steamid", desc = "SteamID to ban", default = "", help = "(format: STEAM_0)" },
+            { name = "time", desc = "Ban time", default = "0", help = "(0 = forever)" },
+            { name = "reason", desc = "Reason", default = "Violation of server rules", help = "(max length: 100)" }
+        },
+        access = 1
+    },
+    {
+        name = "Unban SteamID",
+        id = "unbanid",
+        args = {
+            { name = "steamid", desc = "SteamID to unban", default = "", help = "(format: STEAM_0)" }
+        },
+        access = 1
+    },
+    {
+        name = "Kick Player",
+        id = "kick",
+        args = {
+            { name = "reason", desc = "Kick reason", default = "You have been kicked from the server.", help = "(max length: 100)" }
+        },
+        access = 1
+    },
+    {
+        name = "Get IP Address",
+        id = "getip",
+        args = {},
+        access = 1
+    },
+    {
+        name = "Extend a map",
+        id = "extendmap",
+        args = {
+            { name = "minutes", desc = "Extend time", default = "15", help = "How many minutes" }
+        },
+        access = 1
+    },
+    {
+        name = "Force Spectate",
+        id = "spectate",
+        args = {},
+        access = 1
+    },
+    {
+        name = "Set User Group",
+        id = "setgroup",
+        args = {
+            { name = "group", desc = "User group", default = "user", help = "user, admin, superadmin" }
+        },
+        access = 1
+    }
+}
+
 -- Main Menu
 function UI:CreateMenu()
     if Iv(Frame) then
@@ -870,6 +973,12 @@ function UI:CreateMenu()
                 local x, y = 10, 0
                 self:CreatePanel(parent, {"Admin user management"})
                 self:UpdatePlayerList(parent)
+            end, isActive = true },
+
+            { text = "Command", panelContent = function(parent)
+                local x, y = 10, 0
+                self:CreatePanel(parent, {"Admin user commands"})
+                self:UpdateCommand(parent)
             end, isActive = true },
 
             -- Show all logs

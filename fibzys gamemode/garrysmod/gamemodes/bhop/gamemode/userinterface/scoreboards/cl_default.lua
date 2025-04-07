@@ -258,16 +258,18 @@ local function CreateScoreboard(shouldHide)
             DrawText("Timeleft: " .. timeString, "ui.mainmenu.button", w - x - 10, y, textColor, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
         end
 
-        local lst = ""
-        for k, v in pairs(self.spectators) do 
-            lst = lst .. v:Nick() .. ", "
-        end
-        
-        if string.EndsWith(lst, ", ") then 
-            lst = string.sub(lst, 1, #lst - 2)
-        else 
-            lst = "None"
-        end
+		local lst = ""
+		for k, v in pairs(self.spectators) do 
+			if IsValid(v) then
+				lst = lst .. v:Nick() .. ", "
+			end
+		end
+
+		if lst == "" then
+			lst = "None"
+		elseif string.EndsWith(lst, ", ") then 
+			lst = string.sub(lst, 1, #lst - 2)
+		end
 
         DrawText("Spectators: " .. lst, "ui.mainmenu.button", x + 2, h - (height / 3) - (x / 2) + 1, TEXT, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
         DrawText("Players: " .. #player.GetHumans() .. "/" .. game.MaxPlayers() - 2, "ui.mainmenu.button", w - x - 2, h - (height / 3) - (x / 2) + 1, TEXT, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)

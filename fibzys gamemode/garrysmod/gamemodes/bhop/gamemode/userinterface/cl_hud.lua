@@ -742,7 +742,7 @@ HUD.Themes = {
         local yPos = screenHeight - 90 - height
         local tc = color_white
         local tc2 = Color(0, 160, 200)
-        local speed = math.floor(GetClientVelocity(pl))
+        local speed = data.velocity or math.floor(pl:GetVelocity():Length2D())
         local current = data.current or 0
         local isInPractice = pl:GetNWInt("inPractice", false)
         
@@ -750,7 +750,9 @@ HUD.Themes = {
         local jumps = pl.player_jumps or 0
         local isBot = pl:IsBot()
     
-        if isBot or pl:Team() == TEAM_SPECTATOR then
+        if pl.TimerFinished and pl.tickTimeDiffEnd then
+            status = ConvertTimeWR(pl.tickTimeDiffEnd)
+        elseif isBot or pl:Team() == TEAM_SPECTATOR then
             status = ConvertTimeWR(current)
         end
 
@@ -789,9 +791,8 @@ HUD.Themes = {
         DrawText("World Record: " .. wr .. " " .. wrn, "hud.simplefont", 9, 28, tc, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
         DrawText("Personal Best: " .. personal, "hud.simplefont", 10, 48, tc, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
 
-        if TIMER.globalWR ~= "N/A" then
+        if isstring(TIMER.globalWR) and TIMER.globalWR ~= "N/A" then
             local playerName, time = string.match(TIMER.globalWR, "(.+)%s%-%s(.+)")
-
             if playerName and time then
                 local formattedText = "Global: " .. time .. " (" .. playerName .. ")"
                 DrawText(formattedText, "hud.simplefont", screenWidth - 10, 8, textColor, TEXT_ALIGN_RIGHT)
@@ -864,7 +865,7 @@ HUD.Themes = {
             DrawBoxRound(10, xPos, yPos, boxWidth, boxHeight, Color(0, 0, 0, 100))
         end
 
-        DrawText(speed .. " u/s", "hud.simplefont", screenWidth / 2, (screenHeight / 2) - 180, tc, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+        DrawText(tostring(math.floor(tonumber(speed) or 0)) .. " u/s", "hud.simplefont", screenWidth / 2, (screenHeight / 2) - 180, tc, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
         DrawText("Time: " .. status, "hud.simplefont", screenWidth / 2, screenHeight - 130, tc, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
         DrawText(stylename, "hud.simplefont", screenWidth / 2, screenHeight - 100, tc, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 

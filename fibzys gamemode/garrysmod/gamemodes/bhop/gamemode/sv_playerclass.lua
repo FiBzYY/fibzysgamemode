@@ -567,17 +567,21 @@ function TIMER:SetRankMedal(ply, nPos)
         if self:Assert(Query, "uid") then
             for _, p in pairs(player.GetHumans()) do
                 if p.style ~= ply.style then continue end
+
                 local bSet = false
                 for _, d in pairs(Query) do
                     if p:SteamID() == d.uid then
+                        local rank = tonumber(d.Rank)
+                        p.Placement = (rank <= 3) and rank or 0
+                        p:SetNWInt("Placement", p.Placement)
                         bSet = true
-                        p.Placement = tonumber(d.Rank) > 3 and 0 or tonumber(d.Rank)
-                        p:SetNWInt("Placement", p.WRCount)
+                        break
                     end
                 end
-                if not bSet and p.WRCount then
+
+                if not bSet then
                     p.Placement = 0
-                    p:SetNWInt("Placement", p.WRCount)
+                    p:SetNWInt("Placement", 0)
                 end
             end
         end

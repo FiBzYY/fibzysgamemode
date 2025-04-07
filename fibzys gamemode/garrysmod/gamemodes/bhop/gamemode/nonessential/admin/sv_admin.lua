@@ -780,14 +780,14 @@ function Admin:HandleRequest(ply, args)
 			return BHDATA:Send(ply, "Print", { "Admin", "Replay removal operation has been cancelled!" })
 		end
 
-		if not BHDATA:IsValidStyle(style) then
+		if not TIMER:IsValidStyle(style) then
 			return BHDATA:Send(ply, "Print", { "Admin", "Invalid style entered!" })
 		end
 
 		local mapName = MySQL:Escape(game.GetMap())
 
 		for _, b in pairs(player.GetBots()) do
-			if b.Style == nStyle then
+			if b.Style == style then
 				b.DCReason = "Replay was deleted"
 				b:Kick("Replay deleted")
 			end
@@ -795,6 +795,7 @@ function Admin:HandleRequest(ply, args)
 
 		local stylename = (style == TIMER:GetStyleID("Normal")) and ".txt" or ("_" .. style .. ".txt")
 		local replayFilePath = "timer/replays/data_" .. game.GetMap() .. stylename
+
 		if file.Exists(replayFilePath, "DATA") then
 			file.Delete(replayFilePath)
 		end
@@ -932,14 +933,15 @@ function Admin:HandleRequest(ply, args)
 end
 
 NETWORK:GetNetworkMessage("AdminSetRank", function(ply, data)
-    if not IsValid(ply) or not ply:IsAdmin() then return end
+	if not IsValid(ply) or Admin:GetAccess(ply) < Admin.Level.Owner then return end
 
-    local szSteam = data[1]
+    local rawSteamID64 = data[1]
     local szLevel = data[2]
-    local nType = tonumber(2) or 1
-    local nAccess = Admin.Level.None
 
-    -- Find matching level by name
+    local szSteam = util.SteamIDFrom64(rawSteamID64)
+    if not szSteam or szSteam == "STEAM_0:0:0" then return end
+
+    local nAccess = Admin.Level.None
     for name, level in pairs(Admin.Level) do
         if string.lower(name) == string.lower(szLevel) then
             nAccess = level
@@ -951,54 +953,44 @@ NETWORK:GetNetworkMessage("AdminSetRank", function(ply, data)
         return BHDATA:Send(ply, "Print", { "Admin", Lang:Get("AdminMisinterpret", { szLevel }) })
     end
 
-    local function UpdateAdminStatus(bUpdate, sqlArg, adminPly)
+    local function UpdateAdminStatus(bUpdate, adminPly, id)
         local function UpdateAdminCallback(data, varArg, szError)
-            local targetAdmin, targetData = varArg[1], varArg[2]
-
+            local targetAdmin = varArg[1]
             if data then
                 Admin:LoadAdmins()
-                BHDATA:Send(targetAdmin, "Print", { "Admin", Lang:Get("AdminOperationComplete") })
-                Admin:AddLog("Updated admin with identifier [" .. targetData[1] .. "] to level " .. targetData[2] .. " and type " .. targetData[3], targetAdmin:SteamID(), targetAdmin:Name())
+                Admin:AddLog("Updated admin with SteamID [" .. szSteam .. "] to level " .. nAccess, targetAdmin:SteamID(), targetAdmin:Name())
             else
                 BHDATA:Send(targetAdmin, "Print", { "Admin", Lang:Get("AdminErrorCode", { szError }) })
             end
         end
 
-        if bUpdate then
-            SQL:Prepare("UPDATE timer_admins SET level = {1}, type = {2} WHERE id = {0}", sqlArg)
-            :Execute(UpdateAdminCallback, { adminPly, sqlArg })
+        if bUpdate and id then
+            SQL:Prepare("UPDATE timer_admins SET level = {1}, type = {2} WHERE id = {0}", { id, nAccess, 2 })
+                :Execute(UpdateAdminCallback, { adminPly })
         else
-            SQL:Prepare("INSERT INTO timer_admins (steam, level, type) VALUES ({0}, {1}, {2})", sqlArg)
-            :Execute(UpdateAdminCallback, { adminPly, sqlArg })
+            SQL:Prepare("INSERT INTO timer_admins (steam, level, type) VALUES ({0}, {1}, {2})", { szSteam, nAccess, 2 })
+                :Execute(UpdateAdminCallback, { adminPly })
         end
     end
 
     SQL:Prepare("SELECT id FROM timer_admins WHERE steam = {0} ORDER BY level DESC LIMIT 1", { szSteam })
-    :Execute(function(data, varArg, szError)
-        local updateFunc, adminPly, sqlArg = varArg[1], varArg[2], varArg[3]
-        local bUpdate = false
-
-		if TIMER:Assert(data, "id") then
-			bUpdate = true
-			sqlArg[1] = data[1]["id"]
-		end
-
-        updateFunc(bUpdate, sqlArg, adminPly)
-    end, { UpdateAdminStatus, ply, { szSteam, nAccess, nType } })
+        :Execute(function(data, varArg)
+            local adminPly = varArg[1]
+            if TIMER:Assert(data, "id") then
+                local id = tonumber(data[1]["id"])
+                UpdateAdminStatus(true, adminPly, id)
+            else
+                UpdateAdminStatus(false, adminPly, nil)
+            end
+        end, { ply })
 end)
 
 NETWORK:GetNetworkMessage("AdminChangeMapMultiplier", function(ply, data)
-    if not ply:IsAdmin() then
-        ply:ChatPrint("You don't have permission to change the map multiplier!")
-        return
-    end
+    if not ply:IsAdmin() then return end
 
     local Points = data[1]
 
-    if not Points or Points <= 0 then
-        ply:ChatPrint("Invalid multiplier value!")
-        return
-    end
+    if not Points or Points <= 0 then return end
 
     local mapName = MySQL:Escape(game.GetMap())
     local nOld = Timer.Multiplier or 0

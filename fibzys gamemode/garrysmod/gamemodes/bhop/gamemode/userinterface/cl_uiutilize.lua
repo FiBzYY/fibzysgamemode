@@ -1038,6 +1038,7 @@ function UI:UpdatePlayerList(parent)
                 NETWORK:StartNetworkMessage(nil, "AdminSetRank", ply:SteamID64(), newRank)
                 frame:Close()
             end
+
         end
     end
 end
@@ -1061,7 +1062,11 @@ NETWORK:GetNetworkMessage("SendAdminLogs", function(_, data)
 end)
 
 function UI:UpdateServerLogs(parent, logs)
-    if not Iv(parent) then return end
+    if not IsValid(parent) then return end
+
+    if IsValid(self.LogsPanel) then
+        self.LogsPanel:Remove()
+    end
 
     self.LogsPanel = vgui.Create("DPanel", parent)
     self.LogsPanel:Dock(FILL)
@@ -1073,34 +1078,84 @@ function UI:UpdateServerLogs(parent, logs)
     local scrollPanel = vgui.Create("DScrollPanel", self.LogsPanel)
     scrollPanel:Dock(FILL)
     scrollPanel:DockMargin(10, 5, 10, 10)
-
-    scrollPanel.Paint = function(self, w, h)
-        surface.SetDrawColor(30, 30, 30, 255)
-        surface.DrawRect(0, 0, w, h)
-    end
-
     UI:MenuScrollbar(scrollPanel:GetVBar())
+
+    local infoLabel = vgui.Create("DLabel", scrollPanel)
+    infoLabel:SetText("Click any log entry to view more details.")
+    infoLabel:SetFont("ui.mainmenu.button")
+    infoLabel:SetTextColor(colors.text)
+    infoLabel:Dock(TOP)
+    infoLabel:DockMargin(0, 0, 0, 10)
+    infoLabel:SizeToContents()
 
     if logs and #logs > 0 then
         for _, log in ipairs(logs) do
             local logPanel = vgui.Create("DPanel", scrollPanel)
             logPanel:Dock(TOP)
-            logPanel:SetHeight(25)
+            logPanel:SetHeight(30)
             logPanel:DockMargin(0, 5, 0, 0)
+            logPanel:SetCursor("hand")
 
             logPanel.Paint = function(self, w, h)
                 surface.SetDrawColor(42, 42, 42)
                 surface.DrawRect(0, 0, w, h)
-                DrawText(log, "ui.mainmenu.logs", 10, h / 2, colors.text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+                draw.SimpleText(log, "ui.mainmenu.logs", 10, h / 2, colors.text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+            end
+
+            logPanel.OnMousePressed = function()
+                local frame = vgui.Create("DFrame")
+                frame:SetTitle("")
+                frame:SetSize(500, 200)
+                frame:Center()
+                frame:MakePopup()
+                frame:ShowCloseButton(false)
+
+                frame.Paint = function(self, w, h)
+                    surface.SetDrawColor(32, 32, 32)
+                    surface.DrawRect(0, 0, w, h)
+                    draw.SimpleText("Admin Log Details", "ui.mainmenu.button", 15, 10, colors.text, TEXT_ALIGN_LEFT)
+                end
+
+                local textEntry = vgui.Create("DTextEntry", frame)
+                textEntry:SetMultiline(true)
+                textEntry:SetPos(20, 40)
+                textEntry:SetSize(460, 100)
+                textEntry:SetFont("ui.mainmenu.button")
+                textEntry:SetText(log)
+                textEntry:SetEditable(false)
+
+                textEntry.Paint = function(self, w, h)
+                    surface.SetDrawColor(42, 42, 42)
+                    surface.DrawRect(0, 0, w, h)
+                    self:DrawTextEntryText(colors.text, Color(100, 100, 255), colors.text)
+                end
+
+                local closeBtn = vgui.Create("DButton", frame)
+                closeBtn:SetPos(20, 150)
+                closeBtn:SetSize(460, 30)
+                closeBtn:SetText("")
+                closeBtn:SetFont("ui.mainmenu.button")
+
+                closeBtn.Paint = function(self, w, h)
+                    local hover = self:IsHovered()
+                    surface.SetDrawColor(hover and Color(60, 60, 60) or Color(45, 45, 45))
+                    surface.DrawRect(0, 0, w, h)
+                    draw.SimpleText("Close", "ui.mainmenu.button", w / 2, h / 2, colors.text, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+                end
+
+                closeBtn.DoClick = function()
+                    frame:Close()
+                end
             end
         end
     else
         local emptyLabel = vgui.Create("DLabel", scrollPanel)
         emptyLabel:SetText("No logs available yet.")
         emptyLabel:SetFont("ui.mainmenu.button")
-        emptyLabel:SizeToContents()
+        emptyLabel:SetTextColor(colors.text)
         emptyLabel:Dock(TOP)
         emptyLabel:DockMargin(10, 10, 10, 0)
+        emptyLabel:SizeToContents()
     end
 end
 
@@ -1545,4 +1600,166 @@ function UI:CreateResetAllButton(parent, y, convarTable, labelText, infoText)
     end
 
     return pnl, lbl, infoLbl, resetBtn
+end
+
+function UI:UpdateCommand(parent)
+    local function RoundedBoxBG(pnl, w, h, col)
+        surface.SetDrawColor(col)
+        surface.DrawRect(0, 0, w, h)
+    end
+
+    local yOffset = 75
+
+    -- Draw header line
+    local padding = 10
+    local headerLine = vgui.Create("DPanel", parent)
+    headerLine:SetPos(padding, yOffset - 8)
+    headerLine:SetSize(parent:GetWide() - (padding * 2), 1)
+    headerLine.Paint = function(self, w, h)
+        surface.SetDrawColor(Color(150, 150, 150))
+        surface.DrawRect(0, 0, w, h)
+    end
+
+    -- Title Labels
+    local function AddLabel(text, x)
+        local label = vgui.Create("DLabel", parent)
+        label:SetText(text)
+        label:SetFont("hud.subinfo")
+        label:SetTextColor(Color(150, 150, 150))
+        label:SetPos(x, yOffset - 26)
+        label:SizeToContents()
+    end
+
+    AddLabel("Commands", 10)
+    AddLabel("Player", 220)
+    AddLabel("Level", 360)
+    AddLabel("Arguments", 430)
+
+    -- Command Scroll Panel
+    local commandScroll = vgui.Create("DScrollPanel", parent)
+    commandScroll:SetPos(10, yOffset)
+    commandScroll:SetSize(200, parent:GetTall() - yOffset - 10)
+
+    -- Apply custom scrollbar
+    UI:MenuScrollbar(commandScroll:GetVBar())
+
+    -- Player Scroll Panel
+    local playerScroll = vgui.Create("DScrollPanel", parent)
+    playerScroll:SetPos(220, yOffset)
+    playerScroll:SetSize(190, parent:GetTall() - yOffset - 10)
+
+    -- custom scrollbar
+    UI:MenuScrollbar(playerScroll:GetVBar())
+
+    -- Args Panel
+    local argsPanel = vgui.Create("DPanel", parent)
+    argsPanel:SetPos(420, yOffset)
+    argsPanel:SetSize(parent:GetWide() - 420, parent:GetTall() - yOffset - 10)
+    argsPanel.Paint = function(self, w, h)
+        RoundedBoxBG(self, w, h, colors.content)
+    end
+
+    local currentArgs = {}
+
+    -- Create Args function
+    local function createArgs(cmd)
+        argsPanel:Clear()
+        currentArgs = {}
+
+        local y = 10
+        for _, arg in ipairs(cmd.args or {}) do
+            local lbl = vgui.Create("DLabel", argsPanel)
+            lbl:SetPos(10, y)
+            lbl:SetText("Argument: " .. arg.name .. "     " .. (arg.help or ""))
+            lbl:SetTextColor(colors.text)
+            lbl:SetFont("ui.mainmenu.button")
+            lbl:SizeToContents()
+            y = y + 20
+
+            local entry = vgui.Create("DTextEntry", argsPanel)
+            entry:SetPos(10, y)
+            entry:SetSize(300, 22)
+            entry:SetText(arg.default or "")
+            entry.Paint = function(self, w, h)
+                surface.SetDrawColor(colors.sideNav)
+                surface.DrawRect(0, 0, w, h)
+                draw.SimpleText(self:GetText(), "ui.mainmenu.button", 6, h / 2, colors.text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+            end
+            table.insert(currentArgs, entry)
+            y = y + 30
+        end
+
+        -- Execute Button
+        local exec = vgui.Create("DButton", argsPanel)
+        exec:SetText("")
+        exec:SetPos(10, y + 10)
+        exec:SetSize(300, 30)
+        exec.Paint = function(self, w, h)
+            surface.SetDrawColor(Color(0, 122, 255))
+            surface.DrawRect(0, 0, w, h)
+            draw.SimpleText("Execute Command", "ui.mainmenu.button", w / 2, h / 2, colors.text, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+        end
+        exec.DoClick = function()
+            if not commandScroll.SelectedCommand or not playerScroll.SelectedPlayer then return end
+            local args = {}
+            for _, entry in ipairs(currentArgs) do
+                table.insert(args, entry:GetValue())
+            end
+            RunConsoleCommand("bhop_testing", commandScroll.SelectedCommand.id, playerScroll.SelectedPlayer:SteamID(), unpack(args))
+        end
+    end
+
+    -- Build Command Buttons
+    for _, cmd in ipairs(UI.AdminCommands) do
+        local btn = vgui.Create("DButton", commandScroll)
+        btn:SetTall(35)
+        btn:Dock(TOP)
+        btn:DockMargin(0, 0, 0, 0)
+        btn:SetText("")
+        btn.Paint = function(self, w, h)
+            local hovered = self:IsHovered()
+            local active = self == commandScroll.Selected
+            surface.SetDrawColor(active and Color(0, 122, 255) or hovered and Color(60, 60, 60) or Color(60, 60, 60, 0))
+            surface.DrawRect(0, 0, w, h)
+            draw.SimpleText(cmd.name, "ui.mainmenu.button", 10, h / 2, colors.text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+        end
+        btn.DoClick = function()
+            commandScroll.Selected = btn
+            commandScroll.SelectedCommand = cmd
+            createArgs(cmd)
+        end
+    end
+
+    -- Build Player Buttons
+    for _, ply in ipairs(player.GetAll()) do
+        if ply:IsBot() then continue end -- Skip bots
+
+        local rank = UI.GetRankName and UI:GetRankName(Admin:GetAccess(ply)) or "None"
+        local name = ply:Nick()
+
+        local btn = vgui.Create("DButton", playerScroll)
+        btn:SetTall(35)
+        btn:Dock(TOP)
+        btn:DockMargin(0, 0, 0, 0)
+        btn:SetText("")
+        btn.Paint = function(self, w, h)
+            local hovered = self:IsHovered()
+            local active = self == playerScroll.Selected
+            surface.SetDrawColor(active and Color(0, 122, 255) or hovered and Color(60, 60, 60) or Color(60, 60, 60, 0))
+            surface.DrawRect(0, 0, w, h)
+            draw.SimpleText(name, "ui.mainmenu.button", 10, h / 2, colors.text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+            draw.SimpleText(rank, "ui.mainmenu.button", w - 10, h / 2, colors.text, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+        end
+        btn.DoClick = function()
+            playerScroll.Selected = btn
+            playerScroll.SelectedPlayer = ply
+        end
+    end
+
+    timer.Simple(0, function()
+        local firstBtn = commandScroll:GetCanvas():GetChildren()[1]
+        if IsValid(firstBtn) and firstBtn.DoClick then
+            firstBtn:DoClick()
+        end
+    end)
 end
