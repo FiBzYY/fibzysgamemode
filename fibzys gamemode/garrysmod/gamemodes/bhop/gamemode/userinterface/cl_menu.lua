@@ -857,6 +857,8 @@ function UI:CreateMenu()
             self:CreateToggle(parent, y, "bhop_showpeakheight", "Show Peak Height", "Enables or disables the peak height display.")
             y = y + offset
             self:CreateToggle(parent, y, "bhop_perfprinter", "Perfect Printer", "Enables or disables the jump tracker for scrolling.")
+            y = y + offset
+            self:CreateToggle(parent, y, "bhop_replaylines", "Replay Path", "Enables or disables replay landing path.")
             y = y + offset           
         end },
     })
@@ -1140,6 +1142,22 @@ function UI:CreateRankPanel(parent)
         else
             Text("Waiting for Ranking stats...", "ui.mainmenu.button", tableX + 150, statsY + 10 - 3, Color(255, 0, 0), TEXT_ALIGN_LEFT)
         end
+
+        -- Explanation
+        local explainY = statsY + 35
+        Text("Ranking System", "ui.mainmenu.button", tableX + 10, explainY, Color(255, 215, 0), TEXT_ALIGN_LEFT)
+
+        explainY = explainY + 20
+        Text("Your rank is calculated using:", "ui.mainmenu.button", tableX + 10, explainY, Color(200, 200, 200), TEXT_ALIGN_LEFT)
+        explainY = explainY + 15
+        Text("- Tier of the map (difficulty)", "ui.mainmenu.button", tableX + 20, explainY, Color(180, 180, 180), TEXT_ALIGN_LEFT)
+        explainY = explainY + 15
+        Text("- Your time vs. WR (group system)", "ui.mainmenu.button", tableX + 20, explainY, Color(180, 180, 180), TEXT_ALIGN_LEFT)
+        explainY = explainY + 15
+        Text("- Map popularity (completion bonus)", "ui.mainmenu.button", tableX + 20, explainY, Color(180, 180, 180), TEXT_ALIGN_LEFT)
+
+        explainY = explainY + 15
+        Text("Group 1 = closest to WR, Group 6 = farthest", "ui.mainmenu.button", tableX + 10, explainY, Color(150, 255, 150), TEXT_ALIGN_LEFT)
     end
 
     return pnl

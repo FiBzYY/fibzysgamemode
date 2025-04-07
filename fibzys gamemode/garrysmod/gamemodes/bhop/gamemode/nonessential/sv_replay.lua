@@ -53,7 +53,7 @@ end
 function Replay:StartRecording(ply)
     self:CheckEndFrames(ply)
 
-    self.Recording[ply] = {{}, {}, {}, {}, {}, {}}
+    self.Recording[ply] = {{}, {}, {}, {}, {}, {}, {}}
 
     for i = 1, 2 do
         self.Recording[ply][1][i] = 0
@@ -729,6 +729,9 @@ local function BotRecord(ply, data)
         Replay.Recording[ply][3][frame] = origin.z
         Replay.Recording[ply][4][frame] = eyes.p
         Replay.Recording[ply][5][frame] = eyes.y
+        Replay.Recording[ply][7] = Replay.Recording[ply][7] or {} -- Track frame landing
+        Replay.Recording[ply][7][frame] = ply:GetFlags() or 0
+
 
         Replay.Frame[ply] = frame + 1
 
@@ -794,25 +797,6 @@ local function BotButtonRecord(ply, data)
     end
 end
 hook.Add("StartCommand", "ButtonRecord", BotButtonRecord)
-
-function Replay.HandleSpecialBot(_, szType, _, data)
-	if szType == "Fetch" then
-		if not Replay.BotData then
-			return
-		end
-
-		if not Replay.BotData[data] then
-			return
-		end
-
-		return Replay.BotData[data],
-			   nil, nil,
-			   Replay.BotData[data][4],
-			   Replay.BotData[data][5],
-			   Replay.BotInfo[data]
-	end
-
-end
 
 -- Load
 hook.Add("Initialize", "SpawnBotsOnMapLoad", function()

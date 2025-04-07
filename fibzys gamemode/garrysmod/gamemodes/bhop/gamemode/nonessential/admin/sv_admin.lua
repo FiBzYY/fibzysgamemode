@@ -195,6 +195,32 @@ NETWORK:GetNetworkMessage("RequestAdminLogs", function(ply)
     Admin:SendLogs(ply)
 end)
 
+function Admin:SetMapTier(ply, tier)
+    if not Admin:CanAccess(ply, Admin.Level.Zoner) then
+        return BHDATA:Send(ply, "Print", {"Admin", "You don't have access to use this command!"})
+    end
+
+    if not tier or tier < 1 or tier > 8 then
+        return BHDATA:Send(ply, "Print", {"Admin", "Please enter a valid tier number between 1 and 8."})
+    end
+
+    local map = MySQL:Escape(game.GetMap())
+
+    MySQL:Start("SELECT map FROM timer_map WHERE map = " .. map, function(result)
+        if result and result[1] then
+            MySQL:Start("UPDATE timer_map SET tier = " .. tier .. " WHERE map = " .. map)
+        else
+            MySQL:Start("INSERT INTO timer_map (map, multiplier, tier, plays, options) VALUES (" .. map .. ", " .. (Timer.Multiplier or 15) .. ", " .. tier .. ", 0, NULL)")
+        end
+
+        RTV:LoadData()
+        RTV:UpdateMapListVersion()
+
+        Admin:AddLog("Updated tier to " .. tier .. " for map " .. game.GetMap(), ply:SteamID(), ply:Name())
+        BHDATA:Send(ply, "Print", {"Admin", "Tier for current map set to Tier " .. tier})
+    end)
+end
+
 function Admin:GenerateRequest(caption, title, default, ret)
 	return {Caption = caption, Title = title, Default = default, Return = ret}
 end

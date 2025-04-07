@@ -232,22 +232,28 @@ end
 
 -- Load the rank
 function TIMER:LoadRank(ply, update)
-    self:CachePointSum(ply.style, ply:SteamID())
-    local Sum = self:GetPointSum(ply.style, ply:SteamID())
-    local Rank = self:GetRank(Sum, self:GetRankType(ply.style, true))
+    self:CalculatePlayerJustasPoints(ply, function(points)
+        ply.RankSum = points
+        ply.Sum = points
 
-    ply.RankSum = Sum
+        -- UTIL:Notify(Color(255, 255, 0), "Ranking", "Total Points:", points)
 
-    if Rank ~= ply.Rank then
+        -- system
+        local normalized = math.Clamp(points / 10000, 0, 1)
+        local Rank = self:GetRank(normalized, self:GetRankType(ply.style, true))
+
+        -- UTIL:Notify(Color(255, 255, 0), "Ranking", "Assigned Rank:", Rank)
+
         ply.Rank = Rank
-        ply:SetNWInt("Rank", ply.Rank)
-    end
+        ply:SetNWInt("Rank", Rank)
+        self:SetSubRank(ply, Rank, points)
 
-    self:SetSubRank(ply, Rank, Sum)
-    
-    if not update then
-        NETWORK:StartNetworkMessageTimer(ply, "Timer", {"Ranks", Player.NormalScalar, Player.AngledScalar})
-    end
+        NETWORK:StartNetworkMessage(ply, "UpdatePointsSum", points)
+
+        if not update then
+            NETWORK:StartNetworkMessageTimer(ply, "Timer", {"Ranks", Player.NormalScalar, Player.AngledScalar})
+        end
+    end)
 end
 
 -- Load the players best time and WRs
@@ -335,6 +341,7 @@ end
 Player.Points = {}
 TIMER.WRCached = {}
 
+-- WR only per style
 function TIMER:CacheWRsForStyle(style)
     local query = [[
         SELECT map, MIN(time) AS WR FROM timer_times
@@ -382,39 +389,87 @@ function TIMER:GetMapCompletionCount(map, style, ply)
     return 1
 end
 
-function TIMER:GetPlayerScalar(ply)
-    local completions = ply.FirstPlaceTimes or {}
-    if #completions == 0 then return 0 end
+-- New system based off justas 6 groups and WRs/tier
+function TIMER:CalculatePlayerJustasPoints(ply, callback)
+    local steamID = MySQL:Escape(ply:SteamID())
+    local style = ply.style
 
-    local scalarSum = 0
-    local mapCount = 0
+    local query = string.format([[
+        SELECT t1.map, t1.time, COALESCE(m.tier, 1) AS tier
+        FROM timer_times AS t1
+        LEFT JOIN timer_map AS m ON t1.map = m.map
+        WHERE t1.uid = %s AND t1.style = %d
+    ]], steamID, style)
 
-    for _, mapData in ipairs(completions) do
-        local wr = self:GetMapWRTime(mapData.Map, ply.style)
-        if wr and wr > 0 and mapData.Time > 0 then
-            local ratio = mapData.Time / wr
+    MySQL:Start(query, function(results)
+        if not results or #results == 0 then
+            UTIL:Notify(Color(255, 255, 0), "Ranking", "No runs found for player")
 
-            -- Group system: 6 tiers based on ratio
-            local groupScalar = 0
-            if ratio <= 1.05 then groupScalar = 1.0     -- group 1
-            elseif ratio <= 1.10 then groupScalar = 0.85 -- group 2
-            elseif ratio <= 1.15 then groupScalar = 0.7  -- group 3
-            elseif ratio <= 1.20 then groupScalar = 0.55 -- group 4
-            elseif ratio <= 1.25 then groupScalar = 0.4  -- group 5
-            else groupScalar = 0.25                      -- group 6
-            end
-
-            -- completion multiplier idea
-            local completionMultiplier = math.Clamp(self:GetMapCompletionCount(mapData.Map, ply.style, ply) / 5, 1, 10)
-
-            -- sum it with weight
-            scalarSum = scalarSum + (groupScalar * completionMultiplier)
-            mapCount = mapCount + 1
+            if callback then callback(0) end
+            return
         end
-    end
 
-    if mapCount == 0 then return 0 end
-    return scalarSum / mapCount
+        local totalPoints = 0
+        for _, row in ipairs(results) do
+            local map = row.map
+            local time = tonumber(row.time)
+            local tier = tonumber(row.tier)
+            local wr = self:GetMapWRTime(map, style) or 0
+            local completions = self:GetMapCompletionCount(map, style, ply)
+
+            -- 6 Groups modifier
+            local diff = time - wr
+            local groupModifier = 0.5
+            if diff <= 15 then groupModifier = 1.0
+            elseif diff <= 30 then groupModifier = 0.9
+            elseif diff <= 60 then groupModifier = 0.8
+            elseif diff <= 90 then groupModifier = 0.7
+            elseif diff <= 120 then groupModifier = 0.6 end
+
+            -- Completion bonus
+            local completionBonus = 1.0
+            if completions >= 1000 then completionBonus = 1.15
+            elseif completions >= 500 then completionBonus = 1.10
+            elseif completions >= 250 then completionBonus = 1.05 end
+
+            -- Final points
+            local basePoints = math.Clamp(tier, 1, 8) * 100
+            local points = math.floor(basePoints * groupModifier * completionBonus)
+
+            -- UTIL:Notify(Color(255, 255, 0), "Ranking", "Map:", map, "| Tier:", tier, "| Time:", time, "| WR:", wr, "| Group Mod:", groupModifier, "| Completions:", completions, "| Bonus:", completionBonus, "| Final:", points)
+
+            totalPoints = totalPoints + points
+        end
+
+        -- UTIL:Notify(Color(255, 255, 0), "Ranking", "Final Total:", totalPoints)
+
+        if callback then
+            callback(totalPoints)
+        end
+    end)
+end
+
+function TIMER:CalculateJustasPoints(time, wr, tier, completions)
+    if not wr or wr <= 0 or not time or time <= 0 then return 0 end
+
+    local basePoints = math.Clamp(tier, 1, 8) * 100
+
+    -- 6 Groups modifier
+    local diff = time - wr
+    local groupModifier = 0.5
+    if diff <= 15 then groupModifier = 1.0
+    elseif diff <= 30 then groupModifier = 0.9
+    elseif diff <= 60 then groupModifier = 0.8
+    elseif diff <= 90 then groupModifier = 0.7
+    elseif diff <= 120 then groupModifier = 0.6 end
+
+    -- Completion bonus
+    local completionBonus = 1.0
+    if completions >= 1000 then completionBonus = 1.15
+    elseif completions >= 500 then completionBonus = 1.10
+    elseif completions >= 250 then completionBonus = 1.05 end
+
+    return math.floor(basePoints * groupModifier * completionBonus)
 end
 
 function TIMER:CachePointSum(style, id, callback)
@@ -453,27 +508,6 @@ function TIMER:GetRank(points, type)
     end
 
     return Rank
-end
-
--- Load the players rank
-function TIMER:LoadRank(ply, update)
-    local scalar = self:GetPlayerScalar(ply)
-    local Rank = self:GetRank(scalar, self:GetRankType(ply.style, true))
-
-    if Rank ~= ply.Rank then
-        ply.Rank = Rank
-        ply:SetNWInt("Rank", ply.Rank)
-    end
-
-    ply.RankSum = scalar
-    self:SetSubRank(ply, Rank, scalar)
-    ply.Sum = scalar
-
-    NETWORK:StartNetworkMessage(ply, "UpdatePointsSum", scalar)
-
-    if not update then
-        NETWORK:StartNetworkMessageTimer(ply, "Timer", {"Ranks", Player.NormalScalar, Player.AngledScalar})
-    end
 end
 
 -- Sub Ranks

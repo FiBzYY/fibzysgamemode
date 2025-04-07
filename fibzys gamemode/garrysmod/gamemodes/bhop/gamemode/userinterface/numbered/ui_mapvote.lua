@@ -34,18 +34,15 @@ UI:AddListener("rtv", function(_, data, isRevote)
     if id == "GetList" then
         local ui_options = {}
 
-        local mapInfotier = {
-            ["bhop_asko"] = {tier = 1},
-            ["bhop_newdun"] = {tier = 1},
-            ["bhop_stref_amazon"] = {tier = 2},
-        }
-
         for k, v in pairs(info) do
             local mapName = v[1]
-            local mapData = mapInfotier[mapName] or {tier = 1}
-            local tierName = "Tier " .. mapData.tier
+            local points = v[2]
+            local plays = v[3]
+            local tier = v[4] or 1
 
-            local name = "[0] " .. mapName .. (tierName ~= "" and " - " .. tierName or "") .. " (" .. v[2] .. " points, " .. v[3] .. " plays)"
+            local tierName = "Tier " .. tier
+            local name = "[0] " .. mapName .. " - " .. tierName .. " (" .. points .. " points, " .. plays .. " plays)"
+        
             table.insert(ui_options, {["name"] = name, ["function"] = RTV_Callback(k)})
         end
 
@@ -57,14 +54,12 @@ UI:AddListener("rtv", function(_, data, isRevote)
 
         function UI.rtv:OnThink()
             local s = math.Round(RTVStart - CurTime())
-
             if s <= 0 then
                 self:Exit()
                 RTVStart = false
                 RTVSelected = false
                 return
             end
-
             self.title = "Map Vote (" .. s .. "s remaining)"
         end
 

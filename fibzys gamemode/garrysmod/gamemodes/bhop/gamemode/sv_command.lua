@@ -376,6 +376,18 @@ function Command:Init()
             "<arguments>"
         },
 
+
+        -- Set Tier
+        {
+            {"settier", "tierset"},
+            function(ply, args)
+                local tier = tonumber(args[1])
+                Admin:SetMapTier(ply, tier)
+            end,
+            "Sets tier",
+            "<style> [page]"
+        },
+
         -- Themes Menu
         {
             {"theme", "themeeditor", "themes"},
@@ -965,6 +977,37 @@ function Command:Init()
             "[subcommand]"
         },
 
+        -- Lines Path Replay
+        {
+            {"showlines", "showtrail", "trail", "viewtrail", "showtrail", "path"},
+            function(pl)
+                pl.ReplayLines = pl.ReplayLines or {}
+                pl.ReplayLines.Enabled = not pl.ReplayLines.Enabled
+                pl:SetPData("replay_beams", pl.ReplayLines.Enabled and "1" or "0")
+
+                if pl.ReplayLines.Enabled then
+                    local landings = Replay:GetAllLandings(1)
+
+                    for _, pos in ipairs(landings) do
+                        net.Start("ShavitLine_Beam")
+                        net.WriteVector(pos - Vector(10, 0, 0))
+                        net.WriteVector(pos + Vector(10, 0, 0))
+                        net.WriteColor(Color(0, 255, 0))
+                        net.Send(pl)
+                    end
+                end
+
+                if not pl.ReplayLines.Enabled then
+                    net.Start("ShavitLine_Clear")
+                    net.Send(pl)
+                end
+
+                TIMER:Print(pl, "You have " .. (pl.ReplayLines.Enabled and "enabled" or "disabled") .. " Replay Path Lines.")
+            end,
+            "Show the replay path landings",
+            "[subcommand]"
+        },
+
         -- Long Jump
         {
         {"lj", "ljstats"}, 
@@ -1054,26 +1097,33 @@ function Command:Init()
         "[subcommand]"
         },
 
-        -- Map/Points
+        -- Map/Points/tier
         {
-            {"map", "points"}, 
+            {"map", "points", "tier"}, 
             function(pl, args)
-                if #args > 0 then
-                    if not args[1] then return end
-                    if RTV:MapExists(args[1]) then
-                        local data = RTV:GetMapData(args[1])
-                        BHDATA:Send(pl, "Print", { "Notification", Lang:Get("MapInfo", { data[1], data[2] or 0, "No more details available", "" }) })
-                    else
-                        BHDATA:Send(pl, "Print", { "Notification", Lang:Get("MapInavailable", { args[1] }) })
-                    end
-                else
-                    local nMult, bMult = Timer.Multiplier or 0, Timer.BonusMultiplier or 0
-                    local szBonus = Zones.BonusPoint and " (Bonus has a multiplier of " .. bMult .. ")" or ""
-                    local nPoints = TIMER:GetPointsForMap(pl.record, pl.style)
-                    local szPoints = "You have " .. math.floor(nPoints) .. "/" .. nMult .. " points"
+                local mapName = args[1] or game.GetMap()
+                local tier = 1
+                local wr = TIMER:GetMapWRTime(mapName, pl.style) or 0
+                local record = pl.record or 0
+                local completions = TIMER:GetMapCompletionCount(mapName, pl.style, pl)
 
-                    BHDATA:Send(pl, "Print", { "Notification", Lang:Get("MapInfo", { game.GetMap(), Timer.Multiplier or 1, szPoints, szBonus }) })
+                if RTV:MapExists(mapName) then
+                    local mapData = RTV:GetMapData(mapName)
+                    tier = mapData[4] or 1
                 end
+
+                local points = TIMER:CalculateJustasPoints(record, wr, tier, completions)
+                local displaypts = "You earned " .. points .. " Points on this map - Tier " .. tier .. ""
+
+                BHDATA:Send(pl, "Print", {
+                    "Notification",
+                    Lang:Get("MapInfo", {
+                        mapName,
+                        "Tier " .. tier,
+                        displaypts,
+                        ""
+                    })
+                })
             end,
             "Toggle WR sound effects on/off",
             "[subcommand]"

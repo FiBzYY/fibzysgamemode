@@ -97,7 +97,8 @@ local files = {
         "nonessential/showhidden/sh_init.lua",
         "nonessential/movementfixes/sh_tpfix.lua",
         "nonessential/bash/sv_bash.lua",
-        "nonessential/bash/sv_config.lua"
+        "nonessential/bash/sv_config.lua",
+        "nonessential/sh_path.lua"
     },
     misc = {
         "nonessential/misc/cl_centerbox.lua",

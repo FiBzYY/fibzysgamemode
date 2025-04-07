@@ -374,22 +374,24 @@ end
 function RTV:LoadData()
     MapList = {}
 
-    MySQL:Start("SELECT map, multiplier, plays FROM timer_map", function(results)
+    MySQL:Start("SELECT map, multiplier, plays, tier FROM timer_map", function(results)
         if not results or #results == 0 then
             return
         end
 
         for _, data in ipairs(results) do
             table.insert(MapList, {
-                data["map"],
-                tonumber(data["multiplier"]) or 0,
-                tonumber(data["plays"]) or 0
+                data["map"],                         -- Map name
+                tonumber(data["multiplier"]) or 0,   -- Multiplier
+                tonumber(data["plays"]) or 0,        -- Plays
+                tonumber(data["tier"]) or 1          -- Tier
             })
         end
     end)
 
     file.CreateDir("rtv/")
 
+    -- Handle map list versioning
     if not file.Exists("rtv/settings.txt", "DATA") then
         file.Write("rtv/settings.txt", tostring(RTV.MapListVersion))
     else
@@ -462,13 +464,15 @@ function RTV:SendMapList(client)
     for _, data in ipairs(MapList) do
         local mapName = tostring(data[1])
         local points = tonumber(data[2]) or 0
+        local tier = tonumber(data[4]) or 1
 
         if not seenMaps[mapName] and points > 0 then
             seenMaps[mapName] = true
 
             table.insert(mapList, { 
                 name = mapName, 
-                points = points
+                points = points,
+                tier = tier
             })
         end
     end
