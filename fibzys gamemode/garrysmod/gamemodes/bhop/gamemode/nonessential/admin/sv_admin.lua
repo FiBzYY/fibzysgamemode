@@ -260,6 +260,27 @@ function Admin:GetAccessString(level)
 	return tabNames[level]
 end
 
+util.AddNetworkString("UI_RunAdminCommand")
+
+net.Receive("UI_RunAdminCommand", function(len, ply)
+    local commandID = net.ReadString()
+    local targetSteamID = net.ReadString()
+    local argCount = net.ReadUInt(8)
+    local args = {}
+
+    for i = 1, argCount do
+        args[i] = net.ReadString()
+    end
+
+    print("[ADMIN PANEL] " .. ply:Nick() .. " ran command: " .. commandID)
+    PrintTable({
+        Target = targetSteamID,
+        Arguments = args
+    })
+
+    -- TODO: Add actual banning/muting here
+end)
+
 function Admin.CommandProcess(ply, args)
     if not Admin:CanAccess(ply, Admin.Level.Elevated) then
         return BHDATA:Send(ply, "Print", {"Notification", "You don't have access to Admin."})

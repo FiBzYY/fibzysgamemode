@@ -93,8 +93,12 @@ local lastStrafeAxis = 0
 local hudHideConVar = GetConVar("bhop_hud_hide")
 
 hook.Add("HUDPaint", "HUDPaintStrafes", function()
-    local ply = lp()
-    if not Iv(ply) or ply:Team() == ts then return end
+    local localPly = lp()
+    if not Iv(localPly) then return end
+
+    local ply = (localPly:Team() == ts and localPly:GetObserverTarget()) or localPly
+    if not Iv(ply) then return end
+
     if hudHideConVar:GetInt() == 1 then return end
 
     local ang = ply:EyeAngles()[2]

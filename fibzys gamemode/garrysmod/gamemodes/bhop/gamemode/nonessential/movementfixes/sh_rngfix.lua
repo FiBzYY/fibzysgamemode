@@ -414,7 +414,7 @@ local function DoPreTickChecks(ply, mv, cmd)
     vel = CheckJumpButton(ply, vel)
 
     -- Base velocity is not stored in MoveData
-    local base = ply:GetBaseVelocity() or Vector(0, 0, 0)
+	local base = (bit.band(ply:GetFlags(), FL_BASEVELOCITY) != 0) and ply:GetBaseVelocity() or Vector(0, 0, 0)
 
     -- StartGravity dealt with Z base velocity.
     base[3] = 0

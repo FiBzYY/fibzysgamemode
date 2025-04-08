@@ -1705,7 +1705,17 @@ function UI:UpdateCommand(parent)
             for _, entry in ipairs(currentArgs) do
                 table.insert(args, entry:GetValue())
             end
-            RunConsoleCommand("bhop_testing", commandScroll.SelectedCommand.id, playerScroll.SelectedPlayer:SteamID(), unpack(args))
+
+            net.Start("UI_RunAdminCommand")
+            net.WriteString(commandScroll.SelectedCommand.id)
+            net.WriteString(playerScroll.SelectedPlayer:SteamID())
+            net.WriteUInt(#args, 8)
+
+            for _, v in ipairs(args) do
+                net.WriteString(v)
+            end
+
+            net.SendToServer()
         end
     end
 
