@@ -3,7 +3,6 @@ local bhop_wireframe = CreateClientConVar("bhop_wireframe", 1, true, false, "Tog
 local bhop_thickness = CreateClientConVar("bhop_thickness", 2, true, false, "Change zone thickness")
 local bhop_flatzones = CreateClientConVar("bhop_flatzones", 0, true, false, "Change to flat zones")
 local bhop_rainbowzones = CreateClientConVar("bhop_rainbowzones", 0, true, false, "Change to rainbow zones")
-
 local Iv = IsValid
 
 local Zone = {
@@ -33,20 +32,16 @@ function ENT:UpdateZoneData()
         max = max,
         pos = pos
     }
+
+    self:SetRenderBounds(min, max)
 end
 
 function ENT:Initialize()
+    self:UpdateZoneData()
+
     local min, max = self:GetCollisionBounds()
     self:SetRenderBounds(min, max)
 
-    local GetPos = self:GetPos()
-    min = GetPos + min
-    max = GetPos + max
-
-    self.bl = Vector(min.x, min.y, min.z)
-    self.tl = Vector(min.x, max.y, min.z)
-    self.tr = Vector(max.x, max.y, min.z)
-    self.br = Vector(max.x, min.y, min.z)
     self.initialized = true
 end
 
