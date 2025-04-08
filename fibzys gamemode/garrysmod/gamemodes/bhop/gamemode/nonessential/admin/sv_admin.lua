@@ -176,6 +176,18 @@ function Admin:AddLog(text, steam, zoner)
 	end)
 end
 
+MutedPlayers = MutedPlayers or {}
+PermMutedPlayers = PermMutedPlayers or {}
+PermGaggedPlayers = PermGaggedPlayers or {}
+
+hook.Add("PlayerCanHearPlayersVoice", "BlockMutedVoice", function(listener, talker)
+    if not IsValid(talker) or not IsValid(listener) then return end
+
+    if MutedPlayers[talker:SteamID()] then
+        return false, false
+    end
+end)
+
 function Admin:SendLogs(ply)
     SQL:Prepare("SELECT * FROM timer_logging ORDER BY date DESC LIMIT 100")
     :Execute(function(data, var, error)
@@ -272,13 +284,12 @@ net.Receive("UI_RunAdminCommand", function(len, ply)
         args[i] = net.ReadString()
     end
 
-    print("[ADMIN PANEL] " .. ply:Nick() .. " ran command: " .. commandID)
-    PrintTable({
-        Target = targetSteamID,
-        Arguments = args
-    })
-
-    -- TODO: Add actual banning/muting here
+    local cmdFunc = CommandTable[commandID]
+    if cmdFunc then
+        cmdFunc(ply, targetSteamID, args)
+    else
+        TIMER:Print(ply, "Command not found: " .. commandID)
+    end
 end)
 
 function Admin.CommandProcess(ply, args)
@@ -1006,6 +1017,54 @@ NETWORK:GetNetworkMessage("AdminSetRank", function(ply, data)
         end, { ply })
 end)
 
+function Admin:SetPlayerRankBySteamID64(sender, steamID64, groupName)
+    local szSteam = util.SteamIDFrom64(steamID64)
+    if not szSteam or szSteam == "STEAM_0:0:0" then return end
+
+    local nAccess = Admin.Level.None
+    for name, level in pairs(Admin.Level) do
+        if string.lower(name) == string.lower(groupName) then
+            nAccess = level
+            break
+        end
+    end
+
+    if nAccess == Admin.Level.None then
+        return BHDATA:Send(sender, "Print", { "Admin", Lang:Get("AdminMisinterpret", { groupName }) })
+    end
+
+    local function UpdateAdminStatus(bUpdate, adminPly, id)
+        local function UpdateAdminCallback(data, varArg, szError)
+            local targetAdmin = varArg[1]
+            if data then
+                Admin:LoadAdmins()
+                Admin:AddLog("Updated admin with SteamID [" .. szSteam .. "] to level " .. nAccess, targetAdmin:SteamID(), targetAdmin:Name())
+            else
+                BHDATA:Send(targetAdmin, "Print", { "Admin", Lang:Get("AdminErrorCode", { szError }) })
+            end
+        end
+
+        if bUpdate and id then
+            SQL:Prepare("UPDATE timer_admins SET level = {1}, type = {2} WHERE id = {0}", { id, nAccess, 2 })
+                :Execute(UpdateAdminCallback, { sender })
+        else
+            SQL:Prepare("INSERT INTO timer_admins (steam, level, type) VALUES ({0}, {1}, {2})", { szSteam, nAccess, 2 })
+                :Execute(UpdateAdminCallback, { sender })
+        end
+    end
+
+    SQL:Prepare("SELECT id FROM timer_admins WHERE steam = {0} ORDER BY level DESC LIMIT 1", { szSteam })
+        :Execute(function(data, varArg)
+            local adminPly = varArg[1]
+            if TIMER:Assert(data, "id") then
+                local id = tonumber(data[1]["id"])
+                UpdateAdminStatus(true, adminPly, id)
+            else
+                UpdateAdminStatus(false, adminPly, nil)
+            end
+        end, { sender })
+end
+
 NETWORK:GetNetworkMessage("AdminChangeMapMultiplier", function(ply, data)
     if not ply:IsAdmin() then return end
 
@@ -1074,7 +1133,7 @@ local function SaveBans()
     UTIL:Notify(Color(0, 255, 0), "BanSystem", BanSystem .. "Bans are now saved to the database.")
 end
 
-local function LoadBans()
+function LoadBans()
     Bans = { steam = {}, ip = {} }
 
     MySQL:Start("SELECT * FROM timer_bans", function(result)
@@ -1103,7 +1162,7 @@ local function LoadBans()
     end)
 end
 
-local function IsPlayerBanned(steamID)
+function IsPlayerBanned(steamID)
     steamID = string.upper(steamID)
 
     Bans.steam = Bans.steam or {}
@@ -1124,11 +1183,11 @@ local function IsPlayerBanned(steamID)
     return true, banData.reason
 end
 
-local function IsPlayerCfgBanned(steamID)
+function IsPlayerCfgBanned(steamID)
     return BHOP.Banlist[steamID] or false
 end
 
-local function IsIPBanned(ip)
+function IsIPBanned(ip)
     if not ip then return false end
 
     Bans.ip = Bans.ip or {}
@@ -1147,7 +1206,7 @@ local function IsIPBanned(ip)
     return true, banData.reason
 end
 
-local function IsIPBanned(ip)
+function IsIPBanned(ip)
     local banData = Bans.ip[ip]
     if not banData then return false end
 
@@ -1196,7 +1255,7 @@ hook.Add("CheckPassword", "BanCheck", function(steamID64, ip, sv_password, cl_pa
     return true
 end)
 
-local function BanPlayerBySteamID(steamID, length, reason, admin)
+function BanPlayerBySteamID(steamID, length, reason, admin)
     steamID = string.upper(steamID)
     local adminName = IsValid(admin) and admin:Nick() or "Owner"
     local banTime = os.time()
@@ -1210,22 +1269,20 @@ local function BanPlayerBySteamID(steamID, length, reason, admin)
     }
 
     -- Insert into MySQL
-    local q = string.format(
-        "INSERT INTO timer_bans (steamid, reason, admin, ban_time, unban_time) VALUES ('%s', '%s', '%s', %d, %d)",
-        MySQL:Escape(steamID),
-        MySQL:Escape(reason),
-        MySQL:Escape(adminName),
-        banTime,
-        unbanTime
-    )
+	local steam = MySQL:Escape(steamID)
+	local reasonEsc = MySQL:Escape(reason)
+	local adminEsc = MySQL:Escape(adminName)
 
-    MySQL:Start(q)
+	local q = "INSERT INTO timer_bans (steamid, reason, admin, ban_time, unban_time) VALUES (" ..
+		string.format("%q, %q, %q, %d, %d)", steam, reasonEsc, adminEsc, banTime, unbanTime)
+
+	MySQL:Start(q)
 
     UTIL:Notify(Color(255, 0, 0), "BanSystem", BanSystem .. "SteamID " .. steamID .. " has been banned for " .. length .. " seconds.")
 end
 
 local MAX_BAN_TIME = 315360000
-local function BanIP(ip, length, reason, admin)
+function BanIP(ip, length, reason, admin)
     if not ip or ip == "" then return end
     local adminName = IsValid(admin) and admin:Nick() or "Owner"
 
@@ -1245,7 +1302,7 @@ local function BanIP(ip, length, reason, admin)
 	UTIL:Notify(Color(255, 0, 0), "BanSystem", BanSystem .. "IP " .. ip .. " has been banned for " .. length .. " seconds. Reason: " .. reason .. " by " .. adminName)
 end
 
-local function BanPlayer(ply, length, reason, admin)
+function BanPlayer(ply, length, reason, admin)
     local steamID = ply:SteamID()
     local ip = ply:IPAddress():match("^(%d+%.%d+%.%d+%.%d+)")
 
@@ -1255,7 +1312,7 @@ local function BanPlayer(ply, length, reason, admin)
     ply:Kick("Banned: " .. (reason or "No reason provided") .. " by " .. (IsValid(admin) and admin:Nick() or "Owner"))
 end
 
-local function UnbanPlayer(steamID)
+function UnbanPlayer(steamID)
     steamID = string.upper(steamID)
 
     if Bans.steam[steamID] then
@@ -1267,7 +1324,7 @@ local function UnbanPlayer(steamID)
     end
 end
 
-local function UnbanIP(ip)
+function UnbanIP(ip)
     if not ip or ip == "" then
 		UTIL:Notify(Color(255, 0, 0), "BanSystem", BanSystem .. "ERROR: No IP provided to unban!")
         return
@@ -1370,8 +1427,6 @@ concommand.Add("kick_player", function(pl, cmd, args)
         
         if UTIL and UTIL.Notify then
             UTIL:Notify(Color(255, 0, 0), "BanSystem", "Player " .. targetPlayer:Nick() .. " has been kicked. Reason: " .. reason)
-        else
-            PrintMessage(HUD_PRINTTALK, "[BanSystem] Player " .. targetPlayer:Nick() .. " has been kicked. Reason: " .. reason)
         end
     else
         UTIL:Notify(Color(255, 0, 0), "BanSystem", "Player not found.")

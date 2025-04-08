@@ -969,12 +969,6 @@ function UI:CreateMenu()
     -- Admin Tab
     if lp():IsAdmin() then
         local AdminButton = self:CreateTopNavButton("Admin", {
-            { text = "Users", panelContent = function(parent)
-                local x, y = 10, 0
-                self:CreatePanel(parent, {"Admin user management"})
-                self:UpdatePlayerList(parent)
-            end, isActive = true },
-
             { text = "Command", panelContent = function(parent)
                 local x, y = 10, 0
                 self:CreatePanel(parent, {"Admin user commands"})

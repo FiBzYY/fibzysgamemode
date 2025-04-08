@@ -85,6 +85,7 @@ local files = {
         "essential/zones/sv_zones.lua",
         "nonessential/sv_rtv.lua",
         "nonessential/admin/sv_admin.lua",
+        "nonessential/admin/sv_commands.lua",
         "nonessential/admin/sv_whitelist.lua",
         "nonessential/sv_replay.lua",
         "nonessential/sv_spectator.lua",

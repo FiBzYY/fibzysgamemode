@@ -577,7 +577,7 @@ function TIMER:Finish(ply, time)
     local OldRecord = record
 
     MySQL:Start("SELECT * FROM timer_times WHERE map = '" .. game.GetMap() .. "' AND style = " .. ply.style .. " ORDER BY time ASC LIMIT 1", function(WR)
-        local currentWR = WR and WR[1] and WR[1].time or 0
+      local currentWR = WR and WR[1] and tonumber(WR[1].time) or 0
 
         MySQL:Start("SELECT COUNT(*) AS totalRecords FROM timer_times WHERE map = '" .. game.GetMap() .. "' AND style = " .. ply.style, function(TotalRecords)
             local nRec = TotalRecords and TotalRecords[1] and tonumber(TotalRecords[1]["totalRecords"]) or 0
@@ -586,19 +586,24 @@ function TIMER:Finish(ply, time)
                 local playerRank = Rank and Rank[1] and tonumber(Rank[1]["Rank"]) or 0
                 local id = playerRank + 1
 
-                if nRec == 1 and time >= record then
-                    id = 1
-                end
+                local willBeSaved = record == 0 or time < record
+                local totalRecordsDisplay = willBeSaved and (nRec + 1) or nRec
 
-                if id > (nRec + 1) then
-                    id = nRec + 1
-                elseif id < 1 then
-                    id = 1
+                -- Get accurate rank
+                local id = playerRank + 1
+
+                -- Prevent weird edge cases
+                if id > totalRecordsDisplay then id = totalRecordsDisplay end
+                if id < 1 then id = 1 end
+
+                -- If time >= WR, you're definitely not #1, fix display
+                if time > currentWR and currentWR > 0 then
+                    if id == 1 then id = 2 end -- Prevent false #1 when slower than WR
                 end
 
                 local StyleName = self:StyleName(ply.style)
                 local ID = "TimerFinish"
-                local totalRecordsDisplay = record == 0 and (nRec + 1) or nRec
+
                 local Data = { StyleName, ply:Name(), "#" .. id, formattedTime, slower, id .. "/" .. totalRecordsDisplay }
 
                 if time < currentWR or currentWR == 0 then

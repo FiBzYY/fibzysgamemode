@@ -739,8 +739,8 @@ function Command:Init()
                     for _, map in pairs(RTV.Selections) do
                         table.insert(RTVSend, RTV:GetMapData(map))
                     end
-                    UI:SendToClient(false, "MapVote", "revote", RTVSend)
-                    UI:SendToClient(false, "MapVote", "update", RTV.MapVoteList)
+			        UI:SendToClient(false, "rtv", "Revote", RTVSend)
+			        UI:SendToClient(false, "rtv", "VoteList", RTV.MapVoteList)
                 end
             end,
             "Re-open the RTV voting menu",
@@ -1168,8 +1168,6 @@ function Command:Init()
         
                     if UTIL and UTIL.Notify then
                         UTIL:Notify(Color(255, 0, 0), "BanSystem", "Player " .. targetPlayer:Nick() .. " has been kicked. Reason: " .. reason)
-                    else
-                        PrintMessage(HUD_PRINTTALK, "[BanSystem] Player " .. targetPlayer:Nick() .. " has been kicked. Reason: " .. reason)
                     end
                 else
                     TIMER:Print(pl, "Player not found.")
@@ -1201,14 +1199,21 @@ UI:AddListener("nominate", function(client, data)
 end)
 
 -- Player Say
+GaggedPlayers = GaggedPlayers or {}
+
 function GM:PlayerSay(pl, text, team)
     local command = lower(text:Trim())
+
+    if GaggedPlayers and GaggedPlayers[pl:SteamID()] then
+        NETWORK:StartNetworkMessageTimer(pl, "Print", { "Notification", "You been gagged!" })
+        return ""
+    end
 
     if command == "rtv" then
         if RTV and RTV.Vote then
             RTV:Vote(pl)
         else
-            pl:ChatPrint("RTV system is not installed.")
+            NETWORK:StartNetworkMessageTimer(pl, "Print", { "Notification", "RTV system is not installed." })
         end
         return ""
     end
