@@ -36,13 +36,12 @@ UI:AddListener("rtv", function(_, data, isRevote)
 
         for k, v in pairs(info) do
             local mapName = v[1]
-            local points = v[2]
             local plays = v[3]
             local tier = v[4] or 1
 
             local tierName = "Tier " .. tier
-            local name = "[0] " .. mapName .. " - " .. tierName .. " (" .. points .. " points, " .. plays .. " plays)"
-        
+            local name = "[0] " .. mapName .. " - " .. tierName .. " (" .. plays .. " plays)"
+
             table.insert(ui_options, {["name"] = name, ["function"] = RTV_Callback(k)})
         end
 
@@ -68,6 +67,7 @@ UI:AddListener("rtv", function(_, data, isRevote)
         end
 
         UI.rtv:SetCustomDelay(3)
+
     elseif id == "VoteList" then
         if not UI.rtv or not UI.rtv.title then return end
 
@@ -81,8 +81,10 @@ UI:AddListener("rtv", function(_, data, isRevote)
 
             UI.rtv:UpdateOption(k, name, false, false)
         end
+
     elseif id == "InstantVote" then
         UI.rtv:SelectOption(info)
+
     elseif id == "Revote" then 
         if not UI.rtv or not UI.rtv.title then 
             DATA["rtv"](_, {"GetList", info}, true)

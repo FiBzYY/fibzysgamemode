@@ -8,6 +8,114 @@ local canPlaceZone = true
 local previewPos = nil
 local zonePlacementEnabled = false
 local minm, maxm = math.min, math.max
+local ZoneTypeCache = {}
+
+net.Receive("zone_menu_types", function()
+    ZoneTypeCache = {}
+    local count = net.ReadUInt(8)
+    for i = 1, count do
+        local name = net.ReadString()
+        local id = net.ReadUInt(8)
+        ZoneTypeCache[name] = id
+    end
+end)
+
+function UI:OpenZoneTypeMenu()
+    local frame = vgui.Create("DFrame")
+    frame:SetTitle("")
+    frame:SetSize(650, 550)
+    frame:Center()
+    frame:MakePopup()
+    frame:SetDraggable(false)
+    frame:SetDeleteOnClose(true)
+    frame:ShowCloseButton(false)
+
+    frame.Paint = function(self, w, h)
+        draw.RoundedBox(0, 0, 0, w, h, Color(32, 32, 32)) -- bg
+        draw.RoundedBox(0, 0, 0, w, 25, Color(42, 42, 42)) -- top bar
+        draw.SimpleText("Select Zone Type", "ui.mainmenu.button-bold", 10, 4, color_white, TEXT_ALIGN_LEFT)
+        draw.SimpleText("Pick a zone to select it.", "ui.mainmenu.button", 10, 30, Color(180, 180, 180), TEXT_ALIGN_LEFT)
+    end
+
+    local closeBtn = vgui.Create("DButton", frame)
+    closeBtn:SetText("")
+    closeBtn:SetSize(25, 25)
+    closeBtn:SetPos(frame:GetWide() - 30, 0)
+    closeBtn:SetZPos(10)
+    closeBtn.Paint = function(self, w, h)
+        local clr = self:IsHovered() and Color(200, 60, 60) or Color(150, 40, 40)
+        draw.SimpleText("X", "ui.mainmenu.button-bold", w / 2, h / 2, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+    end
+    closeBtn.DoClick = function()
+        frame:Close()
+    end
+    frame.OnSizeChanged = function()
+        closeBtn:SetPos(frame:GetWide() - 30, 0)
+    end
+
+    local wrapper = vgui.Create("DPanel", frame)
+    wrapper:Dock(FILL)
+    wrapper:DockMargin(10, 50, 10, 10)
+    wrapper.Paint = nil
+
+    local header = vgui.Create("DPanel", wrapper)
+    header:SetTall(30)
+    header:Dock(TOP)
+    header.Paint = function(self, w, h)
+        surface.SetDrawColor(Color(50, 50, 50))
+        surface.DrawRect(0, 0, w, h)
+        draw.SimpleText("Zone", "ui.mainmenu.button-bold", 10, h / 2, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+    end
+
+    local scroll = vgui.Create("DScrollPanel", wrapper)
+    scroll:Dock(FILL)
+    UI:MenuScrollbar(scroll:GetVBar())
+
+    local function AddMenuButton(parent, text, callback)
+        local btn = vgui.Create("DButton", parent)
+        btn:SetText("")
+        btn:SetTall(30)
+        btn:Dock(TOP)
+        btn:DockMargin(0, 0, 0, 0)
+        btn.Paint = function(self, w, h)
+            -- Change color if hovered
+            local bg = self:IsHovered() and Color(60, 60, 60) or Color(45, 45, 45)
+            surface.SetDrawColor(bg)
+            surface.DrawRect(0, 0, w, h)
+
+            draw.SimpleText(text, "ui.mainmenu.button", 10, h / 2, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+        end
+
+        btn.DoClick = callback
+    end
+
+    for name, id in pairs(ZoneTypeCache) do
+        AddMenuButton(scroll, name, function()
+            net.Start("zone_menu_select")
+            net.WriteUInt(id, 8)
+            net.SendToServer()
+            frame:Close()
+        end)
+    end
+
+    AddMenuButton(scroll, "Add Extra Zone", function()
+        net.Start("zone_menu_select")
+        net.WriteUInt(255, 8)
+        net.SendToServer()
+        frame:Close()
+    end)
+
+    AddMenuButton(scroll, "Stop Extra", function()
+        net.Start("zone_menu_select")
+        net.WriteUInt(254, 8)
+        net.SendToServer()
+        frame:Close()
+    end)
+end
+
+net.Receive("zone_menu_open", function()
+    UI:OpenZoneTypeMenu()
+end)
 
 NETWORK:GetNetworkMessage("CancelZonePlacement", function(_, _)
     isPlacing = false

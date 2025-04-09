@@ -1237,7 +1237,6 @@ local function VerifyList()
 end
 hook.Add("Initialize", "LoadDatas", VerifyList)
 
--- Nominate Menu
 UI:AddListener("nominate_list", function(_, data)
     if data and #data > 0 and type(data[1]) == "table" and data[1].name then
         Cache.M_Data = data
@@ -1255,15 +1254,12 @@ UI:AddListener("nominate", function(_, data)
         return
     end
 
+    -- Sort by name or tier
     table.sort(Cache.M_Data, function(a, b)
         if sortMode == 1 then
-            return a.name:lower() < b.name:lower() 
+            return a.name:lower() < b.name:lower()
         else
-            if a.points == b.points then
-                return a.name:lower() < b.name:lower()
-            else
-                return a.points > b.points
-            end
+            return (a.tier or 1) < (b.tier or 1)
         end
     end)
 
@@ -1272,9 +1268,11 @@ UI:AddListener("nominate", function(_, data)
 
     for _, mapItem in ipairs(Cache.M_Data) do
         if mapItem and mapItem.name then
-            if not (mapItem.name == currentMap and (mapItem.points or 0) <= 0) then
+            local tierText = "Tier " .. (mapItem.tier or 1)
+
+            if mapItem.name ~= currentMap then
                 options[#options + 1] = {
-                    ["name"] = mapItem.name .. " (" .. (mapItem.points or 0) .. " points)",
+                    ["name"] = mapItem.name .. " (" .. tierText .. ")",
                     ["col"] = (mapItem.name == currentMap) and Color(0, 150, 255) or Color(255, 255, 255),
                     ["function"] = Nominate_Callback(mapItem.name)
                 }

@@ -140,10 +140,6 @@ if not CONFIG_LOADED then
         ["STEAM_0:0:64764232"] = {
             name = "nilf",
             reason = "Follows vehnex, causes drama, joins/leave spam, hates on servers"
-        },
-        ["STEAM_0:1:162351300"] = {
-            name = "bland",
-            reason = "Joins then leaves servers because he doesn't like any gamemode also used to follow vehnex."
         }
     }
 

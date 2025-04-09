@@ -369,20 +369,42 @@ function Command:Init()
                 if Admin and Admin.CommandProcess then
                     Admin.CommandProcess(pl, args)
                 else
-                    pl:ChatPrint("Admin addon is not installed or is missing.")
+                    TIMER:Print(pl, "Admin is not installed or is missing.")
                 end
             end,
             "Admin command",
             "<arguments>"
         },
 
+        -- Zone Menu
+        {
+            {"editzone", "zedit", "zone", "zonelist", "zones"},
+            function(pl, args)
+                if not Admin:CanAccess(pl, Admin.Level.Zoner) then
+                    return BHDATA:Send(pl, "Print", {"Admin", "You don't have access to use this command!"})
+                end
+
+                net.Start("zone_menu_types")
+                net.WriteUInt(table.Count(Zones.Type), 8)
+                for name, id in pairs(Zones.Type) do
+                    net.WriteString(name)
+                    net.WriteUInt(id, 8)
+                end
+                net.Send(pl)
+
+                net.Start("zone_menu_open")
+                net.Send(pl)
+            end,
+            "Zone command",
+            "<arguments>"
+        },
 
         -- Set Tier
         {
             {"settier", "tierset"},
-            function(ply, args)
+            function(pl, args)
                 local tier = tonumber(args[1])
-                Admin:SetMapTier(ply, tier)
+                Admin:SetMapTier(pl, tier)
             end,
             "Sets tier",
             "<style> [page]"
@@ -770,11 +792,11 @@ function Command:Init()
         -- Nominate
         {
             {"nominate", "rtvmap", "playmap", "maps"},
-           function(ply, args)
+           function(pl, args)
                 if args[1] then
-                    Command.Nominate(ply, nil, args)
+                    Command.Nominate(pl, nil, args)
                 else
-                    UI:SendToClient(ply, "nominate", {RTV.MapListVersion})
+                    UI:SendToClient(pl, "nominate", {RTV.MapListVersion})
                 end
             end,
             "Nominate a map for the next round",
@@ -784,13 +806,13 @@ function Command:Init()
         -- WR List
         {
             {"wr", "wrlist", "records"},
-            function(ply, args)
-                local stylename, page = ply.style, 1
+            function(pl, args)
+                local stylename, page = pl.style, 1
                 if #args > 0 then
-                    TIMER:SendRemoteWRList(ply, args[1], stylename, page)
+                    TIMER:SendRemoteWRList(pl, args[1], stylename, page)
                 else
                     TIMER:GetRecordList(stylename, page, function(wrList)
-                        UI:SendToClient(ply, "wr", wrList, stylename, page, TIMER:GetRecordCount(stylename))
+                        UI:SendToClient(pl, "wr", wrList, stylename, page, TIMER:GetRecordCount(stylename))
                     end)
                 end
             end,
@@ -801,14 +823,14 @@ function Command:Init()
         -- Top Players List
         {
             {"top", "topplayers"},
-            function(ply, args)
+            function(pl, args)
                 local styleArg = args[1] or "normal"
                 local page = tonumber(args[2]) or 1
 
                 local styleID = TIMER:GetStyleID(styleArg)
                 if not styleID then return end
 
-                TIMER:SendTopList(ply, page, styleID)
+                TIMER:SendTopList(pl, page, styleID)
             end,
             "Displays top players list",
             "<style> [page]"
@@ -817,15 +839,15 @@ function Command:Init()
         -- Maps Beat List
         {
             {"beat", "mapsbeat"},
-            function(ply, args)
+            function(pl, args)
                 local styleArg = args[1] or "normal"
 
                 local styleID = TIMER:GetStyleID(styleArg)
                 if not styleID then return end
 
-                ply.style = styleID
+                pl.style = styleID
 
-                TIMER:GetMapsBeat(ply, styleID)
+                TIMER:GetMapsBeat(pl, styleID)
             end,
             "Displays maps beat list",
             "<style> [page]"
@@ -834,8 +856,8 @@ function Command:Init()
         -- Discord Command
         {
             {"discord", "opendiscord"},
-            function(ply, args)
-                NETWORK:StartNetworkMessage(ply, "OpenDiscord")
+            function(pl, args)
+                NETWORK:StartNetworkMessage(pl, "OpenDiscord")
             end,
             "Opens the Discord link.",
             ""
@@ -844,8 +866,8 @@ function Command:Init()
         -- Tutorial Command
         {
             {"tut", "tutorial"},
-            function(ply, args)
-                NETWORK:StartNetworkMessage(ply, "OpenTutorial")
+            function(pl, args)
+                NETWORK:StartNetworkMessage(pl, "OpenTutorial")
             end,
             "Opens the tutorial link.",
             ""
@@ -854,13 +876,13 @@ function Command:Init()
         -- Normal WR
         --[[{
             {"nwr", "normalwr", "wrnormal"},
-            function(ply, args)
-                local nStyle, page = TIMER:GetStyleID("N"), 1
+            function(pl, args)
+                local style, page = TIMER:GetStyleID("N"), 1
                 if #args > 0 then
-                    TIMER:SendRemoteWRList(ply, args[1], nStyle, page)
+                    TIMER:SendRemoteWRList(pl, args[1], style, page)
                 else
-                    TIMER:GetRecordList(nStyle, page, function(records)
-                        UI:SendToClient(ply, "wr", records, nStyle, page, TIMER:GetRecordCount(nStyle))
+                    TIMER:GetRecordList(style, page, function(records)
+                        UI:SendToClient(pl, "wr", records, style, page, TIMER:GetRecordCount(style))
                     end)
                 end
             end,
@@ -872,7 +894,7 @@ function Command:Init()
         -- Style WR 
         {
             {"wr", "records", "worldrecords"},
-            function(ply, args)
+            function(pl, args)
             local styleAliases = {
                 ["n"] = "N",
                 ["sw"] = "SW",
@@ -888,7 +910,7 @@ function Command:Init()
                 local page = tonumber(args[2]) or 1
 
                 TIMER:GetRecordList(styleID, page, function(records)
-                    UI:SendToClient(ply, "wr", records, styleID, page, TIMER:GetRecordCount(styleID))
+                    UI:SendToClient(pl, "wr", records, styleID, page, TIMER:GetRecordCount(styleID))
                 end)
             end,
 
@@ -919,14 +941,14 @@ function Command:Init()
         -- Segment
         {
             {"segment", "segmented", "tas", "seg"},
-            function(client)
-                if (client.style ~= TIMER:GetStyleID("Segment")) then
-                    Command.Style(client, nil, { TIMER:GetStyleID("Segment")})
-                    BHDATA:Send(client, "Print", {"Timer", "To reopen the segment menu at any time, use this command again."})
-                    SendPopupNotification(client, "Notification", "To reopen the segment menu at any time, use this command again.", 2)
+            function(pl)
+                if (pl.style ~= TIMER:GetStyleID("Segment")) then
+                    Command.Style(pl, nil, { TIMER:GetStyleID("Segment")})
+                    BHDATA:Send(pl, "Print", {"Timer", "To reopen the segment menu at any time, use this command again."})
+                    SendPopupNotification(pl, "Notification", "To reopen the segment menu at any time, use this command again.", 2)
                 end
 
-                UI:SendToClient(client, "segment")
+                UI:SendToClient(pl, "segment")
             end,
             "Activate segmented mode and open the segment menu",
             "[subcommand]"

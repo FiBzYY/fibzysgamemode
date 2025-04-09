@@ -962,7 +962,8 @@ function UI:CreateMenu()
             self:CreateToggle(parent, y, "bhop_perfprinter", "Perfect Printer", "Enables or disables the jump tracker for scrolling.")
             y = y + offset
             self:CreateToggle(parent, y, "bhop_replaylines", "Replay Path", "Enables or disables replay landing path.")
-            y = y + offset           
+            y = y + offset
+            self:CreateInputBox(parent, y, "bhop_replaylines_dist", "10000", "Replay Path Distance", "Set your max distance for path.")
         end },
     })
 
@@ -990,22 +991,6 @@ function UI:CreateMenu()
                 else
                     local noAccess = vgui.Create("DLabel", parent)
                     noAccess:SetText("You don’t have access to see logs.")
-                    noAccess:SetFont("ui.mainmenu.button")
-                    noAccess:SetColor(Color(255, 80, 80))
-                    noAccess:SetPos(10, 40)
-                    noAccess:SizeToContents()
-                end
-            end },
-
-            { text = "Timer", panelContent = function(parent)
-                local x, y = 10, 0
-                self:CreatePanel(parent, {"Admin Timer"})
-
-                if lp():GetNWInt("PlayerRank", 0) == 64 or 9 then
-                    UI:UpdateAdminSettings(parent)
-                else
-                    local noAccess = vgui.Create("DLabel", parent)
-                    noAccess:SetText("You don’t have timer access to this.")
                     noAccess:SetFont("ui.mainmenu.button")
                     noAccess:SetColor(Color(255, 80, 80))
                     noAccess:SetPos(10, 40)

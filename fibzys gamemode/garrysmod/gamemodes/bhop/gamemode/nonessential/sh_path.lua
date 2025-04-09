@@ -73,11 +73,14 @@ end
 
 if CLIENT then
     CreateClientConVar("bhop_replaylines", "0", true, false, "Show the path of replay")
+    CreateClientConVar("bhop_replaylines_dist", "1000", true, false, "Show the path of replay distance")
 
     -- Replay path
     local landingBoxes = {}
 
     net.Receive("ShavitLine_Beam", function()
+        if not GetConVar("bhop_replaylines"):GetBool() then return end
+
         local startPos = net.ReadVector()
         local endPos = net.ReadVector()
         local color = net.ReadColor()
@@ -100,7 +103,8 @@ if CLIENT then
         if not IsValid(ply) then return end
 
         local posPlayer = ply:GetPos()
-        local drawDistanceSqr = 1000 * 1000
+        local drawDistance = GetConVar("bhop_replaylines_dist"):GetFloat()
+        local drawDistanceSqr = drawDistance * drawDistance
 
         local size = 6
         local height = 0.1

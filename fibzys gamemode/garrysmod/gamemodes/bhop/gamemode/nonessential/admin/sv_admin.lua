@@ -233,6 +233,37 @@ function Admin:SetMapTier(ply, tier)
     end)
 end
 
+util.AddNetworkString("zone_menu_open")
+util.AddNetworkString("zone_menu_select")
+util.AddNetworkString("zone_menu_types")
+
+net.Receive("zone_menu_select", function(len, ply)
+    if not Admin:CanAccess(ply, Admin.Level.Zoner) then
+        return BHDATA:Send(ply, "Print", {"Admin", "You don't have access to use this command!"})
+    end
+
+    local zoneID = net.ReadUInt(8)
+
+    if not Zones then return end
+    if not Zones.Type then return end
+
+    if zoneID == 255 then -- -1 or -10 doesn't fit in UInt(8)
+        return Admin:HandleButton(ply, { -2, 1, "Extra" })
+    elseif zoneID == 254 then
+        ply.ZoneExtra = nil
+        return Admin:HandleButton(ply, { -2, 1 })
+    end
+
+    Zones:StartSet(ply, zoneID)
+
+    for name, id in pairs(Zones.Type) do
+        if id == zoneID then
+            print(ply:Nick() .. " selected zone type: " .. name .. " (" .. id .. ")")
+            break
+        end
+    end
+end)
+
 function Admin:GenerateRequest(caption, title, default, ret)
 	return {Caption = caption, Title = title, Default = default, Return = ret}
 end

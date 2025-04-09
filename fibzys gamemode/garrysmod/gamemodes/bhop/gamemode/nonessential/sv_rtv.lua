@@ -49,6 +49,7 @@ function RTV:CreateTimer(name, delay, func)
     RTV.Timers[name] = {endTime = CurTime() + delay, callback = func}
 end
 
+-- Start a map vote without using points anymore
 function RTV:StartVote()
     if RTV.VotePossible then return end
 
@@ -86,29 +87,41 @@ function RTV:StartVote()
         for i = 1, #MapList do
             table.insert(indices, i)
         end
-    
+
+        -- Shuffle map indices
         for i = #indices, 2, -1 do
             local j = math.random(i)
             indices[i], indices[j] = indices[j], indices[i]
         end
-    
+
         for _, index in ipairs(indices) do
             if Added >= 5 then break end
             local data = MapList[index]
-            if not table.HasValue(RTV.Selections, data[1]) and data[1] ~= game.GetMap() then
-                table.insert(RTV.Selections, data[1])
+            local mapName = data[1]
+
+            -- Only add if not already picked and not the current map
+            if not table.HasValue(RTV.Selections, mapName) and mapName ~= game.GetMap() then
+                table.insert(RTV.Selections, mapName)
                 Added = Added + 1
             end
         end
     end
 
+    -- Convert map names to full data objects
     local RTVSend = {}
     for _, map in ipairs(RTV.Selections) do
         table.insert(RTVSend, RTV:GetMapData(map))
     end
 
+    -- Send to all clients
     UI:SendToClient(false, "rtv", "GetList", RTVSend)
-    RTV:CreateTimer("EndVote", 15, function() if not RTV.VIPTriggered then RTV:EndVote() end end)
+
+    -- Start vote timers
+    RTV:CreateTimer("EndVote", 15, function()
+        if not RTV.VIPTriggered then
+            RTV:EndVote()
+        end
+    end)
 
     RTV:CreateTimer("InstantVote", 0.1, function()
         for map, voters in pairs(RTV.Nominations) do
@@ -456,22 +469,21 @@ hook_Add("InitPostEntity", "InitializeRTV", function()
     RTV:Init()
 end)
 
--- send the list for ui
+-- Sends map list to client for UI
 function RTV:SendMapList(client)
     local mapList = {}
     local seenMaps = {}
 
     for _, data in ipairs(MapList) do
         local mapName = tostring(data[1])
-        local points = tonumber(data[2]) or 0
+        -- We ditch the points completely
         local tier = tonumber(data[4]) or 1
 
-        if not seenMaps[mapName] and points > 0 then
+        if not seenMaps[mapName] then
             seenMaps[mapName] = true
 
             table.insert(mapList, { 
                 name = mapName, 
-                points = points,
                 tier = tier
             })
         end

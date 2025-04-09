@@ -19,7 +19,8 @@ Timer = {
     BonusMultiplier = GetConVar("timer_bonus_multiplier"):GetFloat(),
     Options = 0,
     CheckpointTime = 0,
-    CheckpointStartTick = 0
+    CheckpointStartTick = 0,
+    Tier = 1
 }
 
 timer_sounds = {}
@@ -948,17 +949,23 @@ end
 function TIMER:LoadMapData()
     local mapName = MySQL:Escape(game.GetMap())
 
-    MySQL:Start("SELECT options FROM timer_map WHERE map = " .. mapName .. " LIMIT 1", function(result)
+    MySQL:Start("SELECT multiplier, bonusmultiplier, options, tier FROM timer_map WHERE map = " .. mapName .. " LIMIT 1", function(result)
         if result and result[1] then
+            Timer.Multiplier = tonumber(result[1]["multiplier"]) or 0
+            Timer.BonusMultiplier = tonumber(result[1]["bonusmultiplier"]) or 0
             Timer.Options = tonumber(result[1]["options"]) or 0
-            UTIL:Notify(Color(255, 255, 0), "Timer", "Loaded map options: " .. Timer.Options)
+            Timer.Tier = tonumber(result[1]["tier"]) or 1
+
+            UTIL:Notify(Color(255, 255, 0), "Timer", "Loaded map data: Main Points: " .. Timer.Multiplier .. ", Bonus Points: " .. Timer.BonusMultiplier .. ", Options: " .. Timer.Options .. ", Tier: " .. Timer.Tier)
         else
+            UTIL:Notify(Color(255, 0, 0), "Timer", "No entry found for map " .. mapName .. ". Using default values.")
+            Timer.Multiplier = 0
+            Timer.BonusMultiplier = 0
             Timer.Options = nil
-            UTIL:Notify(Color(255, 0, 0), "Timer", "No map options found for this map")
+            Timer.Tier = 1
         end
     end)
 end
-
 -- Load all records
 function TIMER:LoadRecords()
     if not self.Styles then return end
@@ -1080,7 +1087,7 @@ function TIMER:AddSpeedData(ply, tab)
 
     if record > 0 then
         local jumpCount = self:GetJumps(ply, 0) or 0
-        local szData = table.concat({
+        local data = table.concat({
             math.floor(tab[1] or 0),
             math.floor(tab[2] or 0),
             jumpCount or 0,
@@ -1090,14 +1097,14 @@ function TIMER:AddSpeedData(ply, tab)
 
         ply.LastSpeedData = { math.floor(tab[1] or 0), math.floor(tab[2] or 0) }
 
-        if szData == "" then
+        if data == "" then
             return
         end
 
-        local szDataEscaped = sql.SQLStr(szData)
+        local DataEscaped = sql.SQLStr(data)
 
         timer.Simple(0.25, function()
-            MySQL:Start("UPDATE timer_times SET data = " .. szDataEscaped .. " WHERE uid = '" .. ply:SteamID() .. "' AND map = '" .. game.GetMap() .. "' AND style = " .. styleID)
+            MySQL:Start("UPDATE timer_times SET data = " .. DataEscaped .. " WHERE uid = '" .. ply:SteamID() .. "' AND map = '" .. game.GetMap() .. "' AND style = " .. styleID)
         end)
     end
 end
