@@ -1664,3 +1664,198 @@ net.Receive("SendProfileData", function()
     if not IsValid(target) then return end
     UI:OpenProfileMenu(target, data)
 end)
+
+function UI:OpenRecordStatsMenu(target, data)
+    if not IsValid(target) or not data then return end
+
+    local frame = vgui.Create("DFrame")
+    frame:SetSize(760, 540)
+    frame:Center()
+    frame:SetTitle("")
+    frame:MakePopup()
+    frame:ShowCloseButton(false)
+    frame.Paint = function(self, w, h)
+        draw.RoundedBox(0, 0, 0, w, h, Color(42, 42, 42)) -- bg
+        draw.RoundedBox(0, 0, 0, w, 45, Color(32, 32, 32)) -- header
+        draw.SimpleText("Stats for " .. data.name .. " #1 run on bhop_grassyass (Normal)", "ui.mainmenu.button", 20, 12, color_white, TEXT_ALIGN_LEFT)
+    end
+
+    -- Section builder
+    local function AddSection(title, y)
+        local header = vgui.Create("DPanel", frame)
+        header:SetPos(15, y)
+        header:SetSize(730, 25)
+        header.Paint = function(self, w, h)
+            draw.SimpleText(title, "ui.mainmenu.button", 0, 0, Color(255, 255, 255), TEXT_ALIGN_LEFT)
+            surface.SetDrawColor(90, 90, 90)
+            surface.DrawLine(0, h - 1, w, h - 1)
+        end
+    end
+
+    -- Stat label
+    local function AddStat(title, value, x, y, titleColor, alignRight)
+        titleColor = titleColor or Color(255, 80, 80)
+
+        local titleLabel = vgui.Create("DLabel", frame)
+        titleLabel:SetFont("ui.mainmenu.button")
+        titleLabel:SetTextColor(titleColor)
+        titleLabel:SetText(title .. ":")
+        titleLabel:SizeToContents()
+
+        local valueLabel = vgui.Create("DLabel", frame)
+        valueLabel:SetFont("ui.mainmenu.button")
+        valueLabel:SetTextColor(Color(255, 255, 255))
+        valueLabel:SetText(value)
+        valueLabel:SizeToContents()
+
+        if alignRight then
+            local totalWidth = titleLabel:GetWide() + 6 + valueLabel:GetWide()
+            local baseX = x - totalWidth
+
+            titleLabel:SetPos(baseX, y)
+            valueLabel:SetPos(baseX + titleLabel:GetWide() + 6, y)
+        else
+            titleLabel:SetPos(x, y)
+            valueLabel:SetPos(x + titleLabel:GetWide() + 6, y)
+        end
+    end
+
+    -- Stat label
+    local function AddStatGroup(title, value, x, y, titleColor, alignRight)
+        titleColor = titleColor or Color(255, 80, 80)
+
+        local titleLabel = vgui.Create("DLabel", frame)
+        titleLabel:SetFont("ui.mainmenu.button")
+        titleLabel:SetTextColor(titleColor)
+        titleLabel:SetText(title .. ":")
+        titleLabel:SizeToContents()
+
+        local valueLabel = vgui.Create("DLabel", frame)
+        valueLabel:SetFont("ui.mainmenu.button")
+        valueLabel:SetTextColor(Color(0, 255, 0))
+        valueLabel:SetText(value)
+        valueLabel:SizeToContents()
+
+        if alignRight then
+            local totalWidth = titleLabel:GetWide() + 6 + valueLabel:GetWide()
+            local baseX = x - totalWidth
+
+            titleLabel:SetPos(baseX, y)
+            valueLabel:SetPos(baseX + titleLabel:GetWide() + 6, y)
+        else
+            titleLabel:SetPos(x, y)
+            valueLabel:SetPos(x + titleLabel:GetWide() + 6, y)
+        end
+    end
+
+    -- Sections
+    AddSection("Overall Statistics", 60)
+    AddStat("Time", data.time or "N/A", 20, 90)
+    AddStat("Jumps", data.jumps or "0", 20, 115)
+    AddStat("Strafes", data.strafes or "0", 20, 140)
+    AddStat("Points", data.points or "0", 740, 90, nil, true)
+    AddStat("SteamID", data.steamid or "N/A", 740, 115, nil, true)
+
+
+    AddSection("Speed/Strafe Statistics and Completions", 170)
+    AddStat("Average Gain", data.gain or "0%", 20, 200)
+    AddStat("Sync", data.sync or "0%", 20, 225)
+    AddStat("Top Speed", data.speed or "0 u/s", 20, 250)
+    AddStat("Completions", data.completions or "0", 20, 275)
+
+    AddSection("Group Statistics", 310)
+
+    AddStatGroup("Group 1", "00:16.279 (Achieved)", 20, 340, Color(255, 80, 80))
+    AddStatGroup("Group 2", "00:17.758 (Achieved)", 20, 365, Color(255, 80, 80))
+    AddStatGroup("Group 3", "00:20.718 (Achieved)", 20, 390, Color(255, 80, 80))
+    AddStatGroup("Group 4", "00:23.678 (Achieved)", 740, 340, Color(255, 80, 80), true)
+    AddStatGroup("Group 5", "00:26.638 (Achieved)", 740, 365, Color(255, 80, 80), true)
+    AddStatGroup("Group 6", "Achieved", 740, 390, Color(255, 80, 80), true)
+
+     -- Group Completion Bar with Outer Outline Trick
+    local outlineThickness = 5
+    local visualW, visualH = 720, 35
+    local totalW, totalH = visualW + outlineThickness * 2, visualH + outlineThickness * 2
+
+    local bar = vgui.Create("DPanel", frame)
+    bar:SetSize(totalW, totalH)
+    bar:SetPos((frame:GetWide() - bar:GetWide()) / 2, 430 - outlineThickness)
+
+    bar.Paint = function(self, w, h)
+        local groups = 6
+        local completedGroups = 3
+        local segmentWidth = visualW / groups
+        local fillX = segmentWidth * completedGroups
+
+        -- Outline
+        surface.SetDrawColor(55, 55, 55)
+        surface.DrawRect(0, 0, w, outlineThickness)
+        surface.DrawRect(0, h - outlineThickness, w, outlineThickness)
+        surface.DrawRect(0, 0, outlineThickness, h)
+        surface.DrawRect(w - outlineThickness, 0, outlineThickness, h)
+
+        local ox, oy = outlineThickness, outlineThickness
+
+        -- Background
+        surface.SetDrawColor(30, 30, 30)
+        surface.DrawRect(ox, oy, visualW, visualH)
+
+        -- Blue Bar
+        surface.SetDrawColor(0, 180, 220)
+        surface.DrawRect(ox, oy, fillX, visualH)
+
+        -- Groups
+        for i = 1, groups do
+            draw.SimpleText(
+                tostring(groups - i + 1),
+                "ui.mainmenu.button",
+                ox + segmentWidth * (i - 1) + segmentWidth / 2,
+                oy + visualH / 2,
+                color_white,
+                TEXT_ALIGN_CENTER,
+                TEXT_ALIGN_CENTER
+            )
+        end
+
+        -- White Line
+        surface.SetDrawColor(255, 255, 255)
+        surface.DrawRect(ox + fillX - 1, oy, 2, visualH)
+
+        -- WR
+        draw.SimpleText("WR", "ui.mainmenu.button", ox + fillX, oy - 16, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+
+        -- PB
+        draw.SimpleText("PB", "ui.mainmenu.button", ox + fillX, oy + visualH + 10, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+    end
+
+    -- Close
+    local close = vgui.Create("DButton", frame)
+    close:SetText("Close")
+    close:SetFont("ProfileFont")
+    close:SetSize(400, 30)
+    close:SetPos(frame:GetWide() / 2 - 200, frame:GetTall() - 45)
+    close:SetTextColor(Color(255, 255, 255))
+    close.Paint = function(s, w, h)
+        local col = s:IsHovered() and Color(100, 42, 42) or Color(32, 32, 32)
+        draw.RoundedBox(0, 0, 0, w, h, col)
+    end
+    close.DoClick = function() frame:Close() end
+end
+
+-- Dev
+concommand.Add("open_profilemenu_test", function()
+    local fakeData = {
+        name = "fibzy",
+        time = "00:14.799",
+        jumps = "22",
+        strafes = "48",
+        points = 200,
+        steamid = "STEAM_0:0:54974417",
+        gain = "70.434% (-4.27%)",
+        sync = "96.95% (-0.92%)",
+        speed = "1171.508 u/s",
+        completions = "1",
+    }
+
+    UI:OpenRecordStatsMenu(LocalPlayer(), fakeData)
+end)
