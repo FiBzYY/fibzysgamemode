@@ -1620,6 +1620,8 @@ function UI:OpenProfileMenu(target, data)
     -- Left Stats
     AddStatLabel("Map Completions:", data.mapCompletions or "0", 45, 230)
     AddStatLabel("Amount of WRs:", data.wrs or "0", 45, 250)
+
+    -- Avg
     AddStatLabel("Map Completions:", data.mapCompletions or "0", 45, 310)
     AddStatLabel("Map placement:", data.placement or "0", 45, 330)
     AddStatLabel("Sync:", data.sync or "0", 45, 390)
@@ -1635,7 +1637,7 @@ function UI:OpenProfileMenu(target, data)
     AddStatLabel("Map Most Played:", data.mapmostplayed or "N/A", 450, 130)
     AddStatLabel("Role:", data.role or "Unknown", 450, 160)
 
-    AddStatLabel("Most Recent WR:", data.mostRecentWR or "N/A", 450, 210)
+    AddStatLabel("Most Recent WR:", data.lastWR or "N/A", 450, 210)
     AddStatLabel("Group 1 Times:", data.group1 or "0", 450, 240)
     AddStatLabel("Tier Played:", data.tierPlayed or "0", 450, 270)
     AddStatLabel("Group Placement:", data.groupPlacement or "0", 450, 300)
@@ -1660,6 +1662,5 @@ net.Receive("SendProfileData", function()
     local data = net.ReadTable()
 
     if not IsValid(target) then return end
-
     UI:OpenProfileMenu(target, data)
 end)

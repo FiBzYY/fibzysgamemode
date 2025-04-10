@@ -691,16 +691,26 @@ function TIMER:AddRecord(ply, time, old)
     local styleID = ply.style
     local styleData = self.Styles[styleID].Data
 
-    MySQL:Start("SELECT COUNT(*) AS runCount FROM timer_times WHERE map = '" .. game.GetMap() .. "' AND style = " .. styleID, function(RunData)
+    local steamid = ply:SteamID()
+    local map = game.GetMap()
+
+    MySQL:Start(string.format([[
+        INSERT INTO timer_mapplays (uid, map, completions)
+        VALUES ('%s', '%s', 1)
+        ON DUPLICATE KEY UPDATE completions = completions + 1
+    ]], steamid, map))
+
+    -- continue as normal
+    MySQL:Start("SELECT COUNT(*) AS runCount FROM timer_times WHERE map = '" .. map .. "' AND style = " .. styleID, function(RunData)
         local runID = RunData and RunData[1] and tonumber(RunData[1]["runCount"]) or 0
         runID = runID + 1
 
-        MySQL:Start("SELECT time FROM timer_times WHERE map = '" .. game.GetMap() .. "' AND uid = '" .. ply:SteamID() .. "' AND style = " .. styleID, function(OldEntry)
+        MySQL:Start("SELECT time FROM timer_times WHERE map = '" .. map .. "' AND uid = '" .. steamid .. "' AND style = " .. styleID, function(OldEntry)
             if OldEntry and OldEntry[1] then
                 if time < OldEntry[1].time then
                     styleData:UpdateTotalTime(time, old)
 
-                    MySQL:Start("UPDATE timer_times SET player = " .. sql.SQLStr(ply:Name()) .. ", time = " .. time .. ", date = '" .. TIMER:GetDate() .. "' WHERE map = '" .. game.GetMap() .. "' AND uid = '" .. ply:SteamID() .. "' AND style = " .. styleID, function()
+                    MySQL:Start("UPDATE timer_times SET player = " .. sql.SQLStr(ply:Name()) .. ", time = " .. time .. ", date = '" .. TIMER:GetDate() .. "' WHERE map = '" .. map .. "' AND uid = '" .. steamid .. "' AND style = " .. styleID, function()
                         ply.RunID = runID
                         self:HandleRecordCompletion(ply, time, old, styleData, runID)
                     end)
@@ -711,13 +721,14 @@ function TIMER:AddRecord(ply, time, old)
             else
                 styleData:UpdateTotalTime(time, nil)
 
-                MySQL:Start("INSERT INTO timer_times (uid, player, map, style, time, points, date) VALUES ('" ..
-                    ply:SteamID() .. "', " ..
+                MySQL:Start("INSERT INTO timer_times (uid, player, map, style, time, points, date, tier) VALUES ('" ..
+                    steamid .. "', " ..
                     sql.SQLStr(ply:Name()) .. ", '" ..
-                    game.GetMap() .. "', " ..
+                    map .. "', " ..
                     styleID .. ", " ..
                     time .. ", 0, '" ..
-                    TIMER:GetDate() .. "')", function()
+                    TIMER:GetDate() .. "', " ..
+                    Timer.Tier .. ")", function()
                     
                     ply.RunID = runID
                     self:HandleRecordCompletion(ply, time, old, styleData, runID)
@@ -966,6 +977,7 @@ function TIMER:LoadMapData()
         end
     end)
 end
+
 -- Load all records
 function TIMER:LoadRecords()
     if not self.Styles then return end
@@ -1003,7 +1015,8 @@ function TIMER:LoadRecords()
                         data["player"], 
                         tonumber(data["time"]), 
                         self:Null(data["date"]), 
-                        self:Null(data["data"])
+                        self:Null(data["data"]),
+                        tonumber(data["tier"]) or 1
                     })
                 end
             end
@@ -1385,42 +1398,269 @@ local function SendAllRecords(ply)
     NETWORK:StartNetworkMessage(ply, "SendAllRecords", recordsTable)
 end
 
+function TIMER:GetMostPlayedMap(ply, callback)
+    local steamid = MySQL:Escape(ply:SteamID())
+
+    local query = string.format([[
+        SELECT map, completions
+        FROM timer_mapplays
+        WHERE uid = %s
+        ORDER BY completions DESC
+        LIMIT 1
+    ]], steamid)
+
+    MySQL:Start(query, function(data)
+        if not data or not data[1] then return callback("N/A") end
+        callback(data[1].map)
+    end)
+end
+
 util.AddNetworkString("RequestProfileData")
 util.AddNetworkString("SendProfileData")
 util.AddNetworkString("ScoreboardProfileRequest")
 
 function FormatPlaytime(seconds)
+    seconds = math.floor(tonumber(seconds) or 0)
+
     local h = math.floor(seconds / 3600)
     local m = math.floor((seconds % 3600) / 60)
     local s = math.floor(seconds % 60)
+
     return string.format("%02dh %02dm %02ds", h, m, s)
+end
+
+-- Get a player's average sync from the database
+function TIMER:GetAverageSync(ply, callback)
+    local steamid = MySQL:Escape(ply:SteamID())
+
+    local query = string.format([[
+        SELECT AVG(syncVal) AS avgSync FROM (
+            SELECT CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(data, ' ', 4), ' ', -1) AS DECIMAL(5,2)) AS syncVal
+            FROM timer_times
+            WHERE uid = %s
+        ) AS sub
+        WHERE syncVal > 0
+    ]], steamid)
+
+    MySQL:Start(query, function(result)
+        local avgSync = result and result[1] and tonumber(result[1].avgSync) or 0
+        callback(avgSync)
+    end)
+end
+
+-- Get a player's most recent WR map (latest record)
+function TIMER:GetLastWRMap(ply, callback)
+    local steamid = MySQL:Escape(ply:SteamID())
+
+    local query = string.format([[
+        SELECT map, style, time, date
+        FROM timer_times
+        WHERE uid = %s
+        ORDER BY date DESC
+        LIMIT 1
+    ]], steamid)
+
+    MySQL:Start(query, function(result)
+        local lastWR = "N/A"
+        if result and result[1] then
+            local wr = result[1]
+            lastWR = string.format("%s",
+                wr.map
+            )
+        end
+        callback(lastWR)
+    end)
+end
+
+-- how many Group 1 runs a player has (within 15s of WR)
+function TIMER:GetGroup1Runs(ply, style, callback)
+    local steamid = MySQL:Escape(ply:SteamID())
+
+    local query = string.format([[
+        SELECT COUNT(*) AS group1count
+        FROM timer_times AS t1
+        JOIN (
+            SELECT map, MIN(time) AS wr
+            FROM timer_times
+            WHERE style = %d
+            GROUP BY map
+        ) AS wrs ON t1.map = wrs.map
+        WHERE t1.uid = %s AND t1.style = %d AND (t1.time - wrs.wr) <= 15
+    ]], style, steamid, style)
+
+    MySQL:Start(query, function(data)
+        local count = (data and data[1] and tonumber(data[1].group1count)) or 0
+        callback(count)
+    end)
+end
+
+function TIMER:GetLastPlayedMap(ply, callback)
+    if not IsValid(ply) or not callback then return end
+
+    local steamid = MySQL:Escape(ply:SteamID())
+
+    local query = string.format([[
+        SELECT map, style, date
+        FROM timer_times
+        WHERE uid = %s
+        ORDER BY date DESC
+        LIMIT 1
+    ]], steamid)
+
+    MySQL:Start(query, function(data)
+        if data and data[1] then
+            local row = data[1]
+            callback(string.format("%s", row.map))
+        else
+            callback("Never")
+        end
+    end)
+end
+
+function TIMER:GetTiersPlayed(ply, callback)
+    local steamid = MySQL:Escape(ply:SteamID())
+    local query = string.format([[
+        SELECT DISTINCT tier
+        FROM timer_times
+        WHERE uid = %s AND tier IS NOT NULL
+        ORDER BY tier ASC
+    ]], steamid)
+
+    MySQL:Start(query, function(result)
+        local tiers = {}
+
+        if result then
+            for _, row in ipairs(result) do
+                table.insert(tiers, tonumber(row.tier))
+            end
+        end
+
+        callback(tiers)
+    end)
+end
+
+function TIMER:UserGetMapsCompletedCount(ply, style, callback)
+    local steamID = MySQL:Escape(ply:SteamID())
+    local query = string.format([[
+        SELECT COUNT(DISTINCT map) AS count
+        FROM timer_times
+        WHERE uid = %s AND style = %d
+    ]], steamID, style)
+
+    MySQL:Start(query, function(data)
+        local count = (data and data[1] and tonumber(data[1].count)) or 0
+        callback(count)
+    end)
+end
+
+-- Get Group Placement
+function TIMER:GetGroupPlacement(ply, callback)
+    local steamID = MySQL:Escape(ply:SteamID())
+    local style = ply.style
+
+    local query = string.format([[
+        SELECT t1.map, t1.time, COALESCE(m.tier, 1) AS tier
+        FROM timer_times AS t1
+        LEFT JOIN timer_map AS m ON t1.map = m.map
+        WHERE t1.uid = %s AND t1.style = %d
+    ]], steamID, style)
+
+    MySQL:Start(query, function(results)
+        if not results or #results == 0 then
+            callback("Unranked")
+            return
+        end
+
+        local groupSum = 0
+        local groupCount = 0
+
+        for _, row in ipairs(results) do
+            local map = row.map
+            local time = tonumber(row.time)
+            local wr = TIMER:GetMapWRTime(map, style)
+
+            if wr and wr > 0 and time > 0 then
+                local diff = time - wr
+                local group = 6 -- default (slowpoke)
+
+                if diff <= 15 then group = 1
+                elseif diff <= 30 then group = 2
+                elseif diff <= 60 then group = 3
+                elseif diff <= 90 then group = 4
+                elseif diff <= 120 then group = 5 end
+
+                groupSum = groupSum + group
+                groupCount = groupCount + 1
+            end
+        end
+
+        if groupCount == 0 then
+            callback("Unranked")
+            return
+        end
+
+        local avgGroup = math.Round(groupSum / groupCount)
+        local groupName = {
+            [1] = "Elite",
+            [2] = "Expert",
+            [3] = "Skilled",
+            [4] = "Intermediate",
+            [5] = "Casual",
+            [6] = "Slowpoke"
+        }
+
+        callback(groupName[avgGroup] or "Unknown")
+    end)
 end
 
 function TIMER:SendProfileData(requester, target)
     if not IsValid(requester) or not IsValid(target) then return end
 
-    self:GetMapsLeft(target, target.style, function(mapsLeft, mapsPlayed, totalMaps)
-        local profile = {
-            name = target:Nick(),
-            steamid = target:SteamID(),
-            role = Admin:GetAccessString(Admin:GetAccess(target)) or "User",
-            wrs = target.WRCount or 0,
-            placement = target.Placement or 0,
-            rank = TIMER.Ranks[target.Rank] and TIMER.Ranks[target.Rank][1] or "Unranked",
-            points = target.RankSum or 0,
-            mapsPlayed = mapsPlayed or 0,
-            mapsLeft = mapsLeft or 0,
-            mapCompletions = TIMER:GetMapCompletionCount(game.GetMap(), target.style, target),
-            sync = target.LastSync or 0,
-            longJump = target.BestLJ or 0,
-            playtime = FormatPlaytime(target.TotalPlayTime or 0),
-            mapmostplayed = "WIP", -- optional, can do this later
-        }
+    self:GetMostPlayedMap(target, function(mostPlayed)
+        self:GetMapsLeft(target, target.style, function(mapsLeft, mapsPlayed, totalMaps)
+            self:GetAverageSync(target, function(avgSync)
+                self:GetLastWRMap(target, function(lastWR)
+                    self:GetGroup1Runs(target, target.style, function(group1count)
+                        self:GetLastPlayedMap(target, function(lastPlayed)
+                            self:GetTiersPlayed(target, function(tiersPlay)
+                                self:UserGetMapsCompletedCount(target, target.style, function(mapCompletions)
+                                    self:GetGroupPlacement(target, function(groupedPlacement)
 
-        net.Start("SendProfileData")
-        net.WriteEntity(target)
-        net.WriteTable(profile)
-        net.Send(requester)
+                                        local profile = {
+                                            name = target:Nick(),
+                                            steamid = target:SteamID(),
+                                            role = Admin:GetAccessString(Admin:GetAccess(target)) or "User",
+                                            wrs = target.WRCount or 0,
+                                            placement = target.Placement or 0,
+                                            rank = TIMER.Ranks[target.Rank] and TIMER.Ranks[target.Rank][1] or "Unranked",
+                                            points = target.RankSum or 0,
+                                            mapsPlayed = mapsPlayed or 0,
+                                            mapsLeft = mapsLeft or 0,
+                                            mapCompletions = mapCompletions or 0,
+                                            sync = math.Round(avgSync, 2) .. "%",
+                                            longJump = target.BestLJ or 0,
+                                            playtime = FormatPlaytime(target.TotalPlayTime or 0),
+                                            mapmostplayed = mostPlayed or "N/A",
+                                            lastWR = lastWR or 0,
+                                            group1 = group1count or 0,
+                                            lastplayed = lastPlayed or 0,
+                                            tierPlayed = (#tiersPlay > 0) and table.concat(tiersPlay, ", ") or "None",
+                                            groupPlacement = groupedPlacement or "Unranked"
+                                        }
+
+                                        net.Start("SendProfileData")
+                                        net.WriteEntity(target)
+                                        net.WriteTable(profile)
+                                        net.Send(requester)
+
+                                    end)
+                                end)
+                            end)
+                        end)
+                    end)
+                end)
+            end)
+        end)
     end)
 end
 
