@@ -105,12 +105,11 @@ function TIMER:ResetPlayerAttributes(ply, previous, start)
     end
 end
 
--- Spawn checks for setspawn use
 function TIMER:SpawnChecks(ply)
     self:SetJumps(ply, 0)
     self:ResetPlayerAttributes(ply)
 
-    local isBonus = (ply.style == TIMER:GetStyleID("bonus"))
+    local isBonus = (ply.style == self:GetStyleID("bonus"))
     local steamID = ply:SteamID()
     local map = game.GetMap()
 
@@ -119,16 +118,26 @@ function TIMER:SpawnChecks(ply)
         and Setspawn.Points[map][steamID] 
         and Setspawn.Points[map][steamID][isBonus and 2 or 0]
 
+    local usedCustomSpawn = false
+
     if index then
         ply:SetPos(index[1])
         ply:SetEyeAngles(index[2])
+        usedCustomSpawn = true
     elseif isBonus and Zones.BonusPoint then
         ply:SetPos(Zones:GetSpawnPoint(Zones.BonusPoint))
+        usedCustomSpawn = false
+
     elseif not isBonus and Zones.StartPoint then
         ply:SetPos(Zones:GetSpawnPoint(Zones.StartPoint))
+        usedCustomSpawn = false
     end
 
-    local zoneType = 2 and 0
+    if not usedCustomSpawn and fallbackAngles[steamID] then
+        ply:SetEyeAngles(fallbackAngles[steamID])
+    end
+
+    local zoneType = 0
     ply.outsideSpawn = not Zones:IsInside(ply, zoneType)
 
     if not ply:IsBot() and ply:GetMoveType() != MOVETYPE_WALK then

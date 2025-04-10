@@ -115,6 +115,8 @@ function Command:Trigger(pl, command, text)
     end
 end
 
+fallbackAngles = fallbackAngles or {}
+
 -- Restart Player
 function Command:PerformRestart(pl, currentFOV)
     if pl.Spectating then
@@ -124,7 +126,9 @@ function Command:PerformRestart(pl, currentFOV)
         pl:UnSpectate()
     end
 
-    if pl.style == TIMER:GetStyleID("Segment") and styleID ~= TIMER:GetStyleID("Segment") then
+    fallbackAngles[pl:SteamID()] = pl:EyeAngles()
+
+    if pl.style == TIMER:GetStyleID("Segment") then
         Segment:Reset(pl)
         Segment:Exit(pl)
     end
