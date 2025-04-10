@@ -206,6 +206,13 @@ function TIMER:Load(ply)
     net.Start("SendVersionDataMenu")
     net.WriteString(cachedVersionMsg)
     net.Send(ply)
+
+    -- Join Max time
+    local totalTime = tonumber(ply:GetPData("TotalPlayTime", 0)) or 0
+    ply.TotalPlayTime = totalTime
+
+    -- LJ Triggers
+    ply.BestLJ = tonumber(ply:GetPData("BestLJ") or 0)
 end
 
 -- Load the style
@@ -763,6 +770,30 @@ function TIMER:GetMapsBeat(ply, style)
     end)
 end
 
+-- Maps left to beat
+function TIMER:GetMapsLeft(ply, style, callback)
+    local steamID = MySQL:Escape(ply:SteamID())
+
+    -- First get all maps with times by this player
+    local queryCompleted = string.format("SELECT COUNT(DISTINCT map) AS Completed FROM timer_times WHERE uid = %s AND style = %d", steamID, style)
+
+    -- Then get all maps that exist
+    local queryAll = "SELECT COUNT(*) AS Total FROM timer_map"
+
+    MySQL:Start(queryCompleted, function(done)
+        local completed = (done and done[1] and tonumber(done[1].Completed)) or 0
+
+        MySQL:Start(queryAll, function(all)
+            local total = (all and all[1] and tonumber(all[1].Total)) or 0
+            local left = math.max(total - completed, 0)
+
+            if callback then
+                callback(left, completed, total)
+            end
+        end)
+    end)
+end
+
 TIMER.RemoteWRCache = {}
 
 function TIMER:SendRemoteWRList(ply, mapName, styleID, page, isUpdate)
@@ -831,6 +862,14 @@ function TIMER:Disconnect(ply)
         BHDATA:Unload()
     end
 
+    if not ply.JoinTime then return end
+
+    local sessionTime = CurTime() - ply.JoinTime
+    local totalTime = tonumber(ply:GetPData("TotalPlayTime", 0)) or 0
+    totalTime = totalTime + sessionTime
+
+    ply:SetPData("TotalPlayTime", totalTime)
+
     if ply.Spectating then 
         Spectator:End(ply, ply:GetObserverTarget())
         ply.Spectating = nil 
@@ -870,6 +909,8 @@ function TIMER:Connect(ply)
         UTIL:Notify(Color(233, 123, 255), "Player Load", "Invalid player entity passed to Player Connect")
         return
     end
+
+    ply.JoinTime = CurTime()
 
     collectgarbage("collect")
 

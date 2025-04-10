@@ -1385,6 +1385,52 @@ local function SendAllRecords(ply)
     NETWORK:StartNetworkMessage(ply, "SendAllRecords", recordsTable)
 end
 
+util.AddNetworkString("RequestProfileData")
+util.AddNetworkString("SendProfileData")
+util.AddNetworkString("ScoreboardProfileRequest")
+
+function FormatPlaytime(seconds)
+    local h = math.floor(seconds / 3600)
+    local m = math.floor((seconds % 3600) / 60)
+    local s = math.floor(seconds % 60)
+    return string.format("%02dh %02dm %02ds", h, m, s)
+end
+
+function TIMER:SendProfileData(requester, target)
+    if not IsValid(requester) or not IsValid(target) then return end
+
+    self:GetMapsLeft(target, target.style, function(mapsLeft, mapsPlayed, totalMaps)
+        local profile = {
+            name = target:Nick(),
+            steamid = target:SteamID(),
+            role = Admin:GetAccessString(Admin:GetAccess(target)) or "User",
+            wrs = target.WRCount or 0,
+            placement = target.Placement or 0,
+            rank = TIMER.Ranks[target.Rank] and TIMER.Ranks[target.Rank][1] or "Unranked",
+            points = target.RankSum or 0,
+            mapsPlayed = mapsPlayed or 0,
+            mapsLeft = mapsLeft or 0,
+            mapCompletions = TIMER:GetMapCompletionCount(game.GetMap(), target.style, target),
+            sync = target.LastSync or 0,
+            longJump = target.BestLJ or 0,
+            playtime = FormatPlaytime(target.TotalPlayTime or 0),
+            mapmostplayed = "WIP", -- optional, can do this later
+        }
+
+        net.Start("SendProfileData")
+        net.WriteEntity(target)
+        net.WriteTable(profile)
+        net.Send(requester)
+    end)
+end
+
+net.Receive("ScoreboardProfileRequest", function(len, ply)
+    local target = net.ReadEntity()
+
+    if not IsValid(ply) or not IsValid(target) or not target:IsPlayer() then return end
+    TIMER:SendProfileData(ply, target)
+end)
+
 hook.Add("PlayerInitialSpawn", "SendRecordsToClient", function(ply)
     timer.Simple(2, function()
         SendAllRecords(ply)

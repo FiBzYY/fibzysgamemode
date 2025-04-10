@@ -509,11 +509,11 @@ local function CreateScoreboard(shouldHide)
             ph = 34 
 
             local pRank = ""
-            DrawText("#" .. ply:GetNWInt("Placement", 0) .. " | ", "ui.mainmenu.button", x, ph / 2, TEXT, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+            DrawText("#" .. ply:GetNWInt("Rank", -1) .. " | ", "ui.mainmenu.button", x, ph / 2, TEXT, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
             local lw, lh = surface.GetTextSize("#" .. ply:GetNWInt("WRCount", 0) .. " | ")
 			local adminList = BHOP.Server.AdminList
 			local font = "ui.mainmenu.button"
-			local placementText = "#" .. ply:GetNWInt("Placement", 0) .. " | "
+			local placementText = "#" .. ply:GetNWInt("Rank", -1) .. " | "
 			local placementW, _ = surface.GetTextSize(placementText)
 
 			DrawText(placementText, font, x, ph / 2, TEXT, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
@@ -761,7 +761,9 @@ local function CreateScoreboard(shouldHide)
                 local offsetY = 34
 
                 self.stat = Sleek(p, baseX, baseY, 150, 30, PRIMARY, color_white, "View Statistics", function() 
-                    UTIL:AddMessage("Server", "That feature has not been added yet.")
+                     net.Start("ScoreboardProfileRequest")
+				     net.WriteEntity(ply) -- the target player you clicked on
+				     net.SendToServer()
                 end)
 
                 self.prof = Sleek(p, baseX + offsetX, baseY, 180, 30, PRIMARY, color_white, "Teleport To", function()

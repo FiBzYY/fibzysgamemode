@@ -247,6 +247,11 @@ function OnLand(p, jpos)
 
                 NETWORK:StartNetworkMessage(p, "LJStats", jumptypes[jt], math.Round(dist), totalstats.sync, totalstats.speed, nsync)
 
+                if not p.BestLJ or dist > p.BestLJ then
+                    p.BestLJ = math.Round(dist)
+                    p:SetPData("BestLJ", p.BestLJ)
+                end
+
                 print(string.format("[%s] %d units", jumptypes[jt], math.Round(dist)))
                 print("Strafe   Speed   Sync")
                 for k, v in ipairs(totalstats.sync) do

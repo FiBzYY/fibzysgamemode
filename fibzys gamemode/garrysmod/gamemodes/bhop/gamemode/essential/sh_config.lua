@@ -56,7 +56,7 @@ if not CONFIG_LOADED then
 
     -- Gamemode version
     BHOP.Version = {
-        Engine = "9594",
+        Engine = "9627",
         GM = "13.25",
         ReleaseDate = "04/06/25",
         LastUpdated = "04/06/25"

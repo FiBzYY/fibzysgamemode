@@ -1564,3 +1564,102 @@ function UI:UpdateCommand(parent)
         end
     end)
 end
+
+-- Profile Menu
+function UI:OpenProfileMenu(target, data)
+    if not IsValid(target) or not data then return end
+
+    local frame = vgui.Create("DFrame")
+    frame:SetSize(700, 500)
+    frame:Center()
+    frame:SetTitle("")
+    frame:MakePopup()
+    frame:ShowCloseButton(false)
+    frame.Paint = function(s, w, h)
+        draw.RoundedBox(0, 0, 0, w, h, Color(42, 42, 42)) -- main bg
+        draw.RoundedBoxEx(0, 0, 0, w, 45, Color(32, 32, 32), true, true, false, false) -- top bar
+        draw.SimpleText("Profile of " .. data.name, "ProfileTitle", 20, 12, color_white, TEXT_ALIGN_LEFT)
+    end
+
+    local avatar = vgui.Create("AvatarImage", frame)
+    avatar:SetSize(128, 128)
+    avatar:SetPos(20, 60)
+    avatar:SetPlayer(target, 128)
+
+    local function AddHeader(text, x, y)
+        local label = vgui.Create("DLabel", frame)
+        label:SetText(text)
+        label:SetFont("ProfileFont")
+        label:SetColor(Color(255, 255, 255))
+        label:SetPos(x, y)
+        label:SizeToContents()
+    end
+
+    local function AddStatLabel(title, value, x, y)
+        local titleLabel = vgui.Create("DLabel", frame)
+        titleLabel:SetPos(x, y)
+        titleLabel:SetText(title)
+        titleLabel:SetFont("ProfileFont")
+        titleLabel:SetColor(Color(100, 200, 255))
+        titleLabel:SizeToContents()
+
+        local valueLabel = vgui.Create("DLabel", frame)
+        valueLabel:SetPos(x + 130, y)
+        valueLabel:SetText(value)
+        valueLabel:SetFont("ProfileFont")
+        valueLabel:SetColor(Color(255, 255, 255))
+        valueLabel:SizeToContents()
+    end
+
+    -- Headers
+    AddHeader("General Statistics", 170, 50)
+    AddHeader("Map Statistics", 20, 200)
+    AddHeader("Map Averages", 20, 280)
+    AddHeader("Strafe Statistics", 20, 360)
+
+    -- Left Stats
+    AddStatLabel("Map Completions:", data.mapCompletions or "0", 45, 230)
+    AddStatLabel("Amount of WRs:", data.wrs or "0", 45, 250)
+    AddStatLabel("Map Completions:", data.mapCompletions or "0", 45, 310)
+    AddStatLabel("Map placement:", data.placement or "0", 45, 330)
+    AddStatLabel("Sync:", data.sync or "0", 45, 390)
+
+    -- Right Stats
+    AddStatLabel("Rank:", data.rank or "Unranked", 195, 80)
+    AddStatLabel("Points:", data.points or "0", 195, 100)
+    AddStatLabel("Maps Left:", data.mapsLeft or "0", 195, 120)
+    AddStatLabel("Maps Played:", data.mapsPlayed or "0", 195, 140)
+
+    AddStatLabel("Time Played:", data.playtime or "00:00.000", 450, 70)
+    AddStatLabel("Last Played:", data.lastplayed or "Never", 450, 100)
+    AddStatLabel("Map Most Played:", data.mapmostplayed or "N/A", 450, 130)
+    AddStatLabel("Role:", data.role or "Unknown", 450, 160)
+
+    AddStatLabel("Most Recent WR:", data.mostRecentWR or "N/A", 450, 210)
+    AddStatLabel("Group 1 Times:", data.group1 or "0", 450, 240)
+    AddStatLabel("Tier Played:", data.tierPlayed or "0", 450, 270)
+    AddStatLabel("Group Placement:", data.groupPlacement or "0", 450, 300)
+    AddStatLabel("Long Jump:", data.longJump or "0", 450, 330)
+
+    -- Close
+    local close = vgui.Create("DButton", frame)
+    close:SetText("Close")
+    close:SetFont("ProfileFont")
+    close:SetSize(400, 30)
+    close:SetPos(frame:GetWide() / 2 - 200, frame:GetTall() - 45)
+    close:SetTextColor(Color(255, 255, 255))
+    close.Paint = function(s, w, h)
+        local col = s:IsHovered() and Color(100, 42, 42) or Color(32, 32, 32)
+        draw.RoundedBox(0, 0, 0, w, h, col)
+    end
+    close.DoClick = function() frame:Close() end
+end
+
+net.Receive("SendProfileData", function()
+    local target = net.ReadEntity()
+    local data = net.ReadTable()
+
+    if not IsValid(target) then return end
+
+    UI:OpenProfileMenu(target, data)
+end)

@@ -81,6 +81,10 @@ if not FONT_CACHE then
     -- Trainer
     MakeFont("StrafeTrainerCSS", { font = "Trebuchet MS", size = 24, weight = 500, antialias = true, extended = false })
 
+    -- Profile
+    MakeFont("ProfileFont", { font = "Roboto", size = 18, weight = 400, antialias = true, extended = false })
+    MakeFont("ProfileTitle", { font = "Roboto", size = 24, weight = 700, antialias = true, extended = false })
+
     -- UI
     MakeFont("hud.numberedui.css1", {font = "Roboto", size = 23, weight = 500, antialias = true})
     MakeFont("hud.numberedui.css2", {font = "Roboto", size = 19, weight = 500, antialias = true})

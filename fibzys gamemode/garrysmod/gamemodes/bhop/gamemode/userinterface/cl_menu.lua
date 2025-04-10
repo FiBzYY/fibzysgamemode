@@ -1104,7 +1104,9 @@ function UI:CreateMenu()
     playerNameLabel:SetMouseInputEnabled(true)
 
     playerNameLabel.OnMousePressed = function()
-        gui.OpenURL(profileURL)
+        net.Start("ScoreboardProfileRequest")
+        net.WriteEntity(LocalPlayer()) -- requesting your own profile
+        net.SendToServer()
     end
 
     playerNameLabel.OnCursorEntered = function()

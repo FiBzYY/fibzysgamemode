@@ -399,6 +399,43 @@ function Command:Init()
             "<arguments>"
         },
 
+        -- Profie Stats
+        {
+            {"profile", "userstats"},
+            function(pl, args)
+                if not IsValid(pl) then return end
+
+                if not args or #args < 1 then
+                    TIMER:Print(pl, "Usage: !profile <player name>")
+                    return
+                end
+
+                local nameQuery = table.concat(args, " "):Trim():lower()
+                if nameQuery == "" then
+                    TIMER:Print(pl, "Please provide a valid player name.")
+                    return
+                end
+
+                -- Find target player
+                local target
+                for _, v in ipairs(player.GetHumans()) do
+                    if v:Nick():lower():find(nameQuery, 1, true) then
+                        target = v
+                        break
+                    end
+                end
+
+                if not IsValid(target) then
+                    TIMER:Print(pl, "Could not find that player.")
+                    return
+                end
+
+                TIMER:SendProfileData(pl, target)
+            end,
+            "Views stats for a player",
+            "<style> [page]"
+        },
+
         -- Set Tier
         {
             {"settier", "tierset"},
