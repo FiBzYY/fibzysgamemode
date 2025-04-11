@@ -1677,7 +1677,13 @@ function UI:OpenRecordStatsMenu(target, data)
     frame.Paint = function(self, w, h)
         draw.RoundedBox(0, 0, 0, w, h, Color(42, 42, 42)) -- bg
         draw.RoundedBox(0, 0, 0, w, 45, Color(32, 32, 32)) -- header
-        draw.SimpleText("Stats for " .. data.name .. " #1 run on bhop_grassyass (Normal)", "ui.mainmenu.button", 20, 12, color_white, TEXT_ALIGN_LEFT)
+
+        local mapName = game.GetMap() or "Unknown Map"
+        local styleName = TIMER and TIMER.Styles and TIMER.Styles[LocalPlayer().style or 1] and TIMER.Styles[LocalPlayer().style or 1][1] or "Unknown Style"
+        local playerName = data.name or "Unknown Player"
+        local PlacementNum = data.placement or "Unknown Placement"
+
+        draw.SimpleText("Stats for " .. playerName .. " " .. PlacementNum ..  " run on " .. mapName .. " (" .. styleName .. ")", "ui.mainmenu.button", 20, 12, color_white, TEXT_ALIGN_LEFT)
     end
 
     -- Section builder
@@ -1756,23 +1762,28 @@ function UI:OpenRecordStatsMenu(target, data)
     AddStat("Points", data.points or "0", 740, 90, nil, true)
     AddStat("SteamID", data.steamid or "N/A", 740, 115, nil, true)
 
-
     AddSection("Speed/Strafe Statistics and Completions", 170)
     AddStat("Average Gain", data.gain or "0%", 20, 200)
     AddStat("Sync", data.sync or "0%", 20, 225)
     AddStat("Top Speed", data.speed or "0 u/s", 20, 250)
     AddStat("Completions", data.completions or "0", 20, 275)
 
-    AddSection("Group Statistics", 310)
+    net.Receive("SendGroupStats", function()
+        local styleID = net.ReadUInt(8)
+        local wrFormatted = net.ReadString()
+        local times = net.ReadTable()
 
-    AddStatGroup("Group 1", "00:16.279 (Achieved)", 20, 340, Color(255, 80, 80))
-    AddStatGroup("Group 2", "00:17.758 (Achieved)", 20, 365, Color(255, 80, 80))
-    AddStatGroup("Group 3", "00:20.718 (Achieved)", 20, 390, Color(255, 80, 80))
-    AddStatGroup("Group 4", "00:23.678 (Achieved)", 740, 340, Color(255, 80, 80), true)
-    AddStatGroup("Group 5", "00:26.638 (Achieved)", 740, 365, Color(255, 80, 80), true)
-    AddStatGroup("Group 6", "Achieved", 740, 390, Color(255, 80, 80), true)
+        AddSection("Group Statistics", 310)
 
-     -- Group Completion Bar with Outer Outline Trick
+        AddStatGroup("Group 1", times[1] .. " (Achieved)", 20, 340, Color(255, 80, 80))
+        AddStatGroup("Group 2", times[2] .. " (Achieved)", 20, 365, Color(255, 80, 80))
+        AddStatGroup("Group 3", times[3] .. " (Achieved)", 20, 390, Color(255, 80, 80))
+        AddStatGroup("Group 4", times[4] .. " (Achieved)", 740, 340, Color(255, 80, 80), true)
+        AddStatGroup("Group 5", times[5] .. " (Achieved)", 740, 365, Color(255, 80, 80), true)
+        AddStatGroup("Group 6", "Achieved", 740, 390, Color(255, 80, 80), true)
+    end)
+
+    -- Group Completion Bar
     local outlineThickness = 5
     local visualW, visualH = 720, 35
     local totalW, totalH = visualW + outlineThickness * 2, visualH + outlineThickness * 2
@@ -1783,7 +1794,7 @@ function UI:OpenRecordStatsMenu(target, data)
 
     bar.Paint = function(self, w, h)
         local groups = 6
-        local completedGroups = 3
+        local completedGroups = data.completedGroups or 0
         local segmentWidth = visualW / groups
         local fillX = segmentWidth * completedGroups
 
@@ -1842,20 +1853,10 @@ function UI:OpenRecordStatsMenu(target, data)
     close.DoClick = function() frame:Close() end
 end
 
--- Dev
-concommand.Add("open_profilemenu_test", function()
-    local fakeData = {
-        name = "fibzy",
-        time = "00:14.799",
-        jumps = "22",
-        strafes = "48",
-        points = 200,
-        steamid = "STEAM_0:0:54974417",
-        gain = "70.434% (-4.27%)",
-        sync = "96.95% (-0.92%)",
-        speed = "1171.508 u/s",
-        completions = "1",
-    }
+net.Receive("SendRecordData", function()
+    local target = net.ReadEntity()
+    local data = net.ReadTable()
 
-    UI:OpenRecordStatsMenu(LocalPlayer(), fakeData)
+    if not IsValid(target) then return end
+    UI:OpenRecordStatsMenu(target, data)
 end)

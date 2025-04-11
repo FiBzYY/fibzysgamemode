@@ -1264,25 +1264,6 @@ function UI:FetchAndDisplayWR(styleID)
     net.SendToServer()
 end
 
-net.Receive("WRList", function()
-    local data = net.ReadTable()
-    local records = data.records
-    local page = data.page
-    local total = data.total
-
-    UI.WRList = {}
-    for i, record in ipairs(records) do
-        table.insert(UI.WRList, {record[1], record[2]})
-    end
-
-    if Iv(ContentPanel) then
-        ContentPanel:Clear()
-        UI:CreateWRPanel(ContentPanel)
-    else
-        print("ERROR: ContentPanel missing!")
-    end
-end)
-
 -- WR List Menu
 UI.StyleLookup = {}
 UI.SelectedStyle = "n"
@@ -1364,6 +1345,7 @@ function UI:CreateWRPanel(parent)
         end
     end
 
+    -- ⛔ UI draw ONLY - static rendering
     pnl.Paint = function(self, w, h)
         local y = 10
 
@@ -1393,27 +1375,66 @@ function UI:CreateWRPanel(parent)
 
         surface.SetDrawColor(150, 150, 150, 50)
         surface.DrawRect(tableX, tableY + titleHeight, tableWidth, 1)
-        tableY = tableY + titleHeight + 10
+    end
 
-        if recordCount == 0 then
-            Text("No records found for '" .. styleNameForMsg .. "' style", "ui.mainmenu.button", tableX + 10, tableY, Color(255, 0, 0), TEXT_ALIGN_LEFT)
-        else
-            for i, record in ipairs(UI.WRList or {}) do
-                local recordName = record[1]
-                local recordTime = record[2]
+    -- ✅ INTERACTABLE STUFF: Buttons (outside Paint)
+    local tableMargin = 20
+    local tableX = tableMargin
+    local tableWidth = panelWidth - (tableMargin * 2)
+    local rowHeight = 25
+    local tableYStart = 10 + 50 + 25 + 30 + 10 -- based on Paint
 
-                local textColorName = (i == 1) and Color(0, 255, 255) or (recordName == playerName and Color(200, 200, 200) or Color(255, 255, 255))
+    if recordCount > 0 then
+        for i, record in ipairs(UI.WRList or {}) do
+            local recordName = record[1]
+            local recordTime = record[2]
+            local rowY = tableYStart + (i - 1) * rowHeight
 
-                Text(tostring(i), "ui.mainmenu.button", tableX + 10, tableY, color_white, TEXT_ALIGN_LEFT)
-                Text(recordName, "ui.mainmenu.button", tableX + 80, tableY, textColorName, TEXT_ALIGN_LEFT)
-                Text(recordTime, "ui.mainmenu.button", tableX + tableWidth - 30, tableY, color_white, TEXT_ALIGN_RIGHT)
-                tableY = tableY + 25
+            local textColorName = (i == 1) and Color(0, 255, 255) or (recordName == playerName and Color(200, 200, 200) or Color(255, 255, 255))
+
+            -- Labels for static text
+            local labelPlace = vgui.Create("DLabel", pnl)
+            labelPlace:SetFont("ui.mainmenu.button")
+            labelPlace:SetTextColor(color_white)
+            labelPlace:SetText(tostring(i))
+            labelPlace:SizeToContents()
+            labelPlace:SetPos(tableX + 10, rowY)
+
+            local labelName = vgui.Create("DLabel", pnl)
+            labelName:SetFont("ui.mainmenu.button")
+            labelName:SetTextColor(textColorName)
+            labelName:SetText(recordName)
+            labelName:SizeToContents()
+            labelName:SetPos(tableX + 80, rowY)
+
+            -- 👇 The TIME BUTTON (clickable, invisible)
+            local btnTime = vgui.Create("DButton", pnl)
+            btnTime:SetText(recordTime)
+            btnTime:SetFont("ui.mainmenu.button")
+            btnTime:SetTextColor(Color(255, 255, 255))
+            btnTime:SetSize(100, 20)
+            btnTime:SetPos(tableX + tableWidth - 130, rowY - 2)
+            btnTime:SetDrawBackground(false)
+            btnTime.Paint = function() end
+
+            btnTime.DoClick = function()
+                for _, v in ipairs(player.GetAll()) do
+                    if v:Nick() == recordName then
+                        net.Start("RequestRecordStats") -- 🔄 fixed
+                        net.WriteEntity(v)
+                        net.SendToServer()
+                        print("[WR Panel] Sent request for stats: " .. recordName)
+                        return
+                    end
+                end
+                print("[WR Panel] Player not found in server: " .. recordName)
             end
         end
     end
 
     return pnl
 end
+
 
 -- Command for opening Menu
 concommand.Add("bhop_menu", function()

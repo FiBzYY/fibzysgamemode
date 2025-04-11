@@ -580,6 +580,23 @@ function TIMER:SetRankMedal(ply, nPos)
         end
     end)
 end
+function TIMER:GetPlayerRunPoints(ply, callback)
+    if not IsValid(ply) then return callback(0) end
+
+    local steamid = MySQL:Escape(ply:SteamID())
+    local map = MySQL:Escape(game.GetMap())
+    local style = ply.style or 1
+
+    local query = string.format([[
+        SELECT points FROM timer_times
+        WHERE uid = %s AND map = %s AND style = %d LIMIT 1
+    ]], steamid, map, style)
+
+    MySQL:Start(query, function(data)
+        local points = (data and data[1] and tonumber(data[1].points)) or 0
+        callback(points)
+    end)
+end
 
 function TIMER:UpdateRank(ply)
     self:LoadRank(ply, true)

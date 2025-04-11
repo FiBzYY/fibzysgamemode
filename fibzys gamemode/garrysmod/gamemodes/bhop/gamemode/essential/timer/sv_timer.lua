@@ -1015,7 +1015,7 @@ function TIMER:LoadRecords()
                         data["player"], 
                         tonumber(data["time"]), 
                         self:Null(data["date"]), 
-                        self:Null(data["data"]),
+                        tostring(self:Null(data["data"])),
                         tonumber(data["tier"]) or 1
                     })
                 end
@@ -1036,7 +1036,7 @@ function TIMER:LoadRecords()
     end
 end
 
-local function StringToTab(szInput)
+function StringToTab(szInput)
     if type(szInput) ~= "string" then
         return {}
     end
@@ -1085,7 +1085,6 @@ function TIMER:GetPlayerWRs(uid, style, all)
 	return out
 end
 
--- Finish stats
 function TIMER:AddSpeedData(ply, tab)
     local record = ply.record or 0
 
@@ -1098,27 +1097,37 @@ function TIMER:AddSpeedData(ply, tab)
         return
     end
 
+    -- Only save if player has a real time
     if record > 0 then
-        local jumpCount = self:GetJumps(ply, 0) or 0
-        local data = table.concat({
-            math.floor(tab[1] or 0),
-            math.floor(tab[2] or 0),
-            jumpCount or 0,
-            ply.LastSync or 0,
-            ply.TotalStrafes or 0
-        }, " ")
+        -- Validate all inputs first, don't write if anything is nil!
+        local avgSpeed = tonumber(tab[1])
+        local topSpeed = tonumber(tab[2])
+        local jumpCount = self:GetJumps(ply, 0)
+        local sync = tonumber(ply.LastSync)
+        local strafes = tonumber(ply.TotalStrafes)
 
-        ply.LastSpeedData = { math.floor(tab[1] or 0), math.floor(tab[2] or 0) }
-
-        if data == "" then
+        -- If any value is nil, bail out. Don't save!
+        if not avgSpeed or not topSpeed or not jumpCount or not sync or not strafes then
             return
         end
 
-        local DataEscaped = sql.SQLStr(data)
+        -- Round speeds, format string safely
+        avgSpeed = math.floor(avgSpeed)
+        topSpeed = math.floor(topSpeed)
 
-        timer.Simple(0.25, function()
-            MySQL:Start("UPDATE timer_times SET data = " .. DataEscaped .. " WHERE uid = '" .. ply:SteamID() .. "' AND map = '" .. game.GetMap() .. "' AND style = " .. styleID)
-        end)
+        ply.LastSpeedData = { topSpeed, avgSpeed }
+
+        local szData = string.format("%d %d %d %.2f %d", avgSpeed, topSpeed, jumpCount, sync, strafes)
+        local dataSQL = sql.SQLStr(szData)
+
+        local steamid = ply:SteamID()
+        local map = game.GetMap()
+
+        MySQL:Start(string.format([[
+            UPDATE timer_times 
+            SET data = %s 
+            WHERE uid = '%s' AND map = '%s' AND style = %d
+        ]], dataSQL, steamid, map, styleID))
     end
 end
 
@@ -1169,9 +1178,17 @@ function TIMER:GetRecordList(style, page, callback)
 
         if result then
             for _, row in ipairs(result) do
-                local speedData = StringToTab(row.data or "0 0 0 0 0")
 
-                table.insert(records, { row.uid, row.player, tonumber(row.time), row.date, speedData })
+                local rawData = row.data
+                local speedData = (rawData and rawData ~= "") and StringToTab(rawData) or {}
+
+                table.insert(records, {
+                    row.uid,
+                    row.player,
+                    tonumber(row.time),
+                    row.date,
+                    speedData
+                })
             end
         end
 
@@ -1316,6 +1333,151 @@ end
 util.AddNetworkString("RequestWRList")
 util.AddNetworkString("WRList")
 
+-- Record Stats
+util.AddNetworkString("SendRecordData")
+util.AddNetworkString("RequestRecordStats")
+util.AddNetworkString("SendGroupStats")
+
+-- Get Record Placement
+function TIMER:GetPlacement(ply, style)
+    local data = self.Styles[style] and self.Styles[style].Data
+    if not data then return nil end
+
+    local steamid = ply:SteamID()
+
+    for i, record in ipairs(data.Records or {}) do
+        if record[1] == steamid then
+            return "#" .. i
+        end
+    end
+
+    return nil
+end
+
+-- Group Stats
+function TIMER:SendGroupStats(ply, styleID)
+    local wr = self:GetMapWRTime(game.GetMap(), styleID)
+    if not wr or wr == 0 then return end
+
+    local thresholds = {
+        wr + 15,
+        wr + 30,
+        wr + 60,
+        wr + 90,
+        wr + 120,
+    }
+
+    local formatted = {}
+    for _, t in ipairs(thresholds) do
+        table.insert(formatted, self:WRConvert2(t))
+    end
+
+    net.Start("SendGroupStats")
+    net.WriteUInt(styleID, 8)
+    net.WriteString(self:WRConvert2(wr)) -- Base WR
+    net.WriteTable(formatted)
+    net.Send(ply)
+end
+
+-- Group Indexed
+local function GetGroupIndex(wr, time)
+    local diff = time - wr
+
+    if diff <= 15 then return 1
+    elseif diff <= 30 then return 2
+    elseif diff <= 60 then return 3
+    elseif diff <= 90 then return 4
+    elseif diff <= 120 then return 5
+    else return 6 end
+end
+
+-- Stats for Records Menu sending
+function TIMER:SendRecordData(requester, target)
+    if not IsValid(requester) or not IsValid(target) then return end
+
+    local plyStyle = target.style or 1
+    local steamid = target:SteamID()
+
+    local wrTime, placementt = "N/A", "#?"
+    local dataStr = nil
+
+    local query = string.format([[
+        SELECT t1.time, t1.data,
+        (SELECT COUNT(*) + 1 FROM timer_times AS t2 WHERE t2.map = t1.map AND t2.style = t1.style AND t2.time < t1.time) AS Rank
+        FROM timer_times AS t1
+        WHERE t1.uid = '%s' AND t1.map = '%s' AND t1.style = %d LIMIT 1
+    ]], steamid, game.GetMap(), plyStyle)
+
+    MySQL:Start(query, function(result)
+        if result and result[1] then
+            wrTime = self:WRConvert2(result[1].time)
+            placementt = "#" .. (result[1].Rank or "?")
+            dataStr = result[1].data
+        else
+            print("[DEBUG] No record found for player:", target:Nick(), "on", game.GetMap(), "style:", plyStyle)
+        end
+
+        local topSpeed, avgSpeed = "0 u/s", "0 u/s"
+        local sync, jumps, strfs = "0%", 0, 0
+
+        if dataStr and type(dataStr) == "string" then
+            local parts = string.Explode(" ", dataStr)
+            topSpeed = (parts[1] and tonumber(parts[1]) or 0) .. " u/s"
+            avgSpeed = (parts[2] and tonumber(parts[2]) or 0) .. " u/s"
+            jumps = tonumber(parts[3]) or 0
+            sync = (parts[4] and parts[4] .. "%") or "0%"
+            strfs = tonumber(parts[5]) or 0
+        else
+            print("[DEBUG] Bad dataStr:", dataStr, "Type:", type(dataStr))
+        end
+
+        -- 🧮 Get extra stats
+        TIMER:GetPlayerRunPoints(target, function(realPoints)
+            MySQL:Start("SELECT completions FROM timer_mapplays WHERE uid = '" .. steamid .. "' AND map = '" .. game.GetMap() .. "'", function(result)
+                local completions = result and result[1] and tonumber(result[1].completions) or 0
+                local cachedPoints = Player.Points[steamid] and Player.Points[steamid][plyStyle] or realPoints or 0
+                local wr = TIMER:GetMapWRTime(game.GetMap(), plyStyle) or 0
+                local recordTime = target.record or 0
+
+                local groupIndex = GetGroupIndex(wr, recordTime)
+
+                local record = {
+                    name = target:Nick(),
+                    steamid = steamid,
+                    time = wrTime,
+                    jumps = jumps,
+                    strafes = strfs,
+                    points = cachedPoints,
+                    gain = target.gain or "0%",
+                    sync = sync,
+                    speed = topSpeed .. " (avg " .. avgSpeed .. ")",
+                    completions = completions,
+                    map = game.GetMap(),
+                    style = plyStyle,
+                    placement = placementt,
+                    completedGroups = groupIndex
+                }
+
+                -- Send to client live!
+                net.Start("SendRecordData")
+                net.WriteEntity(target)
+                net.WriteTable(record)
+                net.Send(requester)
+
+                -- Also send group tier info
+                TIMER:SendGroupStats(requester, plyStyle)
+            end)
+        end)
+    end)
+end
+
+net.Receive("RequestRecordStats", function(len, ply)
+    local target = net.ReadEntity()
+
+    if not IsValid(ply) or not IsValid(target) or not target:IsPlayer() then return end
+    TIMER:SendRecordData(ply, target)
+end)
+
 -- For New UI
 net.Receive("RequestWRList", function(len, ply)
     local mapName = net.ReadString()
@@ -1415,6 +1577,7 @@ function TIMER:GetMostPlayedMap(ply, callback)
     end)
 end
 
+-- Profile Stats
 util.AddNetworkString("RequestProfileData")
 util.AddNetworkString("SendProfileData")
 util.AddNetworkString("ScoreboardProfileRequest")

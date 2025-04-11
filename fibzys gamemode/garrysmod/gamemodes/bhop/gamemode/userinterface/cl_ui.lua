@@ -1482,7 +1482,8 @@ UI:AddListener("wr", function(_, data)
 
     function UI.WR:OnNext(hitMax)
         if (hitMax) and ((self.page * 7) < self.recordCount) then
-            TIMER:Send("WRList", {self.page + 1, self.style, self.map})
+            local styleName = TIMER:StyleName(self.style):lower()
+			TIMER:Send("WRList", {self.page + 1, styleName, self.map})
         end
     end
 end)
