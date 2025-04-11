@@ -465,6 +465,29 @@ function TIMER:CalculatePlayerJustasPoints(ply, callback)
     end)
 end
 
+function TIMER:CalculateJustasPoints(time, wr, tier, completions)
+    if not wr or wr <= 0 or not time or time <= 0 then return 0 end
+
+    local basePoints = math.Clamp(tier, 1, 8) * 100
+
+    -- 6 Groups modifier
+    local diff = time - wr
+    local groupModifier = 0.5
+    if diff <= 15 then groupModifier = 1.0
+    elseif diff <= 30 then groupModifier = 0.9
+    elseif diff <= 60 then groupModifier = 0.8
+    elseif diff <= 90 then groupModifier = 0.7
+    elseif diff <= 120 then groupModifier = 0.6 end
+
+    -- Completion bonus
+    local completionBonus = 1.0
+    if completions >= 1000 then completionBonus = 1.15
+    elseif completions >= 500 then completionBonus = 1.10
+    elseif completions >= 250 then completionBonus = 1.05 end
+
+    return math.floor(basePoints * groupModifier * completionBonus)
+end
+
 function TIMER:CachePointSum(style, id, callback)
     MySQL:Start("SELECT SUM(points) AS Sum FROM timer_times WHERE uid = '" .. id .. "' AND (" .. self:GetMatchingstyles(style) .. ")", function(data)
         if data and data[1] and data[1].Sum then
