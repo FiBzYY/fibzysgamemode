@@ -865,7 +865,7 @@ HUD.Themes = {
             DrawBoxRound(10, xPos, yPos, boxWidth, boxHeight, Color(0, 0, 0, 100))
         end
 
-        DrawText(tostring(math.floor(tonumber(speed) or 0)) .. " u/s", "hud.simplefont", screenWidth / 2, (screenHeight / 2) - 180, tc, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+        DrawText(tostring(math.floor(tonumber(speed) or data.velocity)) .. " u/s", "hud.simplefont", screenWidth / 2, (screenHeight / 2) - 180, tc, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
         DrawText("Time: " .. status, "hud.simplefont", screenWidth / 2, screenHeight - 130, tc, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
         DrawText(stylename, "hud.simplefont", screenWidth / 2, screenHeight - 100, tc, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 

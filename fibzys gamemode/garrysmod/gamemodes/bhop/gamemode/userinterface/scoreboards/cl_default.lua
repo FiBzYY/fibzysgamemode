@@ -35,6 +35,21 @@ function TIMER:Convert(startTick, endTick)
     return (endTick - startTick) * tickRate
 end
 
+net.Receive("ReplayHUD_Progress", function()
+	local style = net.ReadUInt(8)
+	local elapsed = net.ReadFloat()
+	local total = net.ReadFloat()
+	local progress = net.ReadUInt(7)
+
+	REPLAY_HUD = REPLAY_HUD or {}
+	REPLAY_HUD[style] = {
+		elapsed = elapsed,
+		total = total,
+		progress = progress,
+		time = CurTime()
+	}
+end)
+
 -- Seconds to ticks
 function SecondsToClock(seconds)
     seconds = tonumber(seconds) or 0
@@ -434,6 +449,17 @@ local function CreateScoreboard(shouldHide)
                 DrawText(botDisplayName, "ui.mainmenu.button", x + 10, h / 2, TEXT, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
                 DrawText(botRecord, "ui.mainmenu.button", x + W - 50, h / 2, TEXT, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
             end
+
+			-- pogress
+			local style = v:GetNWInt("Style", 0)
+			local replayData = REPLAY_HUD and REPLAY_HUD[style]
+			local per = "0%"
+
+			if replayData and CurTime() - replayData.time < 1 then
+				per = replayData.progress .. "%"
+			end
+
+			DrawText(per, "ui.mainmenu.button", x + W - 10, h / 2, TEXT, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
         end
     end
 

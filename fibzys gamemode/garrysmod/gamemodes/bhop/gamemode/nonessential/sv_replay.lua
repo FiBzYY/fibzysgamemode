@@ -717,6 +717,8 @@ function Replay:GetFrame(ply)
     return self.Frame[ply] or 0
 end
 
+util.AddNetworkString("ReplayHUD_Progress")
+
 -- Record player
 local function BotRecord(ply, data)
     if  Replay.Recording[ply] then
@@ -772,6 +774,26 @@ local function BotRecord(ply, data)
         if Replay.BotInfo[style].Frame and frame == Replay.BotInfo[style].Frame[1] then
             Replay.BotInfo[style].Start = CurTime()
             Replay:NotifyRestart(style)
+        end
+
+        -- pogress
+        if Replay.BotInfo[style] and Replay.BotInfo[style].Start and Replay.BotInfo[style].Time then
+            local elapsed = CurTime() - Replay.BotInfo[style].Start
+            local totalTime = Replay.BotInfo[style].Time
+
+            if elapsed and totalTime and totalTime > 0 then
+                local progress = math.ceil((elapsed / totalTime) * 100)
+                progress = math.Clamp(progress, 0, 100)
+
+                for _, ply in ipairs(player.GetHumans()) do
+                    net.Start("ReplayHUD_Progress")
+                    net.WriteUInt(style, 8)
+                    net.WriteFloat(elapsed)
+                    net.WriteFloat(totalTime)
+                    net.WriteUInt(progress, 7)
+                    net.Send(ply)
+                end
+            end
         end
 
         Replay.BotFrame[style] = frame + 1
