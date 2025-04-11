@@ -16,10 +16,10 @@ local ranks = {"VIP", "VIP+", "Moderator", "Admin", "Zone Admin", "Super Admin",
 timeLeft = 0
 
 -- Time left
-NETWORK:GetNetworkMessage("RTVTimeLeft", function(_, data)
-    local timeLeft = data[1]
+local currentRTVTimeString = "??"
 
-    hook.Run("RTVTimeLeftUpdated", timeLeft)
+NETWORK:GetNetworkMessage("RTVTimeLeft", function(_, data)
+    currentRTVTimeString = data[1]
 end)
 
 local scoreboard
@@ -267,11 +267,9 @@ local function CreateScoreboard(shouldHide)
         DrawText(cycleText[currentTextIndex], "ui.mainmenu.title2", w / 2, y, TEXT, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
         DrawText(game.GetMap(), "ui.mainmenu.button", x + x, y, TEXT, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
-        if timeLeft > 0 then
-            local timeString = cTime(timeLeft)
-    
-            DrawText("Timeleft: " .. timeString, "ui.mainmenu.button", w - x - 10, y, textColor, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
-        end
+		if currentRTVTimeString and currentRTVTimeString ~= "??" then
+			DrawText("Timeleft: " .. currentRTVTimeString, "ui.mainmenu.button", w - x - 10, y, textColor, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+		end
 
 		local lst = ""
 		for k, v in pairs(self.spectators) do 

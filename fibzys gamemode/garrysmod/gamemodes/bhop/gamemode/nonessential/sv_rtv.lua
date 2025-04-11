@@ -14,23 +14,15 @@ local MapList = MapList or {}
 local hook_Add = hook.Add
 
 function RTV:SendTimeLeft()
-    if not RTV.MapEnd or not RTV.VotePossible then return end
+    if not RTV.MapEnd then return end
 
-    local timeLeft = math.max(0, RTV.MapEnd - CurTime())
-
-    if timeLeft ~= self.LastTimeLeft then
-        self.LastTimeLeft = timeLeft
-
-        NETWORK:StartNetworkMessage(nil, "RTVTimeLeft", timeLeft)
-    end
+    local timeString = TIMER:Convert(RTV.MapEnd - CurTime())
+    NETWORK:StartNetworkMessage(nil, "RTVTimeLeft", timeString)
 end
 
-local broadcastInterval = 10
-timer.Create("BroadcastRTVTimeLeft", broadcastInterval, 0, function()
-    if RTV.VotePossible then
+timer.Create("BroadcastRTVTimeLeft", 0.5, 0, function()
+    if RTV.MapEnd then
         RTV:SendTimeLeft()
-    else
-        timer.Remove("BroadcastRTVTimeLeft")
     end
 end)
 
