@@ -1100,7 +1100,6 @@ function UI:CreateMenu()
     playerNameLabel:SetTextColor(Color(0, 150, 255))
     playerNameLabel:SizeToContents()
     playerNameLabel:SetPos(Frame:GetWide() - 136 + 36 + 10, 22)
-    playerNameLabel:SetCursor("hand")
     playerNameLabel:SetMouseInputEnabled(true)
 
     playerNameLabel.OnMousePressed = function()
@@ -1345,7 +1344,7 @@ function UI:CreateWRPanel(parent)
         end
     end
 
-    -- ⛔ UI draw ONLY - static rendering
+    -- UI draw ONLY
     pnl.Paint = function(self, w, h)
         local y = 10
 
@@ -1377,12 +1376,12 @@ function UI:CreateWRPanel(parent)
         surface.DrawRect(tableX, tableY + titleHeight, tableWidth, 1)
     end
 
-    -- ✅ INTERACTABLE STUFF: Buttons (outside Paint)
+    -- INTERACTABLE STUFF
     local tableMargin = 20
     local tableX = tableMargin
     local tableWidth = panelWidth - (tableMargin * 2)
     local rowHeight = 25
-    local tableYStart = 10 + 50 + 25 + 30 + 10 -- based on Paint
+    local tableYStart = 10 + 50 + 25 + 30 + 10
 
     if recordCount > 0 then
         for i, record in ipairs(UI.WRList or {}) do
@@ -1400,14 +1399,7 @@ function UI:CreateWRPanel(parent)
             labelPlace:SizeToContents()
             labelPlace:SetPos(tableX + 10, rowY)
 
-            local labelName = vgui.Create("DLabel", pnl)
-            labelName:SetFont("ui.mainmenu.button")
-            labelName:SetTextColor(textColorName)
-            labelName:SetText(recordName)
-            labelName:SizeToContents()
-            labelName:SetPos(tableX + 80, rowY)
-
-            -- 👇 The TIME BUTTON (clickable, invisible)
+            -- Click Time
             local btnTime = vgui.Create("DButton", pnl)
             btnTime:SetText(recordTime)
             btnTime:SetFont("ui.mainmenu.button")
@@ -1417,10 +1409,31 @@ function UI:CreateWRPanel(parent)
             btnTime:SetDrawBackground(false)
             btnTime.Paint = function() end
 
+            -- Name click
+            local labelName = vgui.Create("DButton", pnl)
+            labelName:SetText(recordName)
+            labelName:SetFont("ui.mainmenu.button")
+            labelName:SetTextColor(textColorName)
+            labelName:SetPos(tableX + 67, rowY)
+            labelName:SetTextColor(textColorName)
+            labelName:SetDrawBackground(false)
+            labelName.Paint = function() end
+            labelName.DoClick = function()
+                for _, v in ipairs(player.GetAll()) do
+                    if v:Nick() == recordName then
+                        net.Start("ScoreboardProfileRequest")
+                        net.WriteEntity(v)
+                        net.SendToServer()
+                        return
+                    end
+                end
+                print("[WR Panel] Player not in server: " .. recordName)
+            end
+
             btnTime.DoClick = function()
                 for _, v in ipairs(player.GetAll()) do
                     if v:Nick() == recordName then
-                        net.Start("RequestRecordStats") -- 🔄 fixed
+                        net.Start("RequestRecordStats")
                         net.WriteEntity(v)
                         net.SendToServer()
                         print("[WR Panel] Sent request for stats: " .. recordName)
@@ -1434,7 +1447,6 @@ function UI:CreateWRPanel(parent)
 
     return pnl
 end
-
 
 -- Command for opening Menu
 concommand.Add("bhop_menu", function()
@@ -1474,9 +1486,55 @@ net.Receive("OpenWorldRecords", function()
     if not Iv(Frame) then
         UI:CreateMenu()
         RunConsoleCommand("bhop_menu_open", "1")
+    elseif not Frame:IsVisible() then
+        Frame:SetVisible(true)
+        Frame:MakePopup()
+        RunConsoleCommand("bhop_menu_open", "1")
     end
-    local wrButton = UI:CreateTopNavButton("World Records", {})
-    if wrButton then
-        wrButton:DoClick()
+
+    for _, child in ipairs(TopNavPanel:GetChildren()) do
+        if child.text == "Gameplay" then
+            child:DoClick()
+            break
+        end
     end
+
+    timer.Simple(0, function()
+        if not Iv(NavPanel) then return end
+        for _, navBtn in ipairs(NavPanel:GetChildren()) do
+            if navBtn.text == "World Records" then
+                navBtn:DoClick()
+                break
+            end
+        end
+    end)
+end)
+
+-- Open Ranks List
+net.Receive("OpenRanksPage", function()
+    if not Iv(Frame) then
+        UI:CreateMenu()
+        RunConsoleCommand("bhop_menu_open", "1")
+    elseif not Frame:IsVisible() then
+        Frame:SetVisible(true)
+        Frame:MakePopup()
+        RunConsoleCommand("bhop_menu_open", "1")
+    end
+
+    for _, child in ipairs(TopNavPanel:GetChildren()) do
+        if child.text == "Gameplay" then
+            child:DoClick()
+            break
+        end
+    end
+
+    timer.Simple(0, function()
+        if not Iv(NavPanel) then return end
+        for _, navBtn in ipairs(NavPanel:GetChildren()) do
+            if navBtn.text == "Ranks" then
+                navBtn:DoClick()
+                break
+            end
+        end
+    end)
 end)

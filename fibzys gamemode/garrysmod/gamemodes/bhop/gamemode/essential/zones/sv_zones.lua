@@ -257,7 +257,12 @@ function Zones:StartSet(ply, ID)
 
     self.Editor[ply] = {Active = true, Type = ID}
 
-    NETWORK:StartNetworkMessageTimer(ply, "Admin", {"EditZone", self.Editor[ply]})
+    NETWORK:StartNetworkMessageTimer(ply, "Admin", {"EditZone", {
+        Active = true,
+        Type = ID,
+        ZoneName = Zones:GetName(ID)
+    }})
+
     NETWORK:StartNetworkMessageTimer(ply, "Print", {"Admin", Lang:Get("ZoneStart")})
 end
 
@@ -266,6 +271,7 @@ NETWORK:GetNetworkMessage("SendZoneData", function(_, data)
     local startPos = data[2]
     local endPos = data[3]
     local zoneType = data[4]
+    local zoneHeight = data[5] or 128
 
     if not IsValid(ply) or not startPos or not endPos or not zoneType then
         UTIL:Notify(Color(255, 255, 0), "Zones", "Error: Invalid zone data received from client!")
@@ -276,6 +282,7 @@ NETWORK:GetNetworkMessage("SendZoneData", function(_, data)
         Start = startPos,
         End = endPos,
         Type = zoneType,
+        Height = zoneHeight,
         Active = true
     }
 
@@ -323,6 +330,10 @@ function Zones:CancelSet(ply, force)
     
     NETWORK:StartNetworkMessage(ply, "CancelZonePlacement")
 end
+
+NETWORK:GetNetworkMessage("CancelZonePlacement", function(ply)
+    Zones:CancelSet(ply, true)
+end)
 
 -- Save new placed zones
 function Zones:SaveZoneToDatabase(editor)

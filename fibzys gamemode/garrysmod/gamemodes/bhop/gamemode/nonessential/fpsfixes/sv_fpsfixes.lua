@@ -300,7 +300,7 @@ local function isNonEssentialGlobal(key)
         ["KEY_I"] = true, ["KEY_H"] = true, ["ACT_HL2MP_IDLE_FIST"] = true, ["KEY_E"] = true, 
         ["ACT_TURN_LEFT"] = true, ["ACT_DOD_PRIMARYATTACK_BAZOOKA"] = true, ["ACT_WALK_ANGRY"] = true, 
         ["FCVAR_NONE"] = true, ["KEY_B"] = true, ["KEY_6"] = true, ["ACT_VM_RECOIL2"] = true, 
-        ["ACT_DOD_RUN_IDLE_MP44"] = true, ["KEY_4"] = true, ["KEY_3"] = true, ["ACT_DOD_CROUCH_AIM_PSCHRECK"] = true, 
+        ["ACT_DOD_RUN_IDLE_MP44"] = true, ["KEY_4"] = false, ["KEY_3"] = false, ["ACT_DOD_CROUCH_AIM_PSCHRECK"] = true, 
         ["ACT_HL2MP_GESTURE_RANGE_ATTACK_CAMERA"] = true, ["ACT_SLAM_STICKWALL_ATTACH"] = true, 
         ["ACT_RUN_PISTOL"] = true, ["BLEND_SRC_COLOR"] = true, ["KEY_NONE"] = true, ["KEY_FIRST"] = true, 
         ["ACT_RUN_AIM_AGITATED"] = false, ["NAV_MESH_INVALID"] = true, ["TYPE_SURFACEINFO"] = true, 

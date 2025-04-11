@@ -14,6 +14,10 @@ Command = {
 local lp, Iv, ct, hook_Add = LocalPlayer, IsValid, CurTime, hook.Add
 local insert, explode, lower, sub = table.insert, string.Explode, string.lower, string.sub
 
+util.AddNetworkString("OpenRanksPage")
+util.AddNetworkString("zone_toggle_hud")
+util.AddNetworkString("zone_editor_data")
+
 function SendSSJTopToClient(ply)
     if not IsValid(ply) then return end
     if not SSJTOP or table.IsEmpty(SSJTOP) then
@@ -128,20 +132,20 @@ function Command:PerformRestart(pl, currentFOV)
 
     fallbackAngles[pl:SteamID()] = pl:EyeAngles()
 
-    if pl.style == TIMER:GetStyleID("Segment") then
+    --[[if pl.style == TIMER:GetStyleID("Segment") then
         Segment:Reset(pl)
         Segment:Exit(pl)
-    end
+    end--]]
 
     if pl:Team() ~= TEAM_SPECTATOR then
-        local szWeapon = IsValid(pl:GetActiveWeapon()) and pl:GetActiveWeapon():GetClass() or "weapon_crowbar"
-        pl.ReceiveWeapons = not not szWeapon
+        local wep = IsValid(pl:GetActiveWeapon()) and pl:GetActiveWeapon():GetClass() or "weapon_crowbar"
+        pl.ReceiveWeapons = not not wep
         pl:Spawn()
         TIMER:ResetTimer(pl)
         pl.ReceiveWeapons = nil
 
-        if szWeapon and pl:HasWeapon(szWeapon) then
-            pl:SelectWeapon(szWeapon)
+        if wep and pl:HasWeapon(wep) then
+            pl:SelectWeapon(wep)
         end
 
         if pl.WeaponsFlipped then
@@ -388,16 +392,25 @@ function Command:Init()
                     return BHDATA:Send(pl, "Print", {"Admin", "You don't have access to use this command!"})
                 end
 
-                net.Start("zone_menu_types")
-                net.WriteUInt(table.Count(Zones.Type), 8)
-                for name, id in pairs(Zones.Type) do
-                    net.WriteString(name)
-                    net.WriteUInt(id, 8)
-                end
-                net.Send(pl)
+net.Start("zone_menu_types")
+net.WriteUInt(table.Count(Zones.Type), 8)
+for name, id in pairs(Zones.Type) do
+    net.WriteString(name)
+    net.WriteUInt(id, 8)
+end
+net.Send(pl)
 
-                net.Start("zone_menu_open")
-                net.Send(pl)
+-- Tell client to show HUD
+net.Start("zone_toggle_hud")
+net.WriteBool(true)
+net.Send(pl)
+
+-- Tell client to activate editor
+net.Start("zone_editor_data")
+net.WriteBool(true) -- active
+net.WriteUInt(0, 8) -- default type ID (or whatever you want)
+net.Send(pl)
+
             end,
             "Zone command",
             "<arguments>"
@@ -672,17 +685,18 @@ function Command:Init()
         {
             {"start", "gostart", "gotostart", "tpstat"},
             function(pl, args)
-                if pl:GetNWInt("inPractice", false) then
-                    local vPoint = Zones:GetCenterPoint(Zones.Type["Normal Start"])
-                    if vPoint then
-                        pl:SetPos(vPoint)
-                        BHDATA:Send(pl, "Print", { "Timer", Lang:Get("PlayerTeleport", { "the normal start zone" }) })
-                        SendPopupNotification(pl, "Notification", "Teleported the normal end zone.", 2)
-                    else
-                        BHDATA:Send(pl, "Print", { "Timer", Lang:Get("MiscZoneNotFound", { "normal end" }) })
-                    end
+                if not pl:GetNWInt("inPractice", false) then
+                    pl.outsideSpawn = true
+                    TIMER:Disable(pl)
+                end
+
+                local vPoint = Zones:GetCenterPoint(Zones.Type["Normal Start"])
+                if vPoint then
+                    pl:SetPos(vPoint)
+                    BHDATA:Send(pl, "Print", { "Timer", Lang:Get("PlayerTeleport", { "the normal start zone" }) })
+                    SendPopupNotification(pl, "Notification", "Teleported to the normal start zone.", 2)
                 else
-                    BHDATA:Send(pl, "Print", { "Timer", "You have to disable your timer first, either use noclip or enable checkpoints to allow for teleport." })
+                    BHDATA:Send(pl, "Print", { "Timer", Lang:Get("MiscZoneNotFound", { "normal start" }) })
                 end
             end,
             "Go to end zone",
@@ -693,17 +707,19 @@ function Command:Init()
         {
             {"end", "goend", "gotoend", "tpend"},
             function(pl, args)
-                if pl:GetNWInt("inPractice", false) then
-                    local vPoint = Zones:GetCenterPoint(Zones.Type["Normal End"])
-                    if vPoint then
-                        pl:SetPos(vPoint)
-                        BHDATA:Send(pl, "Print", { "Timer", Lang:Get("PlayerTeleport", { "the normal end zone" }) })
-                        SendPopupNotification(pl, "Notification", "Teleported the normal end zone.", 2)
-                    else
-                        BHDATA:Send(pl, "Print", { "Timer", Lang:Get("MiscZoneNotFound", { "normal end" }) })
-                    end
+                if not pl:GetNWInt("inPractice", false) then
+                    pl.outsideSpawn = true
+                    TIMER:Disable(pl)
+                end
+
+                local vPoint = Zones:GetCenterPoint(Zones.Type["Normal End"])
+                if vPoint then
+                    pl:SetPos(vPoint)
+
+                    BHDATA:Send(pl, "Print", { "Timer", Lang:Get("PlayerTeleport", { "the normal end zone" }) })
+                    SendPopupNotification(pl, "Notification", "Teleported to the normal end zone.", 2)
                 else
-                    BHDATA:Send(pl, "Print", { "Timer", "You have to disable your timer first, either use noclip or enable checkpoints to allow for teleport." })
+                    BHDATA:Send(pl, "Print", { "Timer", Lang:Get("MiscZoneNotFound", { "normal end" }) })
                 end
             end,
             "Go to end zone",
@@ -714,17 +730,18 @@ function Command:Init()
         {
             {"bonusstart", "gobstart", "gotobonusstart", "tpbonustart"},
             function(pl, args)
-                if pl:GetNWInt("inPractice", false) then
-                    local vPoint = Zones:GetCenterPoint(Zones.Type["Bonus Start"])
-                    if vPoint then
-                        pl:SetPos(vPoint)
-                        BHDATA:Send(pl, "Print", { "Timer", Lang:Get("PlayerTeleport", { "the bonus start zone" }) })
-                        SendPopupNotification(pl, "Notification", "Teleported the normal end zone.", 2)
-                    else
-                        BHDATA:Send(pl, "Print", { "Timer", Lang:Get("MiscZoneNotFound", { "normal end" }) })
-                    end
+                if not pl:GetNWInt("inPractice", false) then
+                    pl.outsideSpawn = true
+                    TIMER:Disable(pl)
+                end
+
+                local vPoint = Zones:GetCenterPoint(Zones.Type["Bonus Start"])
+                if vPoint then
+                    pl:SetPos(vPoint)
+                    BHDATA:Send(pl, "Print", { "Timer", Lang:Get("PlayerTeleport", { "the bonus start zone" }) })
+                    SendPopupNotification(pl, "Notification", "Teleported to the bonus start zone.", 2)
                 else
-                    BHDATA:Send(pl, "Print", { "Timer", "You have to disable your timer first, either use noclip or enable checkpoints to allow for teleport." })
+                    BHDATA:Send(pl, "Print", { "Timer", Lang:Get("MiscZoneNotFound", { "bonus start" }) })
                 end
             end,
             "Go to end zone",
@@ -735,17 +752,18 @@ function Command:Init()
         {
             {"bonusend", "gobend", "gotobend", "tptobend", "bend"},
             function(pl, args)
-                if pl:GetNWInt("inPractice", false) then
-                    local vPoint = Zones:GetCenterPoint(Zones.Type["Bonus End"])
-                    if vPoint then
-                        pl:SetPos(vPoint)
-                        BHDATA:Send(pl, "Print", { "Timer", Lang:Get("PlayerTeleport", { "the bonus end zone" }) })
-                        SendPopupNotification(pl, "Notification", "Teleported the normal end zone.", 2)
-                    else
-                        BHDATA:Send(pl, "Print", { "Timer", Lang:Get("MiscZoneNotFound", { "normal end" }) })
-                    end
+                if not pl:GetNWInt("inPractice", false) then
+                    pl.outsideSpawn = true
+                    TIMER:Disable(pl)
+                end
+
+                local vPoint = Zones:GetCenterPoint(Zones.Type["Bonus End"])
+                if vPoint then
+                    pl:SetPos(vPoint)
+                    BHDATA:Send(pl, "Print", { "Timer", Lang:Get("PlayerTeleport", { "the bonus end zone" }) })
+                    SendPopupNotification(pl, "Notification", "Teleported to the bonus end zone.", 2)
                 else
-                    BHDATA:Send(pl, "Print", { "Timer", "You have to disable your timer first, either use noclip or enable checkpoints to allow for teleport." })
+                    BHDATA:Send(pl, "Print", { "Timer", Lang:Get("MiscZoneNotFound", { "bonus end" }) })
                 end
             end,
             "Go to end zone",
@@ -844,8 +862,32 @@ function Command:Init()
             "[mapname]"
         },
 
-        -- WR List
+
+        -- WR List via F1 Menu
         {
+            {"wr", "wrlist", "records"},
+            function(pl, args)
+                net.Start("OpenWorldRecords")
+                net.Send(pl)
+            end,
+            "Displays world records or record list",
+            "<style> [page]"
+        },
+
+
+        -- Rank via F1 Menu
+        {
+            {"rank", "ranks", "ranklist"},
+            function(pl, args)
+                net.Start("OpenRanksPage")
+                net.Send(pl)
+            end,
+            "Displays world records or record list",
+            "<style> [page]"
+        },
+
+        -- WR List Old Numbered UI
+        --[[{
             {"wr", "wrlist", "records"},
             function(pl, args)
                 local stylename, page = pl.style, 1
@@ -859,7 +901,7 @@ function Command:Init()
             end,
             "Displays world records or record list",
             "<style> [page]"
-        },
+        },--]]
 
         -- Top Players List
         {
@@ -932,8 +974,8 @@ function Command:Init()
             "<style> [page]"
         },--]]
 
-        -- Style WR 
-        {
+        -- Style WR Num UI
+        --[[{
             {"wr", "records", "worldrecords"},
             function(pl, args)
             local styleAliases = {
@@ -957,7 +999,7 @@ function Command:Init()
 
             "Displays normal world records or record list",
             "<style> [page]"
-        },
+        },--]]
 
         -- Style Menu
         {
@@ -1326,6 +1368,7 @@ end)
 -- Clickers
 util.AddNetworkString("OpenBhopMenu")
 util.AddNetworkString("OpenWorldRecords")
+util.AddNetworkString("OpenWorldRecords")
 
 -- F1
 function GM:ShowHelp(pl)
@@ -1337,5 +1380,12 @@ end
 function GM:ShowTeam(pl)
     NETWORK:StartNetworkMessage(pl, "OpenSpectateDialog", {})
 end
+
+-- F3
+hook.Add("ShowSpare1", "OpenWRMenuF4", function(ply)
+    if not IsValid(ply) then return end
+    net.Start("OpenWorldRecords")
+    net.Send(ply)
+end)
 
 Command:Init()

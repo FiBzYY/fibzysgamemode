@@ -10,23 +10,30 @@ hook.Add("EntityEmitSound", MUTE_ID .. "_FilterSound", function(data)
 
     local soundName = string.lower(data.SoundName or "")
     local entity = data.Entity
-    local radius = entity and entity:IsValid() and entity:GetInternalVariable("radius") or 0
+    local radius, spawnflags = 0, 0
+
+    -- Check if the entity is valid before calling internal vars
+    if IsValid(entity) then
+        radius = entity:GetInternalVariable("radius") or 0
+        spawnflags = entity:GetInternalVariable("spawnflags") or 0
+    end
+
     local duration = SoundDuration(soundName)
     local isGlobal = radius == 0 or radius > MAX_MUTE_RADIUS
-    local isLooped = bit.band(entity:GetInternalVariable("spawnflags") or 0, 1) == 1
+    local isLooped = bit.band(spawnflags, 1) == 1
     local isLong = (duration >= 60) or (duration > muteDuration:GetFloat())
 
-    -- .mp3s are shorter duration
+    -- .mp3s are generally short, so bump up their duration check
     if string.sub(soundName, -4) == ".mp3" then
         duration = duration * 3
     end
 
     -- Mode 2: mute long + global
     if mode == 2 and isGlobal and isLong then
-        return false -- blocks sound
+        return false -- block it
     end
 
-    -- Mode 3: mute global or looped sounds
+    -- Mode 3: mute global or looped
     if mode == 3 and (isGlobal or isLooped) then
         return false
     end
