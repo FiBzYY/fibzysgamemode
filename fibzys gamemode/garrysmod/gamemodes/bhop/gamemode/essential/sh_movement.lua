@@ -81,8 +81,8 @@ local function TickVelocity(vel, dir)
         wishvel[3] = 0
 
         local wishspeed = wishvel:Length()
-        if wishspeed > StyleInfo.maxspeed then
-            wishvel = wishvel * (StyleInfo.maxspeed / wishspeed)
+        if wishspeed ~= 0 and wishspeed > StyleInfo.maxspeed then
+            wishvel:Mul(StyleInfo.maxspeed / wishspeed)
             wishspeed = StyleInfo.maxspeed
         end
 
@@ -349,9 +349,24 @@ function GM:SetupMove(client, data, cmd)
            sideInput = (rightPressed and 3 or 0) - (leftPressed and 3 or 0)
     end
 
+    local inputVec = Vector(sideInput, forwardInput, 0)
+    if inputVec:LengthSqr() > 0 then
+        inputVec:Normalize()
+    end
+
     -- Input sets
-    local accelForward = lookVector * (forwardInput * 0.3)
-    local accelSide = sideVector * (sideInput * 2)
+    local forwardAccelFactor = 2.5
+    local sideAccelFactor = 2.5
+
+    -- Responsive acceleration
+    local accelForward = lookVector * (inputVec.y * forwardAccelFactor)
+    local accelSide = sideVector * (inputVec.x * sideAccelFactor)
+
+    -- Final direction
+    if not accelForward:IsZero() or not accelSide:IsZero() then
+        local dir = (accelForward + accelSide):GetNormalized()
+        -- apply to velocity etc
+    end
 
     if accelForward:IsZero() and accelSide:IsZero() then return end
     local dir = (accelForward + accelSide):GetNormalized()

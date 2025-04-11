@@ -1081,9 +1081,9 @@ function UI:CreateInputBoxSettings(parent, y, command, defaultVal, labelText, in
     local convarVal = ConVarExists(command) and GetConVar(command):GetFloat() or defaultVal
 
     if command == "bhop_settings_cap" then
-        inputBox:SetText(math.Round(convarVal * 5))
+        inputBox:SetText(math.Round(convarVal))
     elseif command == "bhop_settings_mv" then
-        inputBox:SetText(string.format("%.1f", convarVal + 0.4))
+        inputBox:SetText(string.format("%.1f", convarVal))
     else
         inputBox:SetText(math.Round(convarVal))
     end

@@ -116,13 +116,16 @@ hook.Add("Move", "BoosterFix", function(ply, mv)
         pFix.NextVelocity = false -- Clear velocity boost after applying
     end
 
+    -- Fix bugs when disabled
+    if not ply:UseBoosterfix() then return end
+
     -- Reactivate booster triggers for proper collision checks
     for _, ent in pairs(Boosters) do ent:SetNotSolid(false) end
 
     -- Setup trace parameters to detect booster zones
     local pos = mv:GetOrigin()
     local vl = mv:GetVelocity()
-    pos.z = pos.z + (0.01 * vl.z) -- Small offset on Z to be more precise
+    pos.z = pos.z + (FrameTime() * vl.z) -- Small offset on Z to be more precise
 
     -- TraceHull to check if player is inside a booster
     local tr = util.TraceHull {
@@ -175,7 +178,7 @@ hook.Add("Move", "BoosterFix", function(ply, mv)
             elseif b.Change == "gravity" then
                 local v = tonumber(b.Value)
                 -- Optional cap for certain styles
-                if (v == 0 or v > 0.75) and ply.style == 8 then v = 0.75 end
+                if (v == 0 or v > 0.75) and TIMER:GetStyleID("Low Gravity") == 8 then v = 0.75 end
                 if b.Timer > 0 then
                     pFix.NextGravity = {floor(b.Timer * TickRate), v}
                 else
