@@ -95,7 +95,7 @@ local function isNonEssentialGlobal(key)
         ["ACT_MP_ATTACK_CROUCH_GRENADE"] = true, ["CHAN_VOICE_BASE"] = true, ["ACT_SLAM_TRIPMINE_TO_THROW_ND"] = true, 
         ["ACT_DOD_STAND_AIM_C96"] = true, ["ACT_RANGE_AIM_AR2_LOW"] = true, ["KEY_P"] = true, 
         ["SCHED_MOVE_TO_WEAPON_RANGE"] = true, ["ACT_SLAM_TRIPMINE_IDLE"] = true, ["ACT_PLAYER_RUN_FIRE"] = true, 
-        ["KEY_DOWN"] = true, ["CAP_MOVE_SWIM"] = true, ["ACT_HL2MP_WALK_CROUCH_SCARED"] = true, 
+        ["KEY_DOWN"] = false, ["CAP_MOVE_SWIM"] = true, ["ACT_HL2MP_WALK_CROUCH_SCARED"] = true, 
         ["ACT_MP_ATTACK_AIRWALK_SECONDARYFIRE"] = true, ["ACT_HL2MP_WALK_CROUCH_ZOMBIE_03"] = true, 
         ["ACT_DOD_CROUCH_IDLE_TNT"] = true, ["SCHED_CHASE_ENEMY_FAILED"] = true, ["ACT_DOD_RUN_IDLE_C96"] = true, 
         ["ACT_DOD_RELOAD_DEPLOYED_FG42"] = true, ["KEY_UP"] = false, ["KEY_XBUTTON_Y"] = true, 

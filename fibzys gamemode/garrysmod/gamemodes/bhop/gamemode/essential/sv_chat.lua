@@ -69,7 +69,7 @@ Lang = {
     SetSpawnNone = {"You don't have a", UTIL.Colour["Timer"], " spawn point ", UTIL.Colour["White"], "set."},
 
     -- Zone
-    ZoneStart = {"You are now placing a", UTIL.Colour["Timer"], " Zone", UTIL.Colour["White"], ". Start placing with 1. Press to", UTIL.Colour["Red"], " Set Zone", UTIL.Colour["White"], " Left click to save."},
+    ZoneStart = {"You are now placing a", UTIL.Colour["Timer"], " Zone", UTIL.Colour["White"], ". Start placing with 2. Press to", UTIL.Colour["Red"], " Set Zone", UTIL.Colour["White"], " Left click to save."},
     ZoneFinish = {"The", UTIL.Colour["Timer"], " Zone ", UTIL.Colour["White"], "has been placed."},
     ZoneCancel = {UTIL.Colour["Timer"], "Zone ", UTIL.Colour["White"], "Placement has been ", UTIL.Colour["Red"], "cancelled", UTIL.Colour["White"], "."},
     ZoneNoEdit = "You are not setting any Zones at the moment.",

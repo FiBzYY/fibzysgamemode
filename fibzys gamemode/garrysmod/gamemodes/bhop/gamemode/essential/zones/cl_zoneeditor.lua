@@ -9,6 +9,7 @@ local previewPos = nil
 local zonePlacementEnabled = false
 local zoneMenuOpened = false
 local showZoneHUD = false
+local isEditingHeight = false
 local minm, maxm = math.min, math.max
 local ZoneTypeCache = {}
 local currentZoneHeight = 128
@@ -212,7 +213,6 @@ local function DrawDynamicZone()
     end
 end
 
-
 local ZoneColorMap = {
     [0] = Color(0, 255, 0, 120),        -- Normal Start
     [1] = Color(255, 0, 0, 120),        -- Normal End
@@ -298,15 +298,8 @@ hook.Add("Tick", "ZonePlace", function()
     if not AdminLoad.Editor or not AdminLoad.Editor.Active or not canPlaceZone then return end
 
     if input.IsKeyDown(KEY_0) and not exitCooldown then
-        isPlacing = false
-        isZoneFinalized = false
-        startPoint = nil
-        endPoint = nil
-        previewPos = nil
-        zonePlacementEnabled = false
-        AdminLoad.Editor = nil
-
-        NETWORK:StartNetworkMessage(nil, "CancelZonePlacement", LocalPlayer())
+        net.Start("zone_force_cancel_editor")
+        net.SendToServer()
 
         exitCooldown = true
         timer.Simple(0.3, function() exitCooldown = false end)
@@ -344,12 +337,13 @@ hook.Add("Tick", "ZonePlace", function()
         NETWORK:StartNetworkMessage(nil, "SendZoneData", LocalPlayer(), startPoint, endPoint, AdminLoad.Editor.Type, currentZoneHeight)
 
         isPlacing = false
-        isZoneFinalized = false
         startPoint = nil
         endPoint = nil
         previewPos = nil
-        AdminLoad.Editor = nil
         zonePlacementEnabled = false
+
+        AdminLoad.Editor = AdminLoad.Editor or {}
+        AdminLoad.Editor.Active = true
     end
 
     if input.IsKeyDown(KEY_5) and not cancelCooldown then
@@ -363,26 +357,30 @@ hook.Add("Tick", "ZonePlace", function()
         endPoint = previewPos
     end
 
+    -- Toggle height editing mode
     if input.IsKeyDown(KEY_3) and not heightAdjustCooldown then
         heightAdjustCooldown = true
+        isEditingHeight = not isEditingHeight -- Toggle on/off
+        chat.AddText(Color(200, 200, 255), "[ZoneTool] Height edit " .. (isEditingHeight and "enabled" or "disabled"))
+        timer.Simple(0.3, function() heightAdjustCooldown = false end)
+    end
 
-        -- Replace soon
-        Derma_StringRequest(
-            "Zone Height Adjustment",
-            "Enter new desired height (default is " .. tostring(currentZoneHeight) .. "):",
-            tostring(currentZoneHeight),
-            function(text)
-                local newHeight = tonumber(text)
-                if newHeight and newHeight > 0 then
-                    currentZoneHeight = newHeight
-                    chat.AddText(Color(50, 255, 50), "[ZoneTool] Height set to " .. newHeight .. " units.")
-                else
-                    chat.AddText(Color(255, 50, 50), "[ZoneTool] Invalid height.")
-                end
-            end
-        )
+    -- DO TO: Key 6
 
-        timer.Simple(0.5, function() heightAdjustCooldown = false end)
+    if isEditingHeight then
+        if input.IsKeyDown(KEY_UP) and not heightAdjustCooldown then
+            heightAdjustCooldown = true
+            currentZoneHeight = currentZoneHeight + 8
+            chat.AddText(Color(100, 255, 100), "[ZoneTool] Height: " .. currentZoneHeight)
+            timer.Simple(0.2, function() heightAdjustCooldown = false end)
+        end
+
+        if input.IsKeyDown(KEY_DOWN) and not heightAdjustCooldown then
+            heightAdjustCooldown = true
+            currentZoneHeight = math.max(8, currentZoneHeight - 8)
+            chat.AddText(Color(255, 100, 100), "[ZoneTool] Height: " .. currentZoneHeight)
+            timer.Simple(0.2, function() heightAdjustCooldown = false end)
+        end
     end
 end)
 
@@ -396,39 +394,59 @@ hook.Add("HUDPaint", "ZoneEditorToolHUD", function()
 
     draw.SimpleText("Zone Management Tool", "HUDTitle", startX + padding, startY + padding - 5, Color(255, 120, 40), TEXT_ALIGN_LEFT)
 
+    -- 1️ Calculate status text
     local statusText = ""
     if not canPlaceZone then
         statusText = "Cannot Place Zones"
     elseif not zonePlacementEnabled then
-        statusText = "Press 1 to Start Placing"
+        statusText = "Press 1 to pick a zone"
     elseif isPlacing and not isZoneFinalized then
         statusText = "Placing... (LMB to Start, RMB to End)"
     elseif isZoneFinalized then
         statusText = "Placement Finalized"
     end
 
+    -- 2️ Draw status text
     draw.SimpleText("Status | " .. statusText, "HUDFont", startX + padding, startY + 25, Color(255, 120, 40), TEXT_ALIGN_LEFT)
 
     local options = {
         "1 | Select Zone",
         "2 | Place New Zone (" .. (AdminLoad.Editor and AdminLoad.Editor.ZoneName or "Select First") .. ")",
-        "3 | Zone Height Adjustment",
+        "3 | Zone Height Adjustment" .. (isEditingHeight and " [+/-] (" .. currentZoneHeight .. " units)" or " (" .. currentZoneHeight .. " units)"),
         "4 | Finish Placement",
         "5 | Cancel Placement",
         "6 | Manage Zones",
         "0 | Exit Management Tool"
     }
 
-    local y = startY + 50
+    local y = startY + 55
     for i, text in ipairs(options) do
         local color = color_white
 
-        if string.StartWith(text, "1") and AdminLoad.Editor and AdminLoad.Editor.Type then
-            color = Color(50, 255, 50)
-        elseif string.StartWith(text, "2") and zonePlacementEnabled and not isPlacing then
-            color = Color(50, 255, 50)
+        -- Zone selected only if it's not "Select First"
+        if string.StartWith(text, "1") 
+            and AdminLoad.Editor 
+            and AdminLoad.Editor.Type 
+            and AdminLoad.Editor.ZoneName 
+            and AdminLoad.Editor.ZoneName ~= "Select First" then
+            color = Color(255, 120, 40)
+
+        elseif string.StartWith(text, "2") and zonePlacementEnabled then
+            color = Color(255, 120, 40)
+
+        elseif string.StartWith(text, "3") and isEditingHeight then
+            color = Color(255, 120, 40)
+
         elseif string.StartWith(text, "4") and isZoneFinalized then
-            color = Color(50, 255, 50)
+            color = Color(255, 120, 40)
+
+        elseif string.StartWith(text, "5") and cancelCooldown then
+            color = Color(255, 120, 40)
+
+        -- DO TO: key 6
+
+        elseif string.StartWith(text, "0") and exitCooldown then
+            color = Color(255, 120, 40)
         end
 
         draw.SimpleText(text, "HUDFont", startX + padding, y, color, TEXT_ALIGN_LEFT)

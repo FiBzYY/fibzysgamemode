@@ -295,8 +295,6 @@ function Zones:FinishSet(ply, extra)
 
     if editor and editor.Start and editor.End then
         self:SaveZoneToDatabase(editor)
-
-        self:CancelSet(ply)
         self:Reload()
 
         if (editor.Type == self.Type["Bonus Start"] or editor.Type == self.Type["Bonus End"]) and not extra then
@@ -330,6 +328,15 @@ function Zones:CancelSet(ply, force)
     
     NETWORK:StartNetworkMessage(ply, "CancelZonePlacement")
 end
+
+util.AddNetworkString("zone_force_cancel_editor")
+
+-- Send when canceled
+net.Receive("zone_force_cancel_editor", function(_, ply)
+    if not IsValid(ply) then return end
+
+    Zones:CancelSet(ply, true)
+end)
 
 NETWORK:GetNetworkMessage("CancelZonePlacement", function(ply)
     Zones:CancelSet(ply, true)
