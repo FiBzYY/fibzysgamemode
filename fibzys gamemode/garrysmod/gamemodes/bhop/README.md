@@ -104,3 +104,5 @@ Ignore: Niflheimrx's fork. There is no AI-written code everywhere – the projec
 All core systems were developed and refined by FiBzY using input from community contributors.
 
 PM me on discord if you need help setting it up at fibzyy 1122656915781066782
+
+v13.32 (big fps fixes smoother gm) is privated so message me if you want to use it
