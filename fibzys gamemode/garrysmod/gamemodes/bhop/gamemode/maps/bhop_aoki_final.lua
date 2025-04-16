@@ -1,1 +1,0 @@
-__MAP[ "SpecialDoorMaps" ] = true
